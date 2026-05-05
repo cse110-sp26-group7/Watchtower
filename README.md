@@ -1,12 +1,17 @@
-# Watchtower
+# WatchTower
 
-## Description
-Watchtower is a centralized dashboard to track the performance of your applications with data visualization and analytics.
-***
+Lightweight observability dashboard. Errors, performance, and user
+feedback in one place.
 
 ## Project Status
-**Prototyping**
+**CSE 110 Sp 26 team project. Pre-release.**
 ***
+
+## Layout
+- `src/` — MVC dashboard (vanilla JS)
+- `tests/` — unit and e2e
+- `docs/` — design artifacts, ADRs, meeting notes
+- Wiki — technical documentation for maintainers
 
 ## Prerequisites
 - Wrangler CLI — `npm install -g wrangler`
