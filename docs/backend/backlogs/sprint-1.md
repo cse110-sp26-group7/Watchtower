@@ -12,7 +12,7 @@ Backend team: Theo (Lead), Michael, Bishal, Gabrielle
 
 - Each member claims one of the five tasks below based on strength or interest. The default is one task per person.
 - After claiming, create a GitHub Issue and self-assign. (Label and tracking conventions are still TBD by Jack.)
-- Claiming deadline is Tuesday (5/06) evening. The backlog is then reported to Jack (Scrum Master / Product Owner).
+- Claiming deadline is Tuesday (5/5) evening. The backlog is then reported to Jack (Scrum Master / Product Owner).
 - If you get stuck, post in Slack `#backend` or DM me (Theo).
 
 ---
@@ -24,7 +24,7 @@ Backend team: Theo (Lead), Michael, Bishal, Gabrielle
 | 1   | Event schema draft + API endpoint sketch                 | Theo     |            |
 | 2   | Backend dev environment setup (wrangler, repo structure) | _(open)_ |            |
 | 3   | Mock ingestion endpoint prototype                        | _(open)_ | #2         |
-| 4   | Cloudflare storage comparison ADR 0001 (D1 vs KV vs R2)  | _(open)_ |            |
+| 4   | Cloudflare storage selection ADR 0001                    | _(open)_ |            |
 | 5   | Frontend/UX sync meeting                                 | Theo     |            |
 
 ---
@@ -85,17 +85,18 @@ Depends on: Task 2 completion.
 
 ---
 
-### 4. Cloudflare storage comparison ADR 0001 (D1 vs KV vs R2)
+### 4. Cloudflare storage selection ADR 0001
 
 Owner: _(open)_
 
 Deliverables:
-- `docs/backend/adr/0001-storage-choice.md` (MADR format)
+- `docs/backend/adr/0001-storage-selection.md` (MADR format)
 
 Scope:
-- Compare the three options across characteristics, query capability, pricing, and free-tier limits.
+- Identify the relevant Cloudflare storage products for our use case (the ADR's "alternatives considered" section).
+- Compare the candidates across characteristics, query capability, pricing, and free-tier limits.
 - Map them to WatchTower's requirements, including dashboard queries that need filter/sort/join and the possibility of large log volume.
-- State a tentative decision with rationale, limitations, and alternatives considered.
+- State a tentative decision with rationale and limitations.
 
 Why an ADR: Migration cost is high once a storage choice is locked in, and the project doc requires ADRs for all major technical decisions.
 
@@ -119,9 +120,4 @@ Scope:
 
 ## Unclaimed tasks
 
-If any task is still unclaimed by Tuesday (5/06) evening, backend lead will assign it provisionally and report the result to Jack.
-
-## Open questions (for the TA)
-
-- Cloudflare account: should we set up a shared team account, or have everyone use personal accounts?
-- Does the storage decision require TA approval (does the dependency-addition rule apply here)?
+If any task is still unclaimed by Tuesday (5/5) evening, backend lead will assign it provisionally and report the result to Jack.
