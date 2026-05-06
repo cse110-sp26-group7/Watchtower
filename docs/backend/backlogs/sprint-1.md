@@ -70,7 +70,7 @@ Owner: Bishal + Michael (each picks 2 tools, results merged into one doc)
 Candidate tools (pick from this pool or propose another):
 - Sentry: error tracking, industry standard
 - PostHog: referenced by the project doc
-- Datadog RUM: enterprise comprehensive observability
+- Datadog: enterprise comprehensive observability
 - Grafana Cloud: open source, fullstack monitoring platform
 - Bugsnag: error tracking
 
