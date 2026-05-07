@@ -7,12 +7,6 @@ feedback in one place.
 **CSE 110 Sp 26 team project. Pre-release.**
 ***
 
-## Layout
-- `src/` — MVC dashboard (vanilla JS)
-- `tests/` — unit and e2e
-- `docs/` — design artifacts, ADRs, meeting notes
-- Wiki — technical documentation for maintainers
-
 ## Prerequisites
 - Wrangler CLI — `npm install -g wrangler`
 For backend-specific setup, see `/backend/README.md`
