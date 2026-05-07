@@ -21,7 +21,7 @@ Backend team: Theo (Lead), Michael, Bishal, Gabrielle
 
 | #   | Task                                                     | Owner                                 | Depends on |
 | --- | -------------------------------------------------------- | ------------------------------------- | ---------- |
-| 1   | Event schema + API endpoint + snippet integration sketch | Theo                                  |            |
+| 1   | Backend integration contract draft                       | Theo                                  |            |
 | 2   | Cloudflare storage selection ADR 0001                    | Gabrielle                             |            |
 | 3   | Observability tool integration survey                    | Bishal + Michael (each picks 2 tools) |            |
 | 4   | Frontend/UX sync meeting                                 | Theo                                  | #1 Phase A |
@@ -30,26 +30,23 @@ Backend team: Theo (Lead), Michael, Bishal, Gabrielle
 
 ## Tasks
 
-### 1. Event schema + API endpoint + snippet integration sketch
+### 1. Backend integration contract draft
 
 Owner: Theo
 
 Deliverables:
 - `docs/backend/api/event-schema.json` with example payloads for error, feedback, and deploy events
-- `docs/backend/api/endpoints.md` with a rough API endpoint outline (`POST /ingest`, `GET /events`, and so on) plus short design notes (why a flat structure, why a type discriminator, where deploy_id sits, etc.)
-- Snippet integration design notes within `endpoints.md` (or `docs/backend/api/snippet-integration.md`): proposed approach for project ID format, manual capture API shape, send mechanism, and auto-capture scope. Cross-team items (hosting, test app form) are flagged as open for team sync rather than decided unilaterally.
+- `docs/backend/api/endpoints.md` covering: rough API endpoint outline (`POST /ingest`, `GET /events`, etc.); short design notes (why a flat structure, why a type discriminator, where deploy_id sits); snippet integration approach (project ID format, manual capture API, send mechanism, auto-capture scope). Cross-team items (hosting, test app form) are flagged as open for team sync rather than decided unilaterally.
 
 Workflow (two phases):
-- Phase A (early to mid week): Rough structural sketch from domain knowledge plus early findings from Task 3 (SDK pattern survey). Just enough concrete shape to walk into the Frontend/UX sync (Task 4) with real proposals on the table.
+- Phase A (early to mid week): Rough structural sketch from domain knowledge plus early findings from Task 3 (SDK pattern survey). Just enough concrete shape to walk into the Frontend/UX sync (Task 4) with real proposals on the table. Explicitly labeled "rough draft, pending Frontend/UX sync."
 - Phase B (after Task 4 sync): Refine into v1 informed by what data the dashboard actually needs from the frontend team.
 
 Scope:
 - Cover only the common fields that come from the domain itself (event_id, app_id, timestamp, environment, event_type, deploy_id, etc.).
-- Phase A is explicitly labeled "rough draft, pending Frontend/UX sync." Phase B finalizes.
-- Incorporate findings from Task 3 (SDK pattern survey) when shaping the integration approach.
-- Include the snippet integration design (project ID format, manual capture API, send mechanism, auto-capture scope). The output feeds Sprint 2 Task 3 (snippet implementation) directly.
+- Output feeds Sprint 2 Task 3 (snippet implementation) directly.
 
-ADR note: No ADR for this task. The schema is a v0 spec, not a stabilized decision. Once it solidifies, the key design choices will be captured as a separate ADR (likely in Sprint 2).
+ADR note: No ADR in Sprint 1. The schema is a v0 spec rather than a decision, and the snippet integration choices are tentative pending Frontend/UX sync and team alignment. Once the approach stabilizes (likely Sprint 2), the integration decisions (snippet vs SDK, project ID format, send mechanism, auto-capture scope) will be captured as a separate ADR.
 
 ---
 
