@@ -25,7 +25,7 @@ Inputs from Sprint 1 (target Thursday EOD):
 | #   | Task                                                     | Owner    | Depends on |
 | --- | -------------------------------------------------------- | -------- | ---------- |
 | 1   | Backend dev environment setup (wrangler, repo structure) | Bishal   |            |
-| 2   | Mock ingestion endpoint prototype                        | _(open)_ | #1         |
+| 2   | Mock ingestion endpoint prototype                        | Gabrielle | #1         |
 | 3   | Test app snippet (auto-capture + post to ingestion)      | _(open)_ |            |
 
 ---
