@@ -13,16 +13,16 @@ Four event types. Three are emitted from the end-user's browser via the snippet 
 
 ## Common envelope
 
-Every event carries these fields.
+Every event carries these fields. deploy_id is nullable: optional on browser events (set by host via watchtower.init); required on deploy events (the deploy's own git SHA).
 
-| field       | type            | notes                                           |
-| ----------- | --------------- | ----------------------------------------------- |
-| event_id    | UUID v4         | client-generated, used for dedup                |
-| project_id  | string          | wt_ + 8-12 random chars (e.g., wt_a1b2c3d4)     |
-| event_type  | enum            | error \| performance \| feedback \| deploy      |
-| timestamp   | ISO 8601 string | UTC, ms precision                               |
-| environment | enum            | dev \| staging \| prod                          |
-| deploy_id   | string          | references deploy event identifier (format TBD) |
+| field       | type            | notes                                       |
+| ----------- | --------------- | ------------------------------------------- |
+| event_id    | UUID v4         | client-generated, used for dedup            |
+| project_id  | string          | wt_ + 8-12 random chars (e.g., wt_a1b2c3d4) |
+| event_type  | enum            | error \| performance \| feedback \| deploy  |
+| timestamp   | ISO 8601 string | UTC, ms precision                           |
+| environment | enum            | dev \| staging \| prod                      |
+| deploy_id   | string \| null  | release identifier (git SHA); see above     |
 
 ## Browser context
 
@@ -61,9 +61,9 @@ Example:
     "event_type": "error",
     "timestamp": "2026-05-07T14:32:11.234Z",
     "environment": "prod",
-    "deploy_id": "v1.2.3",
     "url": "https://example.com/checkout",
     "session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "deploy_id": "b1f2a4d",
     "message": "Cannot read property 'total' of undefined",
     "name": "TypeError",
     "stack": "TypeError: Cannot read property 'total' of undefined\n    at calculateTotal (checkout.js:42:18)",
@@ -95,9 +95,9 @@ Example:
     "event_type": "performance",
     "timestamp": "2026-05-07T14:32:11.234Z",
     "environment": "prod",
-    "deploy_id": "v1.2.3",
     "url": "https://example.com/checkout",
     "session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "deploy_id": "b1f2a4d",
     "metric_name": "LCP",
     "value": 2456,
     "rating": "needs-improvement"
@@ -106,8 +106,66 @@ Example:
 
 ## Feedback event
 
-TBD.
+End-user submits a rating and optional comment about the host app.
+
+| field   | type           | notes                      |
+| ------- | -------------- | -------------------------- |
+| rating  | number         | 1-5 (integer)              |
+| comment | string \| null | optional free-text comment |
+
+Capture mechanism: TBD pending Frontend/UX sync. Options on the table: snippet API only (host builds UI), default widget rendered by snippet, or a hybrid (mount helper + host-placed container). Schema is the same regardless — only the payload contract is fixed here.
+
+Example:
+
+```json
+{
+    "event_id": "880e8400-e29b-41d4-a716-446655440003",
+    "project_id": "wt_a1b2c3d4",
+    "event_type": "feedback",
+    "timestamp": "2026-05-07T14:32:11.234Z",
+    "environment": "prod",
+    "url": "https://example.com/checkout",
+    "session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "deploy_id": "b1f2a4d",
+    "rating": 2,
+    "comment": "Search results look broken on this page"
+}
+```
 
 ## Deploy event
 
-TBD.
+Server-emitted (CI/CD or manual API call). No browser context.
+
+| field   | type           | notes                                                |
+| ------- | -------------- | ---------------------------------------------------- |
+| version | string \| null | SemVer tag (e.g., "v0.1.0") if this commit is tagged |
+
+Capture: GitHub Actions (or another CI runner) calls POST /ingest after a deploy completes. deploy_id comes from $GITHUB_SHA; version is set when the commit carries a vX.Y.Z tag (SemVer required by project doc), otherwise null.
+
+Example (untagged staging deploy):
+
+```json
+{
+    "event_id": "990e8400-e29b-41d4-a716-446655440004",
+    "project_id": "wt_a1b2c3d4",
+    "event_type": "deploy",
+    "timestamp": "2026-05-07T14:00:00.000Z",
+    "environment": "staging",
+    "deploy_id": "cd97401",
+    "version": null
+}
+```
+
+Example (tagged production release):
+
+```json
+{
+    "event_id": "aa0e8400-e29b-41d4-a716-446655440005",
+    "project_id": "wt_a1b2c3d4",
+    "event_type": "deploy",
+    "timestamp": "2026-05-15T10:00:00.000Z",
+    "environment": "prod",
+    "deploy_id": "b1f2a4d",
+    "version": "v0.1.0"
+}
+```
