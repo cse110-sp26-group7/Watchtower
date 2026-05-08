@@ -54,7 +54,7 @@ Reference: [Cloudflare Workers official guide](https://developers.cloudflare.com
 
 ### 2. Mock ingestion endpoint prototype
 
-Owner: _(open)_
+Owner: Gabrielle
 
 Deliverables:
 - `backend/src/ingest.js` containing the `POST /ingest` handler
