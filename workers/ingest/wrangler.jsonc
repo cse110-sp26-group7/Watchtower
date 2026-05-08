@@ -13,7 +13,14 @@
 	"upload_source_maps": true,
 	"compatibility_flags": [
 		"nodejs_compat"
-	]
+	],
+	  "d1_databases": [
+    {
+      "binding": "DB", 
+      "database_name": "watchtower",
+      "database_id": "379f3855-a3c8-4afa-a7c3-3cddccbf606f"
+    }
+  ]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
