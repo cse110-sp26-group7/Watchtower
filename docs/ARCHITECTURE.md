@@ -163,7 +163,7 @@ The following are deliberately deferred and noted here so future maintainers don
 ├── docs/
 │   ├── ARCHITECTURE.md # this file
 │   └── adr/            # MADR records
-|   └── backend/
+│   └── backend/
 ├── .github/workflows/  # CI/CD pipelines
 └── README.md
 ```
