@@ -24,7 +24,7 @@ Inputs from Sprint 1 (target Thursday EOD):
 
 | #   | Task                                                     | Owner    | Depends on |
 | --- | -------------------------------------------------------- | -------- | ---------- |
-| 1   | Backend dev environment setup (wrangler, repo structure) | Bishal   |            |
+| 1   | Ingest Worker dev environment setup (wrangler scaffold)  | Bishal   |            |
 | 2   | Mock ingestion endpoint prototype                        | Gabrielle | #1         |
 | 3   | Test app snippet (auto-capture + post to ingestion)      | _(open)_ |            |
 
@@ -32,19 +32,22 @@ Inputs from Sprint 1 (target Thursday EOD):
 
 ## Tasks
 
-### 1. Backend dev environment setup
+### 1. Ingest Worker dev environment setup
 
 Owner: Bishal (claim preserved from Sprint 1)
 
+Path follows ARCHITECTURE.md §9: the ingest Worker lives at `workers/ingest/`. The reporting API Worker (`workers/api/`) is out of scope for this sprint.
+
 Deliverables:
-- `backend/` directory structure (`src/`, `test/`, `wrangler.toml`, etc.)
-- `backend/README.md` with a local dev guide (wrangler install, `wrangler dev`, environment variables)
+- `workers/ingest/` directory structure (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`)
+- `workers/ingest/README.md` with a local dev guide (prereqs, install, `npm run dev`, tests, lint, deploy, env vars / secrets)
 - Baseline `package.json`, `.gitignore`, and lint config
 
 Scope:
-- Set up Cloudflare Workers and the wrangler CLI.
-- Get a worker running locally via `npm run dev`.
-- Confirm one hello-world endpoint responds correctly.
+- Set up Cloudflare Workers via `wrangler` (pinned in devDependencies, no global install required).
+- Get the worker running locally via `npm run dev` on `http://localhost:8787`.
+- Confirm one hello-world endpoint responds with 200 / `Hello World!`.
+- `npm test` (vitest via `@cloudflare/vitest-pool-workers`) and `npm run lint` both pass on the scaffold.
 
 Why ahead of mock ingestion: Task 2 below needs this scaffolding to run on top of.
 
@@ -57,7 +60,7 @@ Reference: [Cloudflare Workers official guide](https://developers.cloudflare.com
 Owner: Gabrielle
 
 Deliverables:
-- `backend/src/ingest.js` containing the `POST /ingest` handler
+- `POST /ingest` handler wired into `workers/ingest/src/index.js` (extend the scaffold's `fetch` handler; split into a separate module if it grows past a screen)
 - A local test script (curl or fetch example)
 - A brief README section or JSDoc
 
@@ -74,7 +77,7 @@ Depends on: Sprint 2 Task 1 completion.
 Owner: _(open)_
 
 Deliverables:
-- `cdn/watchtower.js` (path TBD) — capture script that auto-captures `window.onerror` and `unhandledrejection`, and exposes a manual `window.watchtower.captureEvent()` API
+- `client/watchtower.js` (per ARCHITECTURE.md §9) — capture script that auto-captures `window.onerror` and `unhandledrejection`, and exposes a manual `window.watchtower.captureEvent()` API
 - Static hosting setup so the snippet is reachable via a public URL
 - A small test app (`/test-app/index.html`) that includes the snippet and triggers errors for end-to-end demo
 - A short integration doc (`docs/backend/api/integration.md`) explaining how a Test App embeds the snippet

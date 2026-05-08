@@ -154,8 +154,8 @@ The following are deliberately deferred and noted here so future maintainers don
 /
 ├── client/             # watchtower.js SDK source
 ├── workers/
-│   ├── ingest/         # Worker + wrangler.toml
-│   └── api/            # Worker + wrangler.toml
+│   ├── ingest/         # Worker + wrangler.jsonc
+│   └── api/            # Worker + wrangler.jsonc
 ├── dashboard/          # static SPA, deploys to Cloudflare Pages
 ├── db/
 │   ├── schema.sql      # D1 schema
