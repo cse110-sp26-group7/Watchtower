@@ -74,11 +74,48 @@ logger.emit({
     'server.env': 'production',
   },
 })
+
 ```
 ***
 
 ### Sentry
+- Sentry connects to user application via an sdk
+
+1. Run the command for your preferred package manager to add the Sentry SDK to your application:
+
+   `npm install @sentry/browser --save`
+
+2. Initialize Sentry as early as possible in your application's lifecycle. The setup differs slightly depending on how you installed the Sentry SDK. Be sure to follow the instructions in the related tab (npm, Loader, CDN):
+```
+import * as Sentry from "@sentry/browser";
+Sentry.init({
+  dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+  // Adds request headers and IP for users, for more info visit:
+  // https://docs.sentry.io/platforms/javascript/configuration/options/#sendDefaultPii
+  sendDefaultPii: true,
+  // Alternatively, use `process.env.npm_package_version` for a dynamic release version
+  // if your build tool supports it.
+  release: "my-project-name@2.3.12",
+});
+```
+
+3. To verify that Sentry captures errors and creates issues in your Sentry project, add a button that throws an error when clicked.
+   Open the page in a browser and click the button to throw an error.
+```
+<script>
+  function triggerError() {
+    throw new Error("Sentry Test Error");
+  }
+</script>
+<button onclick="triggerError()">Break the World</button>
+```
 ***
 
 ## Rest API
+- Representational State Transfer
+### Methods of Rest API
+ - GET: Read data from db
+ - POST: Create new records
+ - PUT: Update or replace existing records
+ - DELETE: Remove resource from server
 ***
