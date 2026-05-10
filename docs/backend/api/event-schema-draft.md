@@ -78,11 +78,11 @@ Example:
 
 Web Vitals only. One event per metric (up to 5 per page load).
 
-| field       | type   | notes                                                          |
-| ----------- | ------ | -------------------------------------------------------------- |
-| metric_name | enum   | LCP \| FCP \| TTFB \| CLS \| INP                               |
-| value       | number | metric value (ms for time metrics, unitless for CLS)           |
-| rating      | enum   | good \| needs-improvement \| poor (Google standard thresholds) |
+| field         | type   | notes                                                          |
+| ------------- | ------ | -------------------------------------------------------------- |
+| metric_name   | enum   | LCP \| FCP \| TTFB \| CLS \| INP                               |
+| metric_value  | number | metric value (ms for time metrics, unitless for CLS)           |
+| metric_rating | enum   | good \| needs-improvement \| poor (Google standard thresholds) |
 
 Capture: PerformanceObserver API in the snippet.
 
@@ -99,8 +99,8 @@ Example:
     "session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
     "deploy_id": "b1f2a4d",
     "metric_name": "LCP",
-    "value": 2456,
-    "rating": "needs-improvement"
+    "metric_value": 2456,
+    "metric_rating": "needs-improvement"
 }
 ```
 
@@ -108,10 +108,10 @@ Example:
 
 End-user submits a rating and optional comment about the host app.
 
-| field   | type           | notes                      |
-| ------- | -------------- | -------------------------- |
-| rating  | number         | 1-5 (integer)              |
-| comment | string \| null | optional free-text comment |
+| field            | type           | notes                      |
+| ---------------- | -------------- | -------------------------- |
+| feedback_rating  | number         | 1-5 (integer)              |
+| comment          | string \| null | optional free-text comment |
 
 Capture mechanism: TBD pending Frontend/UX sync. Options on the table: snippet API only (host builds UI), default widget rendered by snippet, or a hybrid (mount helper + host-placed container). Schema is the same regardless — only the payload contract is fixed here.
 
@@ -127,7 +127,7 @@ Example:
     "url": "https://example.com/checkout",
     "session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
     "deploy_id": "b1f2a4d",
-    "rating": 2,
+    "feedback_rating": 2,
     "comment": "Search results look broken on this page"
 }
 ```
