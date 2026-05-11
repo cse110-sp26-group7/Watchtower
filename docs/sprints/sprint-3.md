@@ -1,16 +1,18 @@
-# Sprint [N]
+# Sprint 3
 
-- **Start date:** YYYY-MM-DD
-- **End date:** YYYY-MM-DD
-- **Sprint Goal:** _One sentence — what does success look like this sprint?_
+- **Start date:** 2026-05-18
+- **End date:** 2026-05-25
+- **Sprint Goal:** Connect all blocks from Sprint 2 and ship a working MVP — a developer can open WatchTower and see real data end to end.
 
 ---
 
 ## Goals
 
-- [ ] Goal 1
-- [ ] Goal 2
-- [ ] Goal 3
+- [ ] FE dashboard connected to real BE data (no more mock data)
+- [ ] Real errors from Test App are visible on the dashboard
+- [ ] Log Viewer functional with real data and search by type
+- [ ] Basic Data Visualizer charts showing real error frequency
+- [ ] QA executes test plan against the fully connected system
 
 ---
 
@@ -20,15 +22,14 @@
 
 | User Story | GitHub Issue | Priority | Status |
 |---|---|---|---|
-| [Story Name](link-to-story-md) | [#00](github-issue-link) | High | Not Started |
-| [Story Name](link-to-story-md) | [#00](github-issue-link) | High | Not Started |
+| [Data Collection](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/data-collection.md) | [#04](https://github.com/cse110-sp26-group7/Watchtower/issues/4) | High | In Progress |
+| [Log Viewer](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/log-viewer.md) | [#05](https://github.com/cse110-sp26-group7/Watchtower/issues/5) | High | In Progress |
+| [Data Visualizer](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/data-visualizer.md) | [#06](https://github.com/cse110-sp26-group7/Watchtower/issues/6) | High | In Progress |
 
 ### General Tasks
 
 | Task | Team | GitHub Issue | Priority | Status |
 |---|---|---|---|---|
-| Task description | FE / BE / DevOps / QA | [#00](github-issue-link) | High | Not Started |
-| Task description | FE / BE / DevOps / QA | [#00](github-issue-link) | High | Not Started |
 
 ---
 
@@ -36,8 +37,6 @@
 
 | Name/Team | Task | GitHub Issue | Doc Link | Expected Finish |
 |---|---|---|---|---|
-| Name | Task description | [#00](link) | [Doc](link) | MM-DD |
-| Name | Task description | [#00](link) | [Doc](link) | MM-DD |
 
 ---
 
@@ -45,9 +44,11 @@
 
 | Criterion | Verification Method | Progress |
 |---|---|---|
-| Criterion 1 | How to verify | Not Ready |
-| Criterion 2 | How to verify | Not Ready |
-| Criterion 3 | How to verify | Not Ready |
+| FE dashboard displays real errors from Test App | Tester opens dashboard and confirms real errors from Test App are visible | Not Ready |
+| Log Viewer shows real logs and search by type works | Tester searches by error type and confirms only matching logs appear | Not Ready |
+| Basic error frequency chart displays real data | Tester confirms chart updates after errors are triggered from Test App | Not Ready |
+| Full end to end flow works: Test App → BE → FE | QA runs through complete flow and confirms data appears correctly on dashboard | Not Ready |
+| All Sprint 3 bugs reported by QA are resolved or documented | SM reviews QA report and confirms blockers are addressed | Not Ready |
 
 ---
 
@@ -55,14 +56,18 @@
 
 | Dependency | Teams Involved | Status |
 |---|---|---|
-| Dependency description | Team A → Team B | Unresolved |
+| Sprint 2 must be fully complete before integration begins | All Teams | Unresolved |
+| FE and BE must verify API contract matches before connecting | FE → BE | Unresolved |
+| Test App must be confirmed sending real data before QA testing begins | DevOps → QA | Unresolved |
+| Integration debugging may take longer than expected — 2 day buffer built in | FE + BE | Unresolved |
 
 ---
 
 ## Notes & Decisions
 
-- Decision 1
-- Decision 2
+- Sprint 3 is MVP sprint — scope is limited to Data Collection, Log Viewer, and basic Data Visualizer
+- Alerts, Notifications, Authentication, and Deploy Signal Tracking are deferred to Sprint 4
+- General Tasks and Sprint Board to be filled once Sprint 2 wraps and issues are created
 
 ---
 

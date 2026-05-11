@@ -56,7 +56,6 @@
 
 | Dependency | Teams Involved | Status |
 |---|---|---|
-| QA and BE must agree on data format before any integration work begins | QA → BE | Unresolved |
 | FE is blocked until BE has at least one working API endpoint to connect to | FE → BE | Deferred — FE building on mock data until Sprint 3 integration |
 | DevOps cannot be setup correctly without Tests from QA | QA → DevOps | Unresolved |
 
