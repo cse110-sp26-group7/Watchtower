@@ -283,10 +283,3 @@ These are working numbers committed in this draft so Sprint 2 implementation has
 3. Server-side deploy events: same `project_id`, no separate ingest secret.
    - Why: Kareem flagged this acceptable for MVP. Spoofed deploys can only pollute the `deploys` view; they cannot exfiltrate data or write to other tables.
    - Revisit trigger: If peer-review surfaces spoofed-deploy concerns, can add a separate CI-only ingest secret in a later ADR.
-
-## References
-
-- ARCHITECTURE.md sections 3.1, 3.2, 3.4, 4
-- event-schema-draft.md (per-event schema; will be revised post this draft to drop envelope-level `project_id`)
-- task1-design-notes.md (Kareem and Jack feedback log)
-- ADR 0005 signed-cookie-auth (referenced for Reporting API auth)
