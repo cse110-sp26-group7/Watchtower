@@ -1,9 +1,5 @@
 # API Endpoints Draft
 
-## Endpoint inventory
-
-# API End Points
-
 | Path                    | Worker           | Method | Purpose                                  |
 | ----------------------- | ---------------- | ------ | ---------------------------------------- |
 | `/ingest`               | `workers/ingest` | POST   | Accept events from snippet + CI/CD       |
