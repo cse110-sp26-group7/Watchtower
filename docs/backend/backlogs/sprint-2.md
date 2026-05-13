@@ -12,8 +12,8 @@ Inputs from Sprint 1 (target Thursday EOD):
 
 ## How we work
 
-- Each member claims one of the active tasks below based on strength or interest.
-- After claiming, create a GitHub Issue and self-assign.
+- Each member takes one of the active tasks below based on strength or interest.
+- Tracking issues already created (see issue ref under each task below).
 - If you get stuck, post in Slack `#backend` or DM me (Theo).
 
 ---
@@ -58,6 +58,7 @@ Reference: [Cloudflare Workers official guide](https://developers.cloudflare.com
 ### 2. /ingest endpoint prototype (with D1 insert)
 
 Owner: Theo
+Issue: #62
 
 Deliverables:
 - `POST /ingest` handler wired into `workers/ingest/src/index.js` (extend the scaffold's `fetch` handler; split into a separate module if it grows past a screen)
@@ -78,10 +79,11 @@ Depends on: Sprint 2 Task 1 completion (scaffold + D1 binding).
 ### 3. Browser SDK + snippet integration
 
 Owner: Michael, Bishal (co-owners)
+Issues: #37 (SDK), #41 (delivery ADR)
 
 Suggested split between co-owners (not strict, adjust as needed):
-- Sub-area A: SDK code (`client/watchtower.js`, local validation against a stub `/ingest`).
-- Sub-area B: Distribution + demo (npm publish setup, jsDelivr verification, integration doc, teammate-app end-to-end).
+- Sub-area A: SDK code (`client/watchtower.js`, local validation against stub or real `/ingest` depending on Task 2 progress).
+- Sub-area B: Distribution + demo + delivery ADR (npm publish setup, jsDelivr verification, integration doc, teammate-app end-to-end, MADR-format ADR).
 
 Deliverables:
 - `client/watchtower.js` (per ARCHITECTURE.md section 9): browser SDK that auto-captures `window.onerror` and `unhandledrejection`, exposes a manual `window.watchtower.captureEvent()` API, reads `project_id` from the `<script>` tag's `data-project` attribute via `document.currentScript.dataset.project`, and posts events to `POST /ingest` via `navigator.sendBeacon`. Envelope follows `endpoints-draft.md` (client-generated `event_id` as UUIDv4, ISO 8601 timestamp).
@@ -89,6 +91,7 @@ Deliverables:
 - jsDelivr CDN verification: after the first publish, load the SDK from `https://cdn.jsdelivr.net/npm/<package>/watchtower.js` and confirm it behaves identically to the local file.
 - Integration doc (`docs/backend/api/integration.md`): snippet form (`<script src="..." data-project="wt_xxx"></script>`), where to paste, what gets captured, how to test, basic troubleshooting.
 - End-to-end demo against a teammate's existing app: paste snippet, trigger errors, confirm events reach `/ingest` and land in D1. No self-built test app this sprint.
+- Delivery ADR (MADR format) under `docs/backend/adr/`: documents snippet + CLI two-track distribution decision, jsDelivr CDN choice, `data-project` attribute ID injection, alternatives considered, consequences.
 
 Scope:
 - Pure browser-side, vanilla JS only (per project constraints).
@@ -107,6 +110,7 @@ Inputs from Sprint 1 Task 1: project ID format, manual capture API, send mechani
 ### 4. Reporting API scaffold + GET /api/events
 
 Owner: Theo, Gabrielle
+Issue: #63
 
 Deliverables:
 - `workers/api/` scaffold mirroring `workers/ingest/` (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`, `package.json`, `README.md`)
@@ -127,6 +131,7 @@ Depends on: Sprint 2 Task 1 (scaffold pattern to mirror, D1 binding setup). Can 
 ### 5. GET /api/summary (stretch)
 
 Owner: Theo
+Issue: #64
 
 Deliverables:
 - `GET /api/summary` handler per `endpoints-draft.md`: query params `project_id` (required), `window` (default `24h`), `timezone` (default UTC); returns `{ totals, timeseries, site_status }` with error counts, feedback aggregates, performance p75 per Web Vital, hourly timeseries for errors and feedback
