@@ -86,7 +86,12 @@ Suggested split between co-owners (not strict, adjust as needed):
 - Sub-area B: Distribution + demo + delivery ADR (npm publish setup, jsDelivr verification, integration doc, teammate-app end-to-end, MADR-format ADR).
 
 Deliverables:
-- `client/watchtower.js` (per ARCHITECTURE.md section 9): browser SDK that auto-captures `window.onerror` and `unhandledrejection`, exposes a manual `window.watchtower.captureEvent()` API, reads `project_id` from the `<script>` tag's `data-project` attribute via `document.currentScript.dataset.project`, and posts events to `POST /ingest` via `navigator.sendBeacon`. Envelope follows `endpoints-draft.md` (client-generated `event_id` as UUIDv4, ISO 8601 timestamp).
+- `client/watchtower.js` (per ARCHITECTURE.md section 9): browser SDK with:
+	- Auto-capture of `window.onerror` and `unhandledrejection`
+	- Manual capture API: `window.watchtower.captureEvent()`
+	- `project_id` injection via `<script>` tag's `data-project` attribute (read with `document.currentScript.dataset.project`)
+	- Send mechanism: `navigator.sendBeacon` to `POST /ingest`
+	- Envelope per `endpoints-draft.md` (client-generated `event_id` UUIDv4, ISO 8601 timestamp)
 - npm publish setup: `package.json`, package name (coordinate with team on namespace, for example `@watchtower/sdk`), publish workflow.
 - jsDelivr CDN verification: after the first publish, load the SDK from `https://cdn.jsdelivr.net/npm/<package>/watchtower.js` and confirm it behaves identically to the local file.
 - Integration doc (`docs/backend/api/integration.md`): snippet form (`<script src="..." data-project="wt_xxx"></script>`), where to paste, what gets captured, how to test, basic troubleshooting.
