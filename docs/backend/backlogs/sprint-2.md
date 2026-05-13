@@ -36,20 +36,14 @@ Inputs from Sprint 1 (target Thursday EOD):
 
 Owner: Gabrielle
 
-Path follows ARCHITECTURE.md section 9: the ingest Worker lives at `workers/ingest/`. The reporting API Worker (`workers/api/`) is scaffolded separately in Task 4.
+Path: `workers/ingest/` (per ARCHITECTURE.md section 9). `workers/api/` is scaffolded separately in Task 4.
 
 Deliverables:
-- `workers/ingest/` directory structure (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`)
-- `workers/ingest/README.md` with a local dev guide (prereqs, install, `npm run dev`, tests, lint, deploy, env vars / secrets)
-- Baseline `package.json`, `.gitignore`, and lint config
+- `workers/ingest/` scaffold (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`, `package.json`, `.gitignore`)
+- README with local dev guide (npm run dev, tests, lint, deploy)
+- Hello-world endpoint; `npm test` + lint passing
 
-Scope:
-- Set up Cloudflare Workers via `wrangler` (pinned in devDependencies, no global install required).
-- Get the worker running locally via `npm run dev` on `http://localhost:8787`.
-- Confirm one hello-world endpoint responds with 200 / `Hello World!`.
-- `npm test` (vitest via `@cloudflare/vitest-pool-workers`) and `npm run lint` both pass on the scaffold.
-
-Why ahead of /ingest endpoint: Task 2 below needs this scaffolding to run on top of.
+Why first: Task 2 builds on top of this.
 
 Reference: [Cloudflare Workers official guide](https://developers.cloudflare.com/workers/get-started/guide/)
 
@@ -61,18 +55,16 @@ Owner: Theo
 Issue: #62
 
 Deliverables:
-- `POST /ingest` handler wired into `workers/ingest/src/index.js` (extend the scaffold's `fetch` handler; split into a separate module if it grows past a screen)
-- Basic envelope parsing: extract `project_id` and `events[]` from the JSON body
-- D1 insert: events written to the `events` table via the existing `DB` binding (already wired in `workers/ingest/wrangler.jsonc`)
-- A local test script (curl or fetch example) demonstrating end-to-end ingest into D1
-- A brief README section or JSDoc
+- `POST /ingest` handler in `workers/ingest/` with envelope parsing and D1 insert
+- Local test script (curl or fetch) and brief README/JSDoc
 
 Scope:
-- No per-event schema validation yet. Reject only on malformed JSON or missing envelope fields.
-- Auth deferred: accept any `project_id` for now. Sprint 4 adds project lookup against the `projects` table.
-- Rationale for including D1 insert this sprint: MVP demo (Sprint 3) needs the dashboard to read real ingested data. A pure console-log mock would push D1 integration into Sprint 3 alongside FE/BE integration, which is too tight.
+- Skip per-event schema validation; reject only on malformed JSON or missing envelope fields
+- Auth deferred (Sprint 4 adds project lookup)
 
-Depends on: Sprint 2 Task 1 completion (scaffold + D1 binding).
+Spec: `docs/backend/api/endpoints-draft.md` (POST /ingest)
+Rationale for D1 insert this sprint: Sprint 3 MVP demo needs real read path; pushing D1 to Sprint 3 stacks with FE/BE integration.
+Depends on: Task 1
 
 ---
 
@@ -86,29 +78,19 @@ Suggested split between co-owners (not strict, adjust as needed):
 - Sub-area B: Distribution + demo + delivery ADR (npm publish setup, jsDelivr verification, integration doc, teammate-app end-to-end, MADR-format ADR).
 
 Deliverables:
-- `client/watchtower.js` (per ARCHITECTURE.md section 9): browser SDK with:
-	- Auto-capture of `window.onerror` and `unhandledrejection`
-	- Manual capture API: `window.watchtower.captureEvent()`
-	- `project_id` injection via `<script>` tag's `data-project` attribute (read with `document.currentScript.dataset.project`)
-	- Send mechanism: `navigator.sendBeacon` to `POST /ingest`
-	- Envelope per `endpoints-draft.md` (client-generated `event_id` UUIDv4, ISO 8601 timestamp)
-- npm publish setup: `package.json`, package name (coordinate with team on namespace, for example `@watchtower/sdk`), publish workflow.
-- jsDelivr CDN verification: after the first publish, load the SDK from `https://cdn.jsdelivr.net/npm/<package>/watchtower.js` and confirm it behaves identically to the local file.
-- Integration doc (`docs/backend/api/integration.md`): snippet form (`<script src="..." data-project="wt_xxx"></script>`), where to paste, what gets captured, how to test, basic troubleshooting.
-- End-to-end demo against a teammate's existing app: paste snippet, trigger errors, confirm events reach `/ingest` and land in D1. No self-built test app this sprint.
-- Delivery ADR (MADR format) under `docs/backend/adr/`: documents snippet + CLI two-track distribution decision, jsDelivr CDN choice, `data-project` attribute ID injection, alternatives considered, consequences.
+- `client/watchtower.js` browser SDK implementing the contract in `endpoints-draft.md` (auto-capture + manual API, `project_id` via `data-project` attribute, `sendBeacon` to `/ingest`)
+- npm publish + jsDelivr CDN distribution
+- Integration doc (`docs/backend/api/integration.md`): snippet form, how to embed, how to test
+- End-to-end demo against a teammate's existing app (no self-built test app this sprint)
+- Delivery ADR (MADR format) under `docs/backend/adr/`: snippet + CLI two-track distribution, jsDelivr choice, `data-project` injection, alternatives, consequences
 
 Scope:
-- Pure browser-side, vanilla JS only (per project constraints).
-- SDK code can proceed in parallel with Task 2 (use a local stub endpoint during development).
-- npm namespace and account setup need a team-level decision before the first publish.
-- Final end-to-end demo (error in teammate's app → snippet → `/ingest` → D1) depends on Task 2.
+- Vanilla JS, browser-side only
+- npm namespace decision needed before first publish
+- Final e2e demo depends on Task 2
 
-ID injection model: Sentry-style `data-project` attribute on the `<script>` tag. This is one of the two standard snippet patterns (the other being a dashboard-generated inline init call). endpoints-draft.md already assumes this form (section "POST /ingest", Auth subsection).
-
-Distribution choice (jsDelivr CDN via npm publish) reflects the 2026-05-09 backend-Ethan whiteboard.
-
-Inputs from Sprint 1 Task 1: project ID format, manual capture API, send mechanism, and auto-capture scope are decided in Sprint 1 Task 1's design notes. This task implements against those decisions.
+Spec: `endpoints-draft.md` (POST /ingest, Auth subsection)
+Reference: ARCHITECTURE.md section 9, 2026-05-09 backend-Ethan whiteboard
 
 ---
 
@@ -118,18 +100,17 @@ Owner: Theo, Gabrielle
 Issue: #63
 
 Deliverables:
-- `workers/api/` scaffold mirroring `workers/ingest/` (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`, `package.json`, `README.md`)
-- D1 binding wired to the same `watchtower` database used by `workers/ingest/` (read access)
-- `GET /api/events` handler per `endpoints-draft.md`: query params `project_id` (required), `type` (default `error`), `since`/`until`, `cursor`, `limit` (default 50, max 200); cursor-based keyset pagination on `(timestamp, event_id)`; returns `{ events, next_cursor, has_more }`
-- A local test script (curl or fetch) demonstrating: ingest a few events via Task 2, then read them back via this endpoint with type filter
-- A brief README section or JSDoc
+- `workers/api/` scaffold mirroring `workers/ingest/`, with D1 read binding
+- `GET /api/events` handler per `endpoints-draft.md`
+- Local test script (ingest via Task 2, read back here)
+- Brief README/JSDoc
 
 Scope:
-- Auth deferred: no signed-cookie check this sprint. Sprint 4 adds session auth (ADR-0005).
-- Defense-in-depth on `project_id`: required query param, returned events are scoped to it.
-- CORS: same policy as `/ingest` (public origin OK for MVP; revisit when auth lands).
+- Auth deferred (Sprint 4, ADR-0005)
+- CORS same as `/ingest` (public origin for MVP)
 
-Depends on: Sprint 2 Task 1 (scaffold pattern to mirror, D1 binding setup). Can start in parallel with Task 2 since the read path is independent of the ingest path; if Task 2 lands first, end-to-end test (ingest → query) becomes trivial.
+Spec: `endpoints-draft.md` (GET /api/events)
+Depends on: Task 1 (scaffold pattern). Can start parallel to Task 2.
 
 ---
 
@@ -139,13 +120,14 @@ Owner: Theo
 Issue: #64
 
 Deliverables:
-- `GET /api/summary` handler per `endpoints-draft.md`: query params `project_id` (required), `window` (default `24h`), `timezone` (default UTC); returns `{ totals, timeseries, site_status }` with error counts, feedback aggregates, performance p75 per Web Vital, hourly timeseries for errors and feedback
-- Aggregation SQL against D1 (count, percentile_disc for p75, time bucketing)
-- A local test script demonstrating: ingest sample events of mixed types, then call /api/summary and verify aggregates match
+- `GET /api/summary` handler per `endpoints-draft.md`
+- Aggregation SQL against D1
+- Local test script verifying aggregates
 
 Scope:
-- Marked as stretch: MVP demo (Sprint 3) can show error frequency via client-side aggregation of GET /api/events results if this endpoint isn't ready in time.
-- Auth deferred: same as Task 4.
-- If stretch slips, this task carries over to Sprint 3 Week 1, ideally before FE wires the dashboard overview screen.
+- Stretch: MVP can do client-side aggregation of `/api/events` if this slips
+- Auth deferred (same as Task 4)
+- If slips, carries over to Sprint 3 Week 1
 
-Depends on: Sprint 2 Task 4 (scaffold + D1 read access).
+Spec: `endpoints-draft.md` (GET /api/summary)
+Depends on: Task 4
