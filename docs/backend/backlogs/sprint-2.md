@@ -1,12 +1,10 @@
-# Sprint 2 Backend Backlog (draft, week of May 11 – May 17, 2026)
-
-Status: Draft. Sprint 2 begins at the next sprint planning meeting (Mon May 11, 4:00 PM). Tasks below are carried over from Sprint 1's deferred-implementation list and may be reshuffled or expanded at planning.
+# Sprint 2 Backend Backlog (week of May 11 – May 18, 2026)
 
 Backend team: Theo (Lead), Michael, Bishal, Gabrielle
 
 Inputs from Sprint 1 (target Thursday EOD):
-- Sprint 1 Task 1 outputs (event schema, API endpoint sketch, snippet integration design notes) feed Task 3 (snippet implementation) directly.
-- Sprint 1 Task 2 (storage selection ADR) defines the persistence target for Task 2 (mock ingestion endpoint) once it evolves past console-log mode.
+- Sprint 1 Task 1 outputs (event schema, API endpoint sketch, snippet integration design notes) feed Task 3 (snippet implementation) and Task 4 (reporting API) directly.
+- Sprint 1 Task 2 (storage selection ADR) defines the persistence target for Task 2 (/ingest endpoint with D1 insert) and the read source for Task 4/5 (reporting API).
 - Sprint 1 Task 3 (SDK pattern survey) provides reference patterns the snippet implementation can borrow.
 - Sprint 1 Task 4 (Frontend/UX sync) feeds the schema's v1 update, which in turn shapes the API contract this sprint implements.
 
@@ -14,19 +12,21 @@ Inputs from Sprint 1 (target Thursday EOD):
 
 ## How we work
 
-- Each member claims one of the active tasks below based on strength or interest.
-- After claiming, create a GitHub Issue and self-assign. (Label and tracking conventions are still TBD)
+- Each member takes one of the active tasks below based on strength or interest.
+- Tracking issues already created (see issue ref under each task below).
 - If you get stuck, post in Slack `#backend` or DM me (Theo).
 
 ---
 
 ## Task summary
 
-| #   | Task                                                     | Owner    | Depends on |
-| --- | -------------------------------------------------------- | -------- | ---------- |
-| 1   | Ingest Worker dev environment setup (wrangler scaffold)  | Bishal   |            |
-| 2   | Mock ingestion endpoint prototype                        | Gabrielle | #1         |
-| 3   | Test app snippet (auto-capture + post to ingestion)      | _(open)_ |            |
+| #   | Task                                                    | Owner           | Depends on |
+| --- | ------------------------------------------------------- | --------------- | ---------- |
+| 1   | Ingest Worker dev environment setup (wrangler scaffold) | Gabrielle       |            |
+| 2   | /ingest endpoint prototype (with D1 insert)             | Theo           | #1         |
+| 3   | Browser SDK + snippet integration                       | Michael, Bishal |            |
+| 4   | Reporting API scaffold + GET /api/events                | Theo, Gabrielle | #1         |
+| 5   | GET /api/summary (stretch)                              | Theo            | #4         |
 
 ---
 
@@ -34,61 +34,100 @@ Inputs from Sprint 1 (target Thursday EOD):
 
 ### 1. Ingest Worker dev environment setup
 
-Owner: Bishal (claim preserved from Sprint 1)
+Owner: Gabrielle
 
-Path follows ARCHITECTURE.md §9: the ingest Worker lives at `workers/ingest/`. The reporting API Worker (`workers/api/`) is out of scope for this sprint.
+Path: `workers/ingest/` (per ARCHITECTURE.md section 9). `workers/api/` is scaffolded separately in Task 4.
 
 Deliverables:
-- `workers/ingest/` directory structure (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`)
-- `workers/ingest/README.md` with a local dev guide (prereqs, install, `npm run dev`, tests, lint, deploy, env vars / secrets)
-- Baseline `package.json`, `.gitignore`, and lint config
+- `workers/ingest/` scaffold (`src/`, `test/`, `wrangler.jsonc`, `eslint.config.mjs`, `vitest.config.js`, `package.json`, `.gitignore`)
+- README with local dev guide (npm run dev, tests, lint, deploy)
+- Hello-world endpoint; `npm test` + lint passing
 
-Scope:
-- Set up Cloudflare Workers via `wrangler` (pinned in devDependencies, no global install required).
-- Get the worker running locally via `npm run dev` on `http://localhost:8787`.
-- Confirm one hello-world endpoint responds with 200 / `Hello World!`.
-- `npm test` (vitest via `@cloudflare/vitest-pool-workers`) and `npm run lint` both pass on the scaffold.
-
-Why ahead of mock ingestion: Task 2 below needs this scaffolding to run on top of.
+Why first: Task 2 builds on top of this.
 
 Reference: [Cloudflare Workers official guide](https://developers.cloudflare.com/workers/get-started/guide/)
 
 ---
 
-### 2. Mock ingestion endpoint prototype
+### 2. /ingest endpoint prototype (with D1 insert)
 
-Owner: Gabrielle
+Owner: Theo
+Issue: #62
 
 Deliverables:
-- `POST /ingest` handler wired into `workers/ingest/src/index.js` (extend the scaffold's `fetch` handler; split into a separate module if it grows past a screen)
-- A local test script (curl or fetch example)
-- A brief README section or JSDoc
+- `POST /ingest` handler in `workers/ingest/` with envelope parsing and D1 insert
+- Local test script (curl or fetch) and brief README/JSDoc
 
 Scope:
-- No real validation or storage; just log the received JSON and return 200.
-- No schema validation either. Integration with the schema spec happens once it stabilizes.
+- Skip per-event schema validation; reject only on malformed JSON or missing envelope fields
+- Auth deferred (Sprint 4 adds project lookup)
 
-Depends on: Sprint 2 Task 1 completion.
+Spec: `docs/backend/api/endpoints-draft.md` (POST /ingest)
+Rationale for D1 insert this sprint: Sprint 3 MVP demo needs real read path; pushing D1 to Sprint 3 stacks with FE/BE integration.
+Depends on: Task 1
 
 ---
 
-### 3. Test app snippet (auto-capture + post to ingestion)
+### 3. Browser SDK + snippet integration
 
-Owner: _(open)_
+Owner: Michael, Bishal (co-owners)
+Issues: #37 (SDK), #41 (delivery ADR)
+
+Suggested split between co-owners (not strict, adjust as needed):
+- Sub-area A: SDK code (`client/watchtower.js`, local validation against stub or real `/ingest` depending on Task 2 progress).
+- Sub-area B: Distribution + demo + delivery ADR (npm publish setup, jsDelivr verification, integration doc, teammate-app end-to-end, MADR-format ADR).
 
 Deliverables:
-- `client/watchtower.js` (per ARCHITECTURE.md §9) — capture script that auto-captures `window.onerror` and `unhandledrejection`, and exposes a manual `window.watchtower.captureEvent()` API
-- Static hosting setup so the snippet is reachable via a public URL
-- A small test app (`/test-app/index.html`) that includes the snippet and triggers errors for end-to-end demo
-- A short integration doc (`docs/backend/api/integration.md`) explaining how a Test App embeds the snippet
+- `client/watchtower.js` browser SDK implementing the contract in `endpoints-draft.md` (auto-capture + manual API, `project_id` via `data-project` attribute, `sendBeacon` to `/ingest`)
+- npm publish + jsDelivr CDN distribution
+- Integration doc (`docs/backend/api/integration.md`): snippet form, how to embed, how to test
+- End-to-end demo against a teammate's existing app (no self-built test app this sprint)
+- Delivery ADR (MADR format) under `docs/backend/adr/`: snippet + CLI two-track distribution, jsDelivr choice, `data-project` injection, alternatives, consequences
 
 Scope:
-- Pure browser-side, vanilla JS only (per project constraints).
-- Implementation can proceed in parallel with Task 2 (use a placeholder URL or local stub during development).
-- Final end-to-end demo (error in test app → snippet → backend logs to console) assumes Task 2's mock ingestion endpoint is up.
+- Vanilla JS, browser-side only
+- npm namespace decision needed before first publish
+- Final e2e demo depends on Task 2
 
-Inputs from Sprint 1 Task 1: project ID format, manual capture API, send mechanism, and auto-capture scope are decided in Sprint 1 Task 1's design notes. This task implements against those decisions.
+Spec: `endpoints-draft.md` (POST /ingest, Auth subsection)
+Reference: ARCHITECTURE.md section 9, 2026-05-09 backend-Ethan whiteboard
 
-Open cross-team decisions (still need team sync before implementation):
-- Hosting: Cloudflare Pages static file vs. a Worker route serving the JS. Sync with Tech Lead Kareem on repo structure and DevOps team on deploy pipeline.
-- Test app form: bare HTML demo or richer example. Coordinate with frontend team in case they have a dashboard demo that doubles as a test target.
+---
+
+### 4. Reporting API scaffold + GET /api/events
+
+Owner: Theo, Gabrielle
+Issue: #63
+
+Deliverables:
+- `workers/api/` scaffold mirroring `workers/ingest/`, with D1 read binding
+- `GET /api/events` handler per `endpoints-draft.md`
+- Local test script (ingest via Task 2, read back here)
+- Brief README/JSDoc
+
+Scope:
+- Auth deferred (Sprint 4, ADR-0005)
+- CORS same as `/ingest` (public origin for MVP)
+
+Spec: `endpoints-draft.md` (GET /api/events)
+Depends on: Task 1 (scaffold pattern). Can start parallel to Task 2.
+
+---
+
+### 5. GET /api/summary (stretch)
+
+Owner: Theo
+Issue: #64
+
+Deliverables:
+- `GET /api/summary` handler per `endpoints-draft.md`
+- Aggregation SQL against D1
+- Local test script verifying aggregates
+
+Scope:
+- Stretch: MVP can do client-side aggregation of `/api/events` if this slips
+- Auth deferred (same as Task 4)
+- If slips, carries over to Sprint 3 Week 1
+
+Spec: `endpoints-draft.md` (GET /api/summary)
+Depends on: Task 4
