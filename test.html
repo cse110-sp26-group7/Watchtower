@@ -1,0 +1,12 @@
+<script src="./client/watchtower.js" data-project="wt_test_123"></script>
+
+<script>
+  // IMPORTANT: run after SDK loads
+  window.addEventListener("load", () => {
+    console.log("SDK loaded:", window.watchtower)
+
+    window.watchtower.track("manual_test_event", {
+      source: "test_page"
+    })
+  })
+</script>
