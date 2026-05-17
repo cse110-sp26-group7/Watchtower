@@ -11,13 +11,18 @@
  *   wt.init()
  */
 
-/* -------------------------
- * WEB VITALS THRESHOLDS
- * Each metric has independent units — never share thresholds.
- * Sources: https://web.dev/vitals/
- * LCP / FCP / INP / TTFB: milliseconds
- * CLS: unitless cumulative score
- * ------------------------- */
+/**
+ * Per-metric thresholds used to classify a Web Vital value as
+ * "good", "needs-improvement", or "poor".
+ *
+ * Each metric uses independent units — thresholds must never be shared:
+ *   - LCP, FCP, INP, TTFB: milliseconds
+ *   - CLS: unitless cumulative score
+ *
+ * @see https://web.dev/vitals/
+ *
+ * @type {Object.<string, {good: number, poor: number}>}
+ */
 const THRESHOLDS = {
   LCP:  { good: 2500, poor: 4000  },
   INP:  { good: 200,  poor: 500   },
@@ -27,9 +32,15 @@ const THRESHOLDS = {
 }
 
 /**
- * @param {string} metricName
- * @param {number} value
- * @returns {"good"|"needs-improvement"|"poor"}
+ * Returns a Web Vitals rating for a given metric value by comparing it
+ * against the per-metric thresholds defined in {@link THRESHOLDS}.
+ *
+ * Returns "good" for unknown metric names so unrecognised metrics never
+ * produce false "poor" alerts.
+ *
+ * @param {string} metricName - One of "LCP" | "INP" | "CLS" | "FCP" | "TTFB".
+ * @param {number} value      - The raw metric value in the metric's native unit.
+ * @returns {"good"|"needs-improvement"|"poor"} The Web Vitals rating bucket.
  */
 function getRating(metricName, value) {
   const t = THRESHOLDS[metricName]
@@ -39,13 +50,33 @@ function getRating(metricName, value) {
   return "poor"
 }
 
+/**
+ * Watchtower analytics client.
+ *
+ * Collects page views, unhandled errors, and Web Vitals (LCP, INP, CLS,
+ * FCP, TTFB) and sends them in batches to the configured ingest endpoint.
+ *
+ * @example
+ * const wt = new Watchtower({
+ *   projectId: "wt_a1b2c3d4",
+ *   endpoint:  "https://your-worker.workers.dev/ingest",
+ *   debug:     true,
+ * })
+ * wt.init()
+ */
 class Watchtower {
   /**
-   * @param {object}  config
-   * @param {string}  config.projectId     - Required. Your Watchtower project ID.
-   * @param {string}  [config.endpoint]    - Ingest URL. Defaults to "/ingest".
-   * @param {string}  [config.environment] - "prod" | "staging" | "dev". Defaults to "prod".
-   * @param {boolean} [config.debug]       - Log batches to console. Defaults to false.
+   * Creates a Watchtower instance. Does NOT start tracking — call
+   * {@link Watchtower#init} explicitly after construction (ADR-0006).
+   *
+   * @param {object}  [config={}]
+   * @param {string}  config.projectId       - Your Watchtower project ID. Falls back to
+   *                                           the loading script's `data-project` attribute.
+   * @param {string}  [config.endpoint]      - Ingest URL events are POSTed to.
+   *                                           Defaults to "/ingest".
+   * @param {string}  [config.environment]   - Deployment environment label
+   *                                           ("prod" | "staging" | "dev"). Defaults to "prod".
+   * @param {boolean} [config.debug=false]   - When true, logs every outbound batch to the console.
    */
   constructor(config = {}) {
     this.projectId   = config.projectId || document.currentScript?.dataset?.project || null
@@ -58,19 +89,30 @@ class Watchtower {
     // NOTE: init() is NOT called here — consumer calls it explicitly (ADR-0006).
   }
 
-  /* -------------------------
-   * PUBLIC INIT  (ADR-0006)
-   * Must be called once by the consumer after construction.
-   * ------------------------- */
+  /**
+   * Starts all automatic tracking: page view, uncaught errors, and Web Vitals.
+   *
+   * Must be called once by the consumer after constructing the instance (ADR-0006).
+   * Calling it more than once will register duplicate event listeners.
+   *
+   * @returns {void}
+   */
   init() {
     this._trackPageView()
     this._setupErrorTracking()
     this._setupPerformanceTracking()
   }
 
-  /* -------------------------
-   * SESSION
-   * ------------------------- */
+  /**
+   * Returns the current session ID, creating and persisting a new one via
+   * `sessionStorage` if none exists yet.
+   *
+   * Session IDs are scoped to the browser tab (sessionStorage lifetime) so
+   * each new tab or window begins a fresh session.
+   *
+   * @private
+   * @returns {string} A UUID v4 session identifier.
+   */
   _getSessionId() {
     let id = sessionStorage.getItem("wt_session_id")
     if (!id) {
@@ -80,9 +122,19 @@ class Watchtower {
     return id
   }
 
-  /* -------------------------
-   * CORE TRACK API
-   * ------------------------- */
+  /**
+   * Enqueues a single analytics event and triggers a flush.
+   *
+   * The event is silently dropped if no `projectId` is configured.
+   * Common fields (event_id, timestamp, url, session_id, etc.) are
+   * added automatically; fields in `data` are merged in and can
+   * override defaults.
+   *
+   * @param {string} eventType          - The event category, e.g. "error", "performance",
+   *                                      "page_view", or "feedback".
+   * @param {object} [data={}]          - Additional fields to merge into the event payload.
+   * @returns {void}
+   */
   track(eventType, data = {}) {
     if (!this.projectId) {
       if (this.debug) console.warn("Watchtower: no projectId — event dropped.")
@@ -102,9 +154,19 @@ class Watchtower {
     this._flush()
   }
 
-  /* -------------------------
-   * FLUSH (batch sender)
-   * ------------------------- */
+  /**
+   * Drains up to 100 events from the queue and sends them as a single
+   * JSON batch to {@link Watchtower#endpoint}.
+   *
+   * Prefers `navigator.sendBeacon` (fire-and-forget, page-unload safe)
+   * and falls back to `fetch` with `keepalive: true`. Errors are caught
+   * and logged in debug mode so analytics never interrupts the host app.
+   *
+   * Re-entrant calls while a flush is in progress are no-ops.
+   *
+   * @private
+   * @returns {void}
+   */
   _flush() {
     if (this.isFlushing || this.queue.length === 0) return
     this.isFlushing = true
@@ -137,19 +199,34 @@ class Watchtower {
     this.isFlushing = false
   }
 
-  /* -------------------------
-   * PAGE VIEW
-   * Distinct event_type — not a Web Vital, not a performance event.
-   * ------------------------- */
+  /**
+   * Emits a "page_view" event for the current page load.
+   *
+   * Uses its own `event_type` ("page_view") rather than "performance"
+   * because a page view is not a Web Vital metric.
+   *
+   * @private
+   * @returns {void}
+   */
   _trackPageView() {
     this.track("page_view", {
       referrer: document.referrer || null,
     })
   }
 
-  /* -------------------------
-   * ERROR TRACKING
-   * ------------------------- */
+  /**
+   * Registers global listeners to automatically capture unhandled errors.
+   *
+   * Listens for:
+   *   - `window.onerror` (synchronous runtime exceptions) via the "error" event.
+   *   - `window.onunhandledrejection` (unhandled Promise rejections).
+   *
+   * Both produce an "error" event with `handled: false`. Use
+   * {@link Watchtower#captureError} to report errors your code catches explicitly.
+   *
+   * @private
+   * @returns {void}
+   */
   _setupErrorTracking() {
     window.addEventListener("error", (e) => {
       this.track("error", {
@@ -173,30 +250,42 @@ class Watchtower {
     })
   }
 
-  /* -------------------------
-   * PERFORMANCE TRACKING  (Web Vitals)
+  /**
+   * Registers {@link PerformanceObserver} instances to collect Core Web Vitals
+   * and navigation timing metrics, then emits them as "performance" events.
    *
-   * PerformanceObserver.observe() is called with ONE type per observer
-   * to avoid cross-browser incompatibilities with multi-type calls.
+   * Collected metrics:
+   *   - **LCP** (Largest Contentful Paint) — load responsiveness, ms.
+   *   - **INP** (Interaction to Next Paint) — runtime responsiveness, ms.
+   *     Uses the `"event"` entry type (Chrome 96+) which captures full
+   *     interaction duration. `"first-input"` is NOT used — it only covers
+   *     the first interaction and is not a valid INP proxy.
+   *   - **CLS** (Cumulative Layout Shift) — visual stability, unitless.
+   *     Accumulated across the entire session and flushed once on page hide
+   *     via `visibilitychange` and `pagehide`. Per-entry values are not reported.
+   *   - **FCP** (First Contentful Paint) — perceived load speed, ms.
+   *   - **TTFB** (Time to First Byte) — server response latency, ms.
+   *     Calculated as `responseStart − requestStart` to exclude redirect time.
    *
-   * INP: uses the "event" entry type (Chrome 96+) which measures full
-   *   interaction duration including presentation delay. "first-input"
-   *   is NOT INP — it only measures the first interaction and is
-   *   therefore not used here.
+   * Each metric uses a dedicated observer (one type per observer) to avoid
+   * cross-browser issues with multi-type `observe()` calls. Unsupported entry
+   * types are silently ignored so the SDK degrades gracefully.
    *
-   * CLS: accumulated across the entire session and flushed on page hide.
-   *   Sending per-entry values is incorrect — CLS is a session aggregate.
-   *
-   * TTFB: responseStart − requestStart isolates true server latency,
-   *   excluding DNS/TCP/TLS. Using responseStart alone includes redirect
-   *   time and overstates TTFB.
-   * ------------------------- */
+   * @private
+   * @returns {void}
+   */
   _setupPerformanceTracking() {
     if (!("PerformanceObserver" in window)) return
 
-    // Registers a PerformanceObserver for exactly one entry type.
-    // Each type gets its own observer — multi-type observe() calls
-    // are not universally supported and may throw.
+    /**
+     * Creates a {@link PerformanceObserver} for a single entry type and
+     * invokes `callback` for each entry. Silently ignores entry types that
+     * are unsupported in the current browser.
+     *
+     * @param {string}   type     - PerformanceEntry type, e.g. "largest-contentful-paint".
+     * @param {function(PerformanceEntry): void} callback - Handler for each observed entry.
+     * @returns {void}
+     */
     const observe = (type, callback) => {
       try {
         const observer = new PerformanceObserver((list) => {
