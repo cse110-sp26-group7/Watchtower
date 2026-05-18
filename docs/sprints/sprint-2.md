@@ -8,7 +8,7 @@
 
 ## Goals
 
-- [ ] FE delivers working dashboard shell with mock data
+- [X] FE delivers working dashboard shell with mock data
 - [ ] BE has minimal API endpoints ready (connection to FE in Sprint 3)
 - [ ] Test App has SDK installed (data sending confirmed in Sprint 3)
 - [ ] CI pipeline set up (stretch goal)
