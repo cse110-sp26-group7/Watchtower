@@ -13,4 +13,6 @@ function init() {
 1. After settingup, you should see the following console logs in your web application
   - Watchtower initialized: Watchtower
   - SDK loaded: Watchtower
+
+  ![Alt text](../../res/sdk-test-example.png)
 ***
