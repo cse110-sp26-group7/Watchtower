@@ -13,7 +13,44 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Installation & Setup
+### Installation
 **WIP**
+### Setup
+#### Step 1 — Register project
+```bash
+npx @watchtower/cli create
+```
+CLI prompts for project name, registers with WatchTower API, drops `watchtower.js` into their folder, writes `project_id` to `.env`.
+
+#### Step 2 — Initialize WatchTower in their app
+
+The CLI prints the following after `create` completes:
+
+```
+✅ Project created! project_id: wt_a1b2c3d4
+
+Add this to your app's JS entry point (e.g. main.js, app.js, index.js):
+
+  function init() {
+    const wt = new WatchTower({ projectId: "wt_a1b2c3d4" })
+    wt.init()
+  }
+
+Note: project_id is a public identifier, safe to commit to your repo.
+```
+
+`project_id` is intentionally hardcoded in app JS — not read from `.env` — because plain HTML projects have no build step to inject environment variables, and `project_id` is not a secret. This matches the standard pattern used by Sentry and PostHog.
+
+#### Step 3 — Set up deploy tracking
+```bash
+npx @watchtower/cli deploy
+```
+CLI generates `.github/workflows/watchtower.yml` in their repo. Customer adds `WATCHTOWER_PROJECT_ID` to their GitHub repository secrets.
+
+From this point:
+- Errors and performance vitals are reported automatically
+- Every push to their `main` branch sends a deploy event to WatchTower
+- The dashboard correlates errors to deploys by timestamp and `deploy_id`
 ***
 
 ## Usage & Common Scripts
@@ -29,8 +66,8 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Tech Stack
-**Frontend:** JavaScript, HTML, CSS
-**Backend:** Cloudflare Workers
+**Frontend:** JavaScript, HTML, CSS\
+**Backend:** Cloudflare Workers, JavaScript
 ***
 
 ## Features
