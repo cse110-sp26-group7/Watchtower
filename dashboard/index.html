@@ -6,7 +6,7 @@
     <title>Watch Tower</title>
 
     <!--fonts-->
-    //Nunito
+    <!-- //Nunito -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
@@ -15,6 +15,7 @@
 
     <!--Add others' pages css here-->
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/performance_summary.css" />
   </head>
   <body>
     <!--NavBar-->
@@ -80,7 +81,94 @@
           <div class="page-title">Dashboard</div>
         </div>
         <!-- KPI cards, charts, recent errors go here -->
-        <p>This is dashboard</p>
+        <!-- <p>This is dashboard</p> -->
+        <section class="dashboard-content">
+
+          <!-- status -->
+          <div class="live-status-container">
+            <span id="site-status-dot" class="live-dot"></span>
+
+            <span id="site-status" class="live-text">
+              LIVE
+            </span>
+          </div>
+
+          <!-- performance summary -->
+          <section class="metrics-row">
+
+            <!-- total errors -->
+            <div class="metric-card">
+              <h3>Total Errors</h3>
+              <p
+                class="metric-number error-number"
+                id="total-errors"
+              >
+                0
+              </p>
+
+              <p
+                class="metric-change increase"
+                id="error-change"
+              >
+                Loading...
+              </p>
+            </div>
+
+            <!-- response time -->
+            <div class="metric-card">
+              <h3>Response Time</h3>
+
+              <p
+                class="metric-number response-number"
+                id="avg-response-time"
+              >
+                0ms
+              </p>
+
+              <p
+                class="metric-change decrease"
+                id="response-change"
+              >
+                Loading...
+              </p>
+            </div>
+
+          </section>
+
+    <!-- graphs -->
+    <section class="charts-row">
+
+      <!-- Error Rate Chart -->
+      <div class="chart-card">
+        <h3>Error Rate Chart</h3>
+
+        <div
+          class="bar-chart"
+          id="error-rate-chart"
+        >
+        </div>
+      </div>
+
+      <!-- response time chart -->
+      <div class="chart-card">
+        <h3>Response Time Chart</h3>
+
+        <svg
+          id="response-chart"
+          class="response-chart"
+          viewBox="0 0 300 150"
+        >
+          <polyline
+            id="response-line"
+            points=""
+          />
+        </svg>
+
+      </div>
+
+    </section>
+
+  </section>
       </div>
 
       <!-- ERROR LOG -->
@@ -104,5 +192,6 @@
     <!--Add scripts here-->
     <script src="js/router.js"></script>
     <script src="js/darkmode.js" defer></script>
+    <script src="js/mock_dashboard_data.js"></script>
   </body>
 </html>

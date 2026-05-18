@@ -1,0 +1,154 @@
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* status */
+.live-status-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.live-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.live-text {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+}
+
+/* performance summary cards */
+.metrics-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  width: 240px;
+
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.metric-card h3 {
+  margin-bottom: 16px;
+  font-family: var(--sans);
+  font-size: 16px;
+  color: var(--dim);
+}
+
+.metric-number {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0;
+
+  color: var(--text);
+}
+
+.error-number {
+  color: var(--red);
+}
+
+.response-number {
+  color: var(--orange);
+}
+
+.metric-change {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.increase {
+  color: var(--red);
+}
+
+.decrease {
+  color: var(--amber);
+}
+
+/* graphs */
+.charts-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.chart-card {
+  flex: 1;
+  min-width: 320px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.chart-card h3 {
+  margin-bottom: 20px;
+
+  font-family: var(--sans);
+  color: var(--dim);
+}
+
+/* bar chart */
+.bar-chart {
+  height: 180px;
+
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.bar {
+  flex: 1;
+
+  background: linear-gradient(
+    to top,
+    var(--orange),
+    var(--amber)
+  );
+
+  border-radius: 8px 8px 0 0;
+
+  transition:
+    height 0.4s ease,
+    background-color 0.25s ease;
+}
+
+/*line graph*/
+.response-chart {
+  width: 100%;
+  height: 180px;
+}
+
+.response-chart polyline {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
