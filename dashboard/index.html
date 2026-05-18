@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Watch Tower</title>
+
+    <!--fonts-->
+    //Nunito
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--Add others' pages css here-->
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!--NavBar-->
+    <nav class="navbar">
+      <a class="navbar-logo" onclick="navigate('projects')">WatchTower</a>
+      <div class="navbar-divider"></div>
+      <div class="navbar-project">App-Name▾</div>
+      <div class="navbar-right">
+        <a class="navbar-icon" title="Notifications">
+          <img
+            class="navbar-icon"
+            src="img/notification.png"
+            alt="notification icon"
+          />
+        </a>
+        <button
+          class="navbar-icon"
+          id="themeBtn"
+          onclick="toggleTheme()"
+          title="Toggle dark mode"
+        >
+          <img
+            class="navbar-icon"
+            src="img/lightMode.png"
+            alt="light mode icon"
+          />
+        </button>
+        <div class="avatar">User</div>
+      </div>
+    </nav>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <a
+        class="sidebar-btn active"
+        data-route="dashboard"
+        onclick="navigate('dashboard')"
+      >
+        <img src="img/homeIcon.png" alt="home icon" />
+        <span class="sidebar-tooltip">Dashboard</span>
+      </a>
+      <a class="sidebar-btn" data-route="errors" onclick="navigate('errors')">
+        <img src="img/log.png" alt="log icon" />
+
+        <span class="sidebar-tooltip">Logs</span>
+      </a>
+      <div class="sidebar-spacer"></div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <!-- PROJECT SELECTION -->
+      <div class="page" id="page-projects">
+        <div class="page-header">
+          <div class="page-title">Your Projects</div>
+        </div>
+        <!-- project cards go here -->
+        <p>This is projects page</p>
+      </div>
+
+      <!-- HOME DASHBOARD -->
+      <div class="page" id="page-dashboard">
+        <div class="page-header">
+          <div class="page-title">Dashboard</div>
+        </div>
+        <!-- KPI cards, charts, recent errors go here -->
+        <p>This is dashboard</p>
+      </div>
+
+      <!-- ERROR LOG -->
+      <div class="page" id="page-errors">
+        <div class="page-header">
+          <div class="page-title">Error Log</div>
+        </div>
+        <!-- search bar, filter, table go here -->
+        <p>This is error log</p>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div class="page-title">Settings</div>
+        </div>
+        <!-- settings content go here -->
+      </div>
+    </main>
+
+    <!--Add scripts here-->
+    <script src="js/router.js"></script>
+    <script src="js/darkmode.js" defer></script>
+  </body>
+</html>
