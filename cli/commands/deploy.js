@@ -13,7 +13,7 @@ export default function deploy() {
     },
   });
 
-  if (values.envFile) process.loadEnvFile(envFile);
+  if (values.envFile) process.loadEnvFile(values.envFile);
   else process.loadEnvFile(); 
 
   console.log(`Deploying watchtower app: ${process.env.PROJECT_ID}`);
