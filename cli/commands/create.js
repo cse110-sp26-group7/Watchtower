@@ -1,13 +1,7 @@
-import { parseArgs } from "node:util";
-
-export default function create(argv) {
-  const { values, positionals } = parseArgs({
-    args: argv,
-    allowPositionals: true,
-    options: {
-      projectId: { type: "string", short: "p" },
-    },
-  });
-
+/**
+ * Creates a new Watchtower project and outputs a unique `PROJECT_ID` to be 
+ * included in environment variables.
+ */
+export default function create() {
   console.log(`Creating watchtower app for ${positionals[0]}`);
 }
