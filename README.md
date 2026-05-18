@@ -21,7 +21,7 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Architecture Overview
-**WIP**
+[ARCHITECTURE.MD](docs/ARCHITECTURE.MD)
 ***
 
 ## Environment Variables
