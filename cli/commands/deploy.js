@@ -1,3 +1,5 @@
+import { parseArgs } from "node:util";
+
 /**
  * Tells the Watchtower backend that your project was deployed. 
  * Requires `WT_PROJECT_ID` to be in your .env file

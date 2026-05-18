@@ -3,5 +3,5 @@
  * included in environment variables.
  */
 export default function create() {
-  console.log(`Creating watchtower app for ${positionals[0]}`);
+  console.log(`Creating watchtower app`);
 }

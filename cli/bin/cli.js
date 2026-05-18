@@ -19,7 +19,7 @@ if (values.version) {
   process.exit(0);
 }
 
-const [command, ...args] = positionals;
+const [command] = positionals;
 
 if (values.help || command) {
   console.log("Usage: npx watchtower <command> [options]");
