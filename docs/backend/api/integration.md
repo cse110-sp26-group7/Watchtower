@@ -8,11 +8,25 @@ function init() {
   wt.init()
 }
 ```
-***
-## How to Test
-1. After settingup, you should see the following console logs in your web application
+3. After setting up, you should see the following console logs in your web application if successful
   - Watchtower initialized: Watchtower
   - SDK loaded: Watchtower
 
-  ![Alt text](../../res/sdk-test-example.png)
+  ![Example](../../../res/sdk-test-example.png)
+***
+## How to Test
+1. Add a test button to manually trigger an error
+```
+<button id="trigger-error">Trigger Test Error</button>
+
+<script>
+  document
+    .getElementById("trigger-error")
+    .addEventListener("click", () => {
+      // Simulate a runtime error
+      throw new Error("Manual test error triggered");
+    });
+</script>
+```
+   
 ***
