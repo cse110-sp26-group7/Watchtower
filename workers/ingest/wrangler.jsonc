@@ -18,7 +18,7 @@
 		{
 			"binding": "DB",
 			"database_name": "watchtower",
-			"database_id": "379f3855-a3c8-4afa-a7c3-3cddccbf606f",
+			"database_id": "c65d1f5e-5f88-4381-958b-fbbcbb1c00f0",
 			"migrations_dir": "../../db/migrations"
 		}
 	]
