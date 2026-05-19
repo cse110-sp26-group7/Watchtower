@@ -1,7 +1,10 @@
 # Integration
 ## How to Embed
-1. Install Watchtower
-2. Add this to your applications code
+1. Add the Watchtower SDK to your html file with the following script tag
+```
+<script src = "https://cdn.jsdelivr.net/..."></script> 
+```
+3. Add this to your applications code
 ```
 function init() {
   const wt = new WatchTower({ projectId: "wt_a1b2c3d4" })
