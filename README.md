@@ -51,6 +51,36 @@ From this point:
 - Errors and performance vitals are reported automatically
 - Every push to their `main` branch sends a deploy event to WatchTower
 - The dashboard correlates errors to deploys by timestamp and `deploy_id`
+
+#### Step 4 - Install SDK
+Add the Watchtower SDK to your html file with the following script.
+```
+<script src = "https://cdn.jsdelivr.net/..."></script> 
+```
+
+#### Step 5 - Initialize SDK
+Create and initialize a WatchTower object in in your code.
+```
+function init() {
+  const wt = new WatchTower({ projectId: "wt_a1b2c3d4" })
+  wt.init()
+}
+```
+
+#### Step 6 - Test
+Add this button to your html file to test your dashboard
+```
+<button id="trigger-error">Trigger Test Error</button>
+
+<script>
+  document
+    .getElementById("trigger-error")
+    .addEventListener("click", () => {
+      // Simulate a runtime error
+      throw new Error("Manual test error triggered");
+    });
+</script>
+```
 ***
 
 ## Usage & Common Scripts
