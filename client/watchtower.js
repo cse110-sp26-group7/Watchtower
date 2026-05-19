@@ -76,12 +76,17 @@ class Watchtower {
    *                                           Defaults to "/ingest".
    * @param {string}  [config.environment]   - Deployment environment label
    *                                           ("prod" | "staging" | "dev"). Defaults to "prod".
+   * @param {string}  [config.deployId]      - Identifier for the active deployment (e.g. a git
+   *                                           SHA or release tag). Attached to every event so
+   *                                           regressions can be correlated with specific deploys.
    * @param {boolean} [config.debug=false]   - When true, logs every outbound batch to the console.
    */
   constructor(config = {}) {
     this.projectId   = config.projectId || document.currentScript?.dataset?.project || null
     this.endpoint    = config.endpoint  || "/ingest"
     this.environment = config.environment || "prod"
+    // FIX (michael-marras): accept deploy_id from config so it propagates to every event.
+    this.deployId    = config.deployId  || null
     this.debug       = config.debug || false
     this.sessionId   = this._getSessionId()
     this.queue       = []
@@ -131,7 +136,7 @@ class Watchtower {
    * override defaults.
    *
    * @param {string} eventType          - The event category, e.g. "error", "performance",
-   *                                      "page_view", or "feedback".
+   *                                      "pageview", or "feedback".
    * @param {object} [data={}]          - Additional fields to merge into the event payload.
    * @returns {void}
    */
@@ -147,7 +152,8 @@ class Watchtower {
       environment: this.environment,
       url:         window.location.href,
       session_id:  this.sessionId,
-      deploy_id:   null,
+      // FIX (michael-marras): populate deploy_id from instance config rather than hardcoding null.
+      deploy_id:   this.deployId,
       ...data,
     }
     this.queue.push(event)
@@ -158,9 +164,11 @@ class Watchtower {
    * Drains up to 100 events from the queue and sends them as a single
    * JSON batch to {@link Watchtower#endpoint}.
    *
-   * Prefers `navigator.sendBeacon` (fire-and-forget, page-unload safe)
-   * and falls back to `fetch` with `keepalive: true`. Errors are caught
-   * and logged in debug mode so analytics never interrupts the host app.
+   * Prefers `navigator.sendBeacon` (fire-and-forget, page-unload safe) but
+   * falls back to `fetch` with `keepalive: true` when sendBeacon is unavailable
+   * or returns false (e.g. the payload exceeds the browser's size limit).
+   * Errors are caught and logged in debug mode so analytics never interrupts
+   * the host app.
    *
    * Re-entrant calls while a flush is in progress are no-ops.
    *
@@ -179,11 +187,16 @@ class Watchtower {
     if (this.debug) console.log("WATCHTOWER BATCH:", batch)
 
     const payload = JSON.stringify(batch)
+
     try {
-      if (navigator.sendBeacon) {
-        const blob = new Blob([payload], { type: "application/json" })
-        navigator.sendBeacon(this.endpoint, blob)
-      } else {
+      // FIX (michael-marras): check sendBeacon's return value. It returns false when the
+      // browser cannot queue the request (e.g. payload too large), so we must fall back
+      // to fetch in that case rather than silently losing the batch.
+      const beaconQueued = navigator.sendBeacon
+        ? navigator.sendBeacon(this.endpoint, new Blob([payload], { type: "application/json" }))
+        : false
+
+      if (!beaconQueued) {
         fetch(this.endpoint, {
           method:    "POST",
           headers:   { "Content-Type": "application/json" },
@@ -200,16 +213,14 @@ class Watchtower {
   }
 
   /**
-   * Emits a "page_view" event for the current page load.
-   *
-   * Uses its own `event_type` ("page_view") rather than "performance"
-   * because a page view is not a Web Vital metric.
+   * Emits a "pageview" event for the current page load.
    *
    * @private
    * @returns {void}
    */
   _trackPageView() {
-    this.track("page_view", {
+    // FIX (michael-marras): changed event type from "page_view" to "pageview" to match schema.
+    this.track("pageview", {
       referrer: document.referrer || null,
     })
   }
@@ -236,7 +247,7 @@ class Watchtower {
         handled:  false,
         filename: e.filename     || null,
         lineno:   e.lineno       || null,
-        colno:    e.colno        || null,  // e.colno is a real ErrorEvent property
+        colno:    e.colno        || null,
       })
     })
 
@@ -322,23 +333,30 @@ class Watchtower {
       })
     })
 
-    // --- CLS (cumulative session total, flushed on page hide) ---
+    // --- CLS (cumulative session total, flushed once on page hide) ---
     // Per-entry CLS values are meaningless in isolation; the metric is
     // the sum of all unexpected layout shifts across the session.
-    let clsTotal = 0
+    let clsTotal    = 0
+    // FIX (michael-marras): guard against duplicate flushes when both visibilitychange
+    // and pagehide fire in the same unload sequence (common in Chrome/Safari bfcache).
+    let clsFlushed  = false
+
     observe("layout-shift", (entry) => {
       // Exclude shifts triggered by recent user input (spec requirement).
       if (entry.hadRecentInput) return
       clsTotal += entry.value
     })
+
     const flushCLS = () => {
-      if (clsTotal === 0) return
+      if (clsTotal === 0 || clsFlushed) return
+      clsFlushed = true
       this.track("performance", {
         metric_name:   "CLS",
         metric_value:  clsTotal,
         metric_rating: getRating("CLS", clsTotal),
       })
     }
+
     // visibilitychange covers tab switches, navigation, and app backgrounding.
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") flushCLS()
