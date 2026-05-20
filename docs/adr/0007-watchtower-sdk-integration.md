@@ -6,7 +6,7 @@
 
 ## Context
 
-Users need a way to get the watchtower.js sdk into their projects so they can keep their dashboard updated.
+Users need a way to get the watchtower.js sdk into their projects so they can get data sent from their projects to their dashboard.
 
 ## Decision
 
@@ -18,4 +18,5 @@ A Jsdelivr cdn will be used to give the user access to the watchtower sdk. They 
 
 ## Consequences
 
-This makes it super easy for the user to gain access to the sdk. The user does not have to npm install.
+- The user does not have to npm install.
+- Must add the script tag to their html file
