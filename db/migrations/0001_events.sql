@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS events (
     event_id    TEXT PRIMARY KEY,
     project_id  TEXT NOT NULL,
     event_type  TEXT NOT NULL
-                CHECK (event_type IN ('error','performance','feedback','deploy')),
+                CHECK (event_type IN ('error','performance','feedback','deploy','pageview')),
     timestamp   TEXT NOT NULL,
     environment TEXT NOT NULL
                 CHECK (environment IN ('dev','staging','prod')),
