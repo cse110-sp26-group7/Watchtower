@@ -25,7 +25,7 @@ Mid-sprint context:
 
 A real error from Ethan's Test App is visible on the dashboard via SDK → `/ingest` → D1 → `/api/events` → Log Viewer. Data Visualizer renders a basic error-frequency chart from real data.
 
-This is mostly an integration sprint. We are not building auth, project CRUD, event-detail view, or deploy-event ingestion. Those are Sprint 4 per `docs/sprints/sprint-4.md` and ADR-0005.
+This is mostly an integration sprint. We are not building auth, project CRUD, event-detail view, or the CI deploy-event ingestion hook (the GitHub Actions automation; `/ingest` itself already accepts deploy events via PR #78). Those are Sprint 4 per `docs/sprints/sprint-4.md` and ADR-0005.
 
 ---
 
@@ -176,6 +176,6 @@ Per `docs/sprints/sprint-4.md` and ADR-0005:
 - `POST /api/login` and session cookie auth
 - `GET /api/projects` and `POST /api/projects`
 - `GET /api/events/:event_id` (detail view with deploy correlation)
-- `GET /api/deploys` and CI deploy-event ingestion path
+- `GET /api/deploys` and the CI deploy-event ingestion hook (GitHub Actions side)
 - Full `/api/summary` (feedback aggregates, perf p75, `site_status`)
 - Alerts, notifications, source-map symbolication
