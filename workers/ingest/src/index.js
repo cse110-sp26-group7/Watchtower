@@ -1,5 +1,4 @@
 // Spec: docs/backend/api/endpoints-draft.md (POST /ingest)
-// IMPORTANT: column order below mirrors migrations/0001_events.sql; update both + bind() in lockstep.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -9,16 +8,13 @@ const CORS = {
 const MAX_BYTES = 1024 * 1024;
 const MAX_EVENTS = 100;
 
-// ON CONFLICT(event_id) DO NOTHING (not INSERT OR IGNORE) so that PK replays
-// are absorbed while CHECK/NOT NULL violations still surface as errors.
+// ON CONFLICT(event_id) DO NOTHING (not INSERT OR IGNORE) so PK replays are
+// absorbed while constraint violations still surface as errors.
 const INSERT_SQL = `
   INSERT INTO events (
     event_id, project_id, event_type, timestamp, environment, deploy_id,
-    url, user_agent, session_id, received_at, country,
-    message, name, stack, handled, filename, lineno, colno,
-    metric_name, metric_value, metric_rating,
-    feedback_rating, comment, version
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    received_at, country, payload
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(event_id) DO NOTHING
 `;
 
@@ -31,16 +27,29 @@ function ok204() {
 }
 
 function bind(stmt, event, ctx) {
+  const {
+    event_id,
+    event_type,
+    timestamp,
+    environment,
+    deploy_id,
+    ...rest
+  } = event;
+  // Browser-emitted events carry a user_agent (server-enriched from the
+  // request header). Deploy events have no browser context.
+  const payload = event_type === 'deploy'
+    ? rest
+    : { ...rest, user_agent: ctx.userAgent };
   return stmt.bind(
-    event.event_id, ctx.projectId, event.event_type, event.timestamp, event.environment, event.deploy_id ?? null,
-    event.url ?? null, ctx.userAgent, event.session_id ?? null,
-    ctx.receivedAt, ctx.country,
-    event.message ?? null, event.name ?? null, event.stack ?? null,
-    event.handled == null ? null : (event.handled ? 1 : 0),
-    event.filename ?? null, event.lineno ?? null, event.colno ?? null,
-    event.metric_name ?? null, event.metric_value ?? null, event.metric_rating ?? null,
-    event.feedback_rating ?? null, event.comment ?? null,
-    event.version ?? null,
+    event_id,
+    ctx.projectId,
+    event_type,
+    timestamp,
+    environment,
+    deploy_id ?? null,
+    ctx.receivedAt,
+    ctx.country,
+    JSON.stringify(payload),
   );
 }
 

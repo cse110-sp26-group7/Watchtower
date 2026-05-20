@@ -10,35 +10,12 @@ CREATE TABLE IF NOT EXISTS events (
                 CHECK (environment IN ('dev','staging','prod')),
     deploy_id   TEXT,
 
-    -- Browser Context
-    url        TEXT,
-    user_agent TEXT,
-    session_id TEXT,
-
-    -- Server enrichments (received_at supplied by Worker per batch)
+    -- Server enrichments (set by the ingest worker)
     received_at TEXT NOT NULL,
     country     TEXT,
 
-    -- Error Event
-    message  TEXT,
-    name     TEXT,
-    stack    TEXT,
-    handled  INTEGER CHECK (handled IN (0, 1)),
-    filename TEXT,
-    lineno   INTEGER,
-    colno    INTEGER,
-
-    -- Performance Event
-    metric_name   TEXT CHECK (metric_name IN ('LCP','FCP','TTFB','CLS','INP')),
-    metric_value  REAL,
-    metric_rating TEXT CHECK (metric_rating IN ('good','needs-improvement','poor')),
-
-    -- Feedback Event
-    feedback_rating INTEGER CHECK (feedback_rating BETWEEN 1 AND 5),
-    comment         TEXT,
-
-    -- Deploy Event
-    version TEXT
+    -- Type-specific fields as JSON; shape per event-schema-draft.md
+    payload TEXT NOT NULL
 );
 
 CREATE INDEX idx_events_project_ts
