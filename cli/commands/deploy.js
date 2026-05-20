@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
  * Tells the Watchtower backend that your project was deployed. 
  * Requires `WT_PROJECT_ID` to be in your .env file
  */
-export default function deploy() {
+export default async function deploy() {
   const { values } = parseArgs({ 
     options: {
       version: { type: "string", short: "V" },
