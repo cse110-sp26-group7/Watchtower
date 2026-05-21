@@ -4,7 +4,7 @@ Cloudflare Worker that accepts event payloads from the WatchTower client SDK and
 
 ## Prerequisites
 
-- Node.js 20+ (`node --version`)
+- Node.js 22+ (`node --version`)
 - npm 10+ (ships with Node)
 
 `wrangler` is pinned in `devDependencies`, so a global install is not required. All commands below use the local copy via npm scripts.
