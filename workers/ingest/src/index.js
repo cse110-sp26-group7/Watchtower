@@ -5,7 +5,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
-const MAX_BYTES = 1024 * 1024;
+const MAX_BYTES = 1024 *;
 const MAX_EVENTS = 100;
 
 // ON CONFLICT(event_id) DO NOTHING (not INSERT OR IGNORE) so PK replays are
