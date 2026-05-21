@@ -152,3 +152,102 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* recent errors */
+.recent-errors-logs {
+  flex: 1;
+  min-width: 560px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.recent-errors-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 16px;
+}
+
+.recent-errors h3 {
+  font-family: var(--sans);
+  color: var(--dim);
+}
+
+#view-all-errors {
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* recent errors table */
+.errors-table {
+  width: 100%;
+  color: var(--dim);
+  
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+
+  border-collapse: separate;
+  border-spacing: 0 20px; 
+
+  th:nth-child(1) {width: 10%;};
+  th:nth-child(2) {width: 10%;};
+  th:nth-child(3) {width: 40%;};
+  th:nth-child(4) {width: 30%;};
+  th:nth-child(5) {width: 10%;};
+}
+
+#level-dot-1 {
+  display: inline-block;
+  width: 32px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--red);
+}
+
+#level-dot-2 {
+  display: inline-block;
+  width: 32px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--amber);
+}
+
+#level-dot-3 {
+  display: inline-block;
+  width: 32px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--clear);
+}
+
+#level-dot-4 {
+  display: inline-block;
+  width: 32px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--green);
+}
+
+#level-dot-5 {
+  display: inline-block;
+  width: 32px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--amber);
+}
