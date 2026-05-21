@@ -35,7 +35,7 @@ async function cli() {
         console.log('Tells the Watchtower backend that your project was deployed. Requires "WT_PROJECT_ID" to be set in a .env file.');
         console.log('Usage: npx watchtower deploy --version <version> --environment ["prod", "staging", "dev"] --gitSha <git_sha>');
         console.log('REQUIRED: --environment <environment> (short: -e) Specifies the deployment environment (e.g. "prod")');
-        console.log('REQUIRED: --gitSha <git_sha> (short: -s) Release identifier (git SHA). In GitHub actions, this can be obtained from \$GITHUB_SHA');
+        console.log('REQUIRED: --gitSha <git_sha> (short: -s) Release identifier (git SHA). In GitHub actions, this can be obtained from $GITHUB_SHA');
         console.log('OPTIONAL: --envFile <path> (short: -E) Override env file (default: .env)');
         console.log('OPTIONAL: --version <version> (short: -V): Specifies the version with a SemVer tag (e.g., "v0.1.0")');
         break;
