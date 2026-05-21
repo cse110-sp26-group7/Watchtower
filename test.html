@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Watchtower SDK Test</title>
+</head>
+<body>
+  <h1>Watchtower SDK Test Page</h1>
+
+  <!-- 1. Load the SDK -->
+  <script src="./watchtower.js"></script>
+
+  <!-- 2. Consumer controls initialization (ADR-0006) -->
+  <script>
+    const wt = new Watchtower({
+      projectId:   "wt_a1b2c3d4",
+      endpoint:    "https://your-worker.workers.dev/ingest",
+      environment: "dev",
+      debug:       true,
+    })
+    wt.init()
+
+    // Manual test event
+    window.addEventListener("load", () => {
+      wt.track("manual_test_event", { source: "test_page" })
+    })
+  </script>
+</body>
+</html>

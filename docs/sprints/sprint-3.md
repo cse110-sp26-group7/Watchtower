@@ -13,6 +13,7 @@
 - [ ] Log Viewer functional with real data and search by type
 - [ ] Basic Data Visualizer charts showing real error frequency
 - [ ] QA executes test plan against the fully connected system
+- [ ] Video updating current status of the team.
 
 ---
 
@@ -68,6 +69,21 @@
 - Sprint 3 is MVP sprint — scope is limited to Data Collection, Log Viewer, and basic Data Visualizer
 - Alerts, Notifications, Authentication, and Deploy Signal Tracking are deferred to Sprint 4
 - General Tasks and Sprint Board to be filled once Sprint 2 wraps and issues are created
+- We have to have a video showcasing our progress by Thursday
+- Jack worked on CI/CD pipeline
+- Thy made the frontend layout and router
+- Bishal worked on watchtower SDK, tracks page views, events
+- Cindy worked on frontend as well
+- Michael is updating the README and making an ADR for the SDK integration, will have merges up today
+- Theo finished /ingest endpoint prototype and schema test, fixed some bugs, will open PR today
+- Johnny will work on error logs and will work with backend on connecting everything 
+- Ethan finished cli scaffold and started cloudflare migration
+- Aarnav and Benny were planning QA and will meet with TA today to discuss
+- We will not change the schema
+- Ethan, Theo, and Kareem need to review Gabby's PR
+- Video just needs to showcase what we have
+- **Goal**: working prototype by Wednesday evening
+- Need an ADR for distribution 
 
 ---
 

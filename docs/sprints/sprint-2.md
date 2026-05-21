@@ -8,10 +8,10 @@
 
 ## Goals
 
-- [ ] FE delivers working dashboard shell with mock data
-- [ ] BE has minimal API endpoints ready (connection to FE in Sprint 3)
-- [ ] Test App has SDK installed (data sending confirmed in Sprint 3)
-- [ ] CI pipeline set up (stretch goal)
+- [X] FE delivers working dashboard shell with mock data
+- [X] BE has minimal API endpoints ready (connection to FE in Sprint 3)
+- [X] Test App has SDK installed (data sending confirmed in Sprint 3)
+- [X] CI pipeline set up (stretch goal)
 ---
 
 ## Sprint Backlog
@@ -45,10 +45,10 @@
 
 | Criterion | Verification Method | Progress |
 |---|---|---|
-|FE dashboard shell is built and displays mock data correctly| Tester opens dashboard and confirms UI renders with mock data | Not Ready |
-|BE has at least one working API endpoint returning real data| BE team demos a successful API response in isolation | Not Ready |
-|SDK is installed on Test App | Ethan confirms SDK is running on the site | Not Ready |
-|QA test plan is written and reviewed| SM reviews and approves test plan doc | Not Ready |
+|FE dashboard shell is built and displays mock data correctly| Tester opens dashboard and confirms UI renders with mock data | Done |
+|BE has at least one working API endpoint returning real data| BE team demos a successful API response in isolation | Done |
+|SDK is installed on Test App | Ethan confirms SDK is running on the site | Done |
+|QA test plan is written and reviewed| SM reviews and approves test plan doc | Done |
 
 ---
 
@@ -57,7 +57,7 @@
 | Dependency | Teams Involved | Status |
 |---|---|---|
 | FE is blocked until BE has at least one working API endpoint to connect to | FE → BE | Deferred — FE building on mock data until Sprint 3 integration |
-| DevOps cannot be setup correctly without Tests from QA | QA → DevOps | Unresolved |
+| DevOps cannot be setup correctly without Tests from QA | QA → DevOps | Resolved by including tests from BE code init for now which is good enough for CI/CD for now. |
 
 ---
 
@@ -70,7 +70,7 @@
 
 ---
 
-## Retrospective _(fill at end of sprint)_
+## Retrospective _(N/A)_
 
 **What went well:**
 -

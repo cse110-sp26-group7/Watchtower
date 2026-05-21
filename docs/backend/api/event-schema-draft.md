@@ -4,10 +4,10 @@ Status: rough draft, pending Frontend/UX sync (Sprint 1, Task 1).
 
 ## Scope
 
-Four event types. Three are emitted from the end-user's browser via the snippet (error, performance, feedback). One is emitted server-side from CI/CD or a manual API call (deploy).
+Five event types. Four are emitted from the end-user's browser via the snippet (error, performance, feedback, pageview). One is emitted server-side from CI/CD or a manual API call (deploy).
 
 ```
-[browser-emitted]   error / performance / feedback
+[browser-emitted]   error / performance / feedback / pageview
 [server-emitted]    deploy
 ```
 
@@ -18,7 +18,7 @@ Every event carries these fields. deploy_id is nullable: optional on browser eve
 | field       | type            | notes                                      |
 | ----------- | --------------- | ------------------------------------------ |
 | event_id    | UUID v4         | client-generated, used for dedup           |
-| event_type  | enum            | error \| performance \| feedback \| deploy |
+| event_type  | enum            | error \| performance \| feedback \| deploy \| pageview |
 | timestamp   | ISO 8601 string | UTC, ms precision                          |
 | environment | enum            | dev \| staging \| prod                     |
 | deploy_id   | string \| null  | release identifier (git SHA); see above    |
@@ -126,6 +126,31 @@ Example:
 	"deploy_id": "b1f2a4d",
 	"feedback_rating": 2,
 	"comment": "Search results look broken on this page"
+}
+```
+
+## Pageview event
+
+Emitted when the snippet initializes (page load). Lets the backend attribute other browser events to a specific page in a session.
+
+| field    | type           | notes                                      |
+| -------- | -------------- | ------------------------------------------ |
+| referrer | string \| null | `document.referrer`; null on direct visits |
+
+Capture: snippet emits one pageview event on `Watchtower.init()`. URL and `session_id` come from the common browser context.
+
+Example:
+
+```json
+{
+	"event_id": "770e8400-e29b-41d4-a716-446655440002",
+	"event_type": "pageview",
+	"timestamp": "2026-05-07T14:32:11.234Z",
+	"environment": "prod",
+	"url": "https://example.com/checkout",
+	"session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+	"deploy_id": "b1f2a4d",
+	"referrer": "https://google.com/"
 }
 ```
 
