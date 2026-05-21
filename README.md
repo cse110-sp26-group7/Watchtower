@@ -13,7 +13,41 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Installation & Setup
+### Installation
 **WIP**
+### Setup
+#### Step 1 - Register your Project
+Create an account. After that you will have a ProjectId
+
+#### Step 2 - Install SDK
+Add the Watchtower SDK to your html file with the following script
+```
+<script src = "https://cdn.jsdelivr.net/..."></script> 
+```
+
+#### Step 3 - Initialize SDK
+Create and initialize a WatchTower object in in your code. Make sure to use your project id
+```
+function init() {
+  const wt = new WatchTower({ projectId: "wt_a1b2c3d4" })
+  wt.init()
+}
+```
+
+#### Step 4 - Test
+Add this button to your html file to test your dashboard
+```
+<button id="trigger-error">Trigger Test Error</button>
+
+<script>
+  document
+    .getElementById("trigger-error")
+    .addEventListener("click", () => {
+      // Simulate a runtime error
+      throw new Error("Manual test error triggered");
+    });
+</script>
+```
 ***
 
 ## Usage & Common Scripts
@@ -21,7 +55,7 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Architecture Overview
-**WIP**
+[ARCHITECTURE.md](docs/ARCHITECTURE.md)
 ***
 
 ## Environment Variables
@@ -29,8 +63,8 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Tech Stack
-**Frontend:** JavaScript, HTML, CSS
-**Backend:** Cloudflare Workers
+**Frontend:** JavaScript, HTML, CSS\
+**Backend:** Cloudflare Workers, JavaScript
 ***
 
 ## Features
