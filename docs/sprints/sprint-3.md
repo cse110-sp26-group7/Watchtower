@@ -13,6 +13,7 @@
 - [ ] Log Viewer functional with real data and search by type
 - [ ] Basic Data Visualizer charts showing real error frequency
 - [ ] QA executes test plan against the fully connected system
+- [ ] Video updating current status of the team.
 
 ---
 
