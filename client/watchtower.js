@@ -193,7 +193,7 @@ class Watchtower {
       // browser cannot queue the request (e.g. payload too large), so we must fall back
       // to fetch in that case rather than silently losing the batch.
       const beaconQueued = navigator.sendBeacon
-        ? navigator.sendBeacon(this.endpoint, new Blob([payload], { type: "application/json" }))
+        ? navigator.sendBeacon(this.endpoint, new Blob([payload], { type: "text/plain;charset=UTF-8" }))
         : false
 
       if (!beaconQueued) {
