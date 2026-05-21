@@ -207,11 +207,11 @@
   th:nth-child(5), td:nth-child(5) {width: 10%;};
 }
 
-th {
+.errors-table th {
   text-decoration: underline;
 }
 
-td {
+.errors-table td {
   font-weight: bold;
   text-align: center;
 }
