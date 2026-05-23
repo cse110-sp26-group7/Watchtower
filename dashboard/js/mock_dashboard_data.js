@@ -128,10 +128,6 @@ function updateDashboard(data) {
   updateBarChart(
     data.timeseries.errors
   );
-
-  updateLineChart(
-    data.timeseries.performance
-  );
 }
 
 updateDashboard(
