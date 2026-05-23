@@ -5,9 +5,9 @@
 #   - workers/ingest running on :8787 (cd workers/ingest && npm run dev)
 #   - workers/api    running on :8788 (cd workers/api    && npm run dev -- --port 8788)
 #
-# Blocked on Task 2 (POST /ingest D1-write handler). Until that's in, the
-# POST step returns "Hello World!" and the GET returns []. Once Theo's
-# ingest handler lands, this script should round-trip a real event.
+# Round-trips a real event end-to-end: POSTs an error event to workers/ingest,
+# which writes it to D1, then reads it back via GET /api/events on workers/api.
+# (POST /ingest is live as of #62.)
 
 set -euo pipefail
 

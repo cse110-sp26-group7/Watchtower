@@ -67,7 +67,7 @@ curl 'http://localhost:8787/api/events?project_id=wt_a1b2c3d4&cursor=<next_curso
 
 ## End-to-end smoke test
 
-`scripts/smoke.sh` documents the intended ingest→read flow. It is **not yet runnable end-to-end** — it depends on the `POST /ingest` handler (Task 2). Until that lands, the POST step hits the placeholder `"Hello World!"` response and the GET returns `[]`. Once Theo's handler is in, the same script will round-trip a real event without changes.
+`scripts/smoke.sh` runs the ingest→read flow end-to-end: it `POST`s an error event to `workers/ingest` (`/ingest`), which writes it to D1, then reads it back via `GET /api/events`. Start both workers locally first (ingest on `:8787`, this worker on `:8788` — see above), then run it.
 
 ```sh
 ./scripts/smoke.sh
