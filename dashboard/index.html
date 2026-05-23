@@ -114,24 +114,53 @@
               </p>
             </div>
 
-            <!-- response time -->
+            <!-- LCP -->
             <div class="metric-card">
-              <h3>Response Time</h3>
+                <h3>LCP</h3>
 
-              <p
-                class="metric-number response-number"
-                id="avg-response-time"
-              >
-                0ms
-              </p>
+                <p
+                  class="metric-number metric-lcp"
+                  id="lcp-value"
+                >
+                  0ms
+                </p>
 
-              <p
-                class="metric-change decrease"
-                id="response-change"
-              >
-                Loading...
-              </p>
-            </div>
+                <p class="metric-description">
+                  Largest Contentful Paint
+                </p>
+              </div>
+
+              <!-- INP -->
+              <div class="metric-card">
+                <h3>INP</h3>
+
+                <p
+                  class="metric-number metric-inp"
+                  id="inp-value"
+                >
+                  0ms
+                </p>
+
+                <p class="metric-description">
+                  Interaction to Next Paint
+                </p>
+              </div>
+
+              <!-- CLS -->
+              <div class="metric-card">
+                <h3>CLS</h3>
+
+                <p
+                  class="metric-number metric-cls"
+                  id="cls-value"
+                >
+                  0
+                </p>
+
+                <p class="metric-description">
+                  Layout Stability
+                </p>
+              </div>
 
           </section>
 
@@ -147,23 +176,6 @@
                 id="error-rate-chart"
               >
               </div>
-            </div>
-
-            <!-- response time chart -->
-            <div class="chart-card">
-              <h3>Response Time Chart</h3>
-
-              <svg
-                id="response-chart"
-                class="response-chart"
-                viewBox="0 0 300 150"
-              >
-                <polyline
-                  id="response-line"
-                  points=""
-                />
-              </svg>
-
             </div>
 
           </section>
