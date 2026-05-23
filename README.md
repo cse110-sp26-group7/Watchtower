@@ -5,6 +5,8 @@ feedback in one place.
 
 ## Project Status
 **CSE 110 Sp 26 team project. Pre-release.**
+
+[Status Update 1](https://youtu.be/NoIb_ukGxmw)
 ***
 
 ## Prerequisites

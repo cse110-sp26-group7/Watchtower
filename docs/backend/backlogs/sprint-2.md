@@ -55,6 +55,7 @@ Owner: Theo
 Issue: #62
 
 Deliverables:
+- Initial D1 schema migration: `db/migrations/0001_events.sql` (shared repo-root migrations dir; `workers/ingest/wrangler.jsonc` wires it via `migrations_dir: "../../db/migrations"`). events table per `event-schema-draft.md`, UNIQUE on `event_id`, index on `(project_id, timestamp)`. Applied via `wrangler d1 migrations apply watchtower`. Same schema is the read source for Task 4/5.
 - `POST /ingest` handler in `workers/ingest/` with envelope parsing and D1 insert
 - Local test script (curl or fetch) and brief README/JSDoc
 
@@ -62,7 +63,7 @@ Scope:
 - Skip per-event schema validation; reject only on malformed JSON or missing envelope fields
 - Auth deferred (Sprint 4 adds project lookup)
 
-Spec: `docs/backend/api/endpoints-draft.md` (POST /ingest)
+Spec: `docs/backend/api/endpoints-draft.md` (POST /ingest), `docs/backend/api/event-schema-draft.md` (table shape)
 Rationale for D1 insert this sprint: Sprint 3 MVP demo needs real read path; pushing D1 to Sprint 3 stacks with FE/BE integration.
 Depends on: Task 1
 
@@ -110,7 +111,7 @@ Scope:
 - CORS same as `/ingest` (public origin for MVP)
 
 Spec: `endpoints-draft.md` (GET /api/events)
-Depends on: Task 1 (scaffold pattern). Can start parallel to Task 2.
+Depends on: Task 1 (scaffold pattern) + Task 2 schema migration (events table). Handler can start parallel to Task 2 against the schema once it lands; full read path needs Task 2's INSERT for end-to-end test.
 
 ---
 
