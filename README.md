@@ -24,7 +24,7 @@ Create an account. After that you will have a ProjectId
 #### Step 2 - Install SDK
 Add the Watchtower SDK to your html file with the following script
 ```
-<script src = "https://cdn.jsdelivr.net/..."></script> 
+<script src = "cdn.jsdelivr.net/gh/cse110-sp26-group7/Watchtower@latest/client/watchtower.min.js"></script> 
 ```
 
 #### Step 3 - Initialize SDK
@@ -37,7 +37,7 @@ function init() {
 ```
 
 #### Step 4 - Test
-Add this button to your html file to test your dashboard
+Add this button inside the body of your html file to test your dashboard
 ```
 <button id="trigger-error">Trigger Test Error</button>
 
