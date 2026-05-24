@@ -25,9 +25,18 @@ Every event carries these fields. deploy_id is nullable: optional on browser eve
 
 `project_id` is not a per-event field. It lives on the batch envelope at `POST /ingest` (`{ "project_id": "wt_…", "events": [...] }`). See `endpoints-draft.md` for envelope spec. Backend storage associates each event row with its envelope's `project_id` on insert.
 
+## Server enrichment
+
+These fields are added by the ingest worker on receipt; they are not part of the client envelope. Applied to every event regardless of type (browser-emitted or server-emitted).
+
+| field       | type            | source                                                              |
+| ----------- | --------------- | ------------------------------------------------------------------- |
+| received_at | ISO 8601 string | server-side wall clock at envelope receipt (UTC, ms precision)      |
+| country     | string \| null  | derived from `cf-ipcountry` request header; null if not annotated   |
+
 ## Browser context
 
-Added to error / performance / feedback events.
+Added to error / performance / feedback / pageview events.
 
 | field      | type    | source | notes                                                   |
 | ---------- | ------- | ------ | ------------------------------------------------------- |
@@ -194,9 +203,3 @@ Example (tagged production release):
 
 - feedback capture mechanism (API only / default widget / hybrid): pending Frontend/UX sync.
 - additional browser context (referrer, viewport, language): deferred; can be added in a later iteration if dashboard needs surface.
-
-## References
-
-- Brainstorming notes: event-schema-brainstorming.md (same folder)
-- Spec source: Watchtower User Stories.pdf
-- Sprint 1 backlog Task 1: backend integration contract
