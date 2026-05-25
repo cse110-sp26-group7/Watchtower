@@ -25,9 +25,58 @@ Every event carries these fields. deploy_id is nullable: optional on browser eve
 
 `project_id` is not a per-event field. It lives on the batch envelope at `POST /ingest` (`{ "project_id": "wt_…", "events": [...] }`). See `endpoints-draft.md` for envelope spec. Backend storage associates each event row with its envelope's `project_id` on insert.
 
+## Server enrichment
+
+These fields are added by the ingest worker on receipt; they are not part of the client envelope. Applied to every event regardless of type (browser-emitted or server-emitted).
+
+| field       | type            | source                                                              |
+| ----------- | --------------- | ------------------------------------------------------------------- |
+| received_at | ISO 8601 string | server-side wall clock at envelope receipt (UTC, ms precision)      |
+| country     | string \| null  | derived from `cf-ipcountry` request header; null if not annotated   |
+
+## Storage shape (D1)
+
+Events are stored polymorphically in a single `events` table (see ARCHITECTURE.md section 3.3): a fixed set of envelope columns plus one `payload` TEXT column holding the type-specific fields as JSON. Canonical schema: `db/migrations/0001_events.sql`.
+
+Promoted to columns (queryable without JSON extraction):
+
+- Envelope: `event_id`, `project_id`, `event_type`, `timestamp`, `environment`, `deploy_id`
+- Server enrichment: `received_at`, `country`
+
+Every other field documented below (browser context and the per-type fields) is serialized into `payload`. `project_id` comes from the batch envelope at insert, not from the event body. The Reporting API reads type-specific fields with `json_extract(payload, '$.key')`.
+
+Example: the Error event below, as stored.
+
+| column      | value                                  |
+| ----------- | -------------------------------------- |
+| event_id    | 550e8400-e29b-41d4-a716-446655440000   |
+| project_id  | wt_demo (from envelope)                |
+| event_type  | error                                  |
+| timestamp   | 2026-05-07T14:32:11.234Z               |
+| environment | prod                                   |
+| deploy_id   | b1f2a4d                                |
+| received_at | 2026-05-07T14:32:11.501Z (server-set)  |
+| country     | US (server-set)                        |
+| payload     | the JSON below                         |
+
+```json
+{
+	"url": "https://example.com/checkout",
+	"user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ...",
+	"session_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+	"message": "Cannot read property 'total' of undefined",
+	"name": "TypeError",
+	"stack": "TypeError: Cannot read property 'total' of undefined\n    at calculateTotal (checkout.js:42:18)",
+	"handled": false,
+	"filename": "https://example.com/checkout.js",
+	"lineno": 42,
+	"colno": 18
+}
+```
+
 ## Browser context
 
-Added to error / performance / feedback events.
+Added to error / performance / feedback / pageview events.
 
 | field      | type    | source | notes                                                   |
 | ---------- | ------- | ------ | ------------------------------------------------------- |
@@ -194,9 +243,3 @@ Example (tagged production release):
 
 - feedback capture mechanism (API only / default widget / hybrid): pending Frontend/UX sync.
 - additional browser context (referrer, viewport, language): deferred; can be added in a later iteration if dashboard needs surface.
-
-## References
-
-- Brainstorming notes: event-schema-brainstorming.md (same folder)
-- Spec source: Watchtower User Stories.pdf
-- Sprint 1 backlog Task 1: backend integration contract

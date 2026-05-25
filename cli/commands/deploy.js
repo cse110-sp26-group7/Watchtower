@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 export default async function deploy() {
   const { values } = parseArgs({
     args: process.argv.slice(3),
+    allowPositionals: true,
     options: {
       version: { type: "string", short: "V" },
       environment: { type: "string", short: "e" },

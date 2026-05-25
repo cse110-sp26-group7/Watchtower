@@ -114,61 +114,155 @@
               </p>
             </div>
 
-            <!-- response time -->
+            <!-- LCP -->
             <div class="metric-card">
-              <h3>Response Time</h3>
+                <h3>LCP</h3>
 
-              <p
-                class="metric-number response-number"
-                id="avg-response-time"
-              >
-                0ms
-              </p>
+                <p
+                  class="metric-number metric-lcp"
+                  id="lcp-value"
+                >
+                  0ms
+                </p>
 
-              <p
-                class="metric-change decrease"
-                id="response-change"
+                <p class="metric-description">
+                  Largest Contentful Paint
+                </p>
+              </div>
+
+              <!-- INP -->
+              <div class="metric-card">
+                <h3>INP</h3>
+
+                <p
+                  class="metric-number metric-inp"
+                  id="inp-value"
+                >
+                  0ms
+                </p>
+
+                <p class="metric-description">
+                  Interaction to Next Paint
+                </p>
+              </div>
+
+              <!-- CLS -->
+              <div class="metric-card">
+                <h3>CLS</h3>
+
+                <p
+                  class="metric-number metric-cls"
+                  id="cls-value"
+                >
+                  0
+                </p>
+
+                <p class="metric-description">
+                  Layout Stability
+                </p>
+              </div>
+
+          </section>
+
+          <!-- graphs -->
+          <section class="charts-row">
+
+            <!-- Error Rate Chart -->
+            <div class="chart-card">
+              <h3>Error Rate Chart</h3>
+
+              <div
+                class="bar-chart"
+                id="error-rate-chart"
               >
-                Loading...
-              </p>
+              </div>
             </div>
 
           </section>
 
-    <!-- graphs -->
-    <section class="charts-row">
+          <!-- Recent Errors Logs -->
+          <section class="recent-errors-logs">
 
-      <!-- Error Rate Chart -->
-      <div class="chart-card">
-        <h3>Error Rate Chart</h3>
+            <div class="recent-errors">
+              <div class="recent-errors-header">
+                <h3>Recent Errors</h3>
+                <a id="view-all-errors" data-route="errors" onclick="navigate('errors')">
+                  <u>
+                    View All Errors &rarr;
+                  </u>
+                </a>
+              </div>
 
-        <div
-          class="bar-chart"
-          id="error-rate-chart"
-        >
-        </div>
-      </div>
+              <table class="errors-table">
+                <thead class="errors-table-row" id="recent-errors-header">
+                  <tr>
+                    <th>Time</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                    <th>Location</th>
+                    <th>Count</th>
+                  </tr>
+                </thead>
 
-      <!-- response time chart -->
-      <div class="chart-card">
-        <h3>Response Time Chart</h3>
+                <tbody id="recent-errors-body">
+                  <!-- Recent errors will be populated here -->
+                  <tr class="errors-table-row" id="recent-error-1">
 
-        <svg
-          id="response-chart"
-          class="response-chart"
-          viewBox="0 0 300 150"
-        >
-          <polyline
-            id="response-line"
-            points=""
-          />
-        </svg>
+                    <td>12:00</td>
+                    <td> <span class="error-level-dot" id="level-dot-1"></span> </td>
+                    <td>this is a very long sentence detailing the crash details of the website you are monitoring. blah balah blahsda </td>
+                    <td>everywhere</td>
+                    <td>10</td>
+                    
+                  </tr>
 
-      </div>
+                  <tr class="errors-table-row" id="recent-error-2">
 
-    </section>
+                    <td>20:00</td>
+                    <td> <span class="error-level-dot" id="level-dot-2"></span> </td>
+                    <td>this is another very long sentence detailing an issue with details of the website you are monitoring.</td>
+                    <td>one specific page</td>
+                    <td>22</td>
 
-  </section>
+                  </tr>
+
+                  <tr class="errors-table-row" id="recent-error-3">
+
+                    <td>placeholder 3</td>
+                    <td> <span class="error-level-dot" id="level-dot-3"></span> </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+
+                  </tr>
+
+                  <tr class="errors-table-row" id="recent-error-4">
+
+                    <td>placeholder 4</td>
+                    <td> <span class="error-level-dot" id="level-dot-4"></span> </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+
+                  </tr>
+
+                  <tr class="errors-table-row" id="recent-error-5">
+
+                    <td>placeholder 5</td>
+                    <td> <span class="error-level-dot" id="level-dot-5"></span> </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+
+                  </tr>
+
+                </tbody>
+              </table>
+
+            </div>
+          </section>
+
+        </section>
       </div>
 
       <!-- ERROR LOG -->
