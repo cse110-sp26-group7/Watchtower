@@ -11,21 +11,18 @@ export default async function deploy() {
     options: {
       version: { type: "string", short: "V" },
       environment: { type: "string", short: "e" },
-      envFile: { type: "string", short: "E" },
+      projectId: { type: "string", short: "p" },
       gitSha: { type: "string", short: "s" },
     },
   });
 
-  if (values.envFile) process.loadEnvFile(values.envFile);
-  else process.loadEnvFile(); 
-
-  const projectId = process.env.WT_PROJECT_ID;
-  if (!projectId) {
-    console.error('"WT_PROJECT_ID" not set in .env');
+  if (!values.projectId) {
+    console.error("Project ID not provided");
+    console.log('Provide a project ID with --projectId <projectId> (ex: wt_a1b2c3d4)');
     return;
   }
 
-  console.log(`Deploying watchtower app: ${projectId}`);
+  console.log(`Deploying watchtower app: ${values.projectId}`);
 
   if (!values.environment) {
     console.error("Environment not provided");
@@ -49,24 +46,23 @@ export default async function deploy() {
 
   const version = validateVersion(values.version);
 
-  const responseStatus = await sendDeployEventRequest(projectId, values.gitSha, environment, version);
+  const responseStatus = await sendDeployEventRequest(values.projectId, values.gitSha, environment, version);
 
-  // TODO: Make these errors more descriptive depending on the case
   switch (responseStatus) {
     case 204:
       console.log("Successfully deployed Watchtower app");
       break;
     case 400:
-      console.error("Failed to deploy Watchtower app");
+      console.error("Failed to deploy Watchtower app. Bad Request. See `npx watchtower --help deploy`");
       break;
     case 401:
-      console.error("Failed to deploy Watchtower app");
+      console.error("Failed to deploy Watchtower app. Unknown or missing projectId.");
       break;
     case 413:
-      console.error("Failed to deploy Watchtower app");
+      console.error("Failed to deploy Watchtower app. Payload was too large.");
       break;
     case 429:
-      console.error("Failed to deploy Watchtower app");
+      console.error("Failed to deploy Watchtower app. Exceeded the rate limit.");
       break;
     default:
       console.error("Failed to deploy Watchtower app");
@@ -85,7 +81,7 @@ export default async function deploy() {
  * @returns {Promise<number>} A promise containing the HTTP status code if the request went through, or -1 if it didn't
  */
 async function sendDeployEventRequest(projectId, gitSha, environment, version) {
-  const WATCHTOWER_BASE_URL = "https://cse110piedpiper7.workers.dev";
+  const WATCHTOWER_BASE_URL = "https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest";
   try {
     // Create a sha256 hash of the parameters to serve as a primary key for events that allows for idempotency
     const hash = createHash('sha256').update(`${projectId}:${gitSha}:${environment}`).digest('hex');
