@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import fs from "node:fs"
+import { readFile } from "node:fs/promises"
 import { parseArgs } from "node:util";
 import create from "../commands/create.js";
 import deploy from "../commands/deploy.js";
@@ -18,7 +18,7 @@ async function cli() {
   });
 
   if (values.version) {
-    const { version } = await JSON.parse(fs.readFile("./package.json", "utf8"));
+    const { version } = await JSON.parse(await readFile("./package.json", "utf8"));
     console.log(version);
     process.exit(0);
   }
@@ -34,9 +34,9 @@ async function cli() {
       case "deploy": 
         console.log('Tells the Watchtower backend that your project was deployed. Requires "WT_PROJECT_ID" to be set in a .env file.');
         console.log('Usage: npx watchtower deploy --version <version> --environment ["prod", "staging", "dev"] --gitSha <git_sha>');
+        console.log('REQUIRED: --projectId <projectId> (short: -p) Unique Watchtower project id (e.g. "wt_abcdabcd") for the project you are deploying');
         console.log('REQUIRED: --environment <environment> (short: -e) Specifies the deployment environment (e.g. "prod")');
         console.log('REQUIRED: --gitSha <git_sha> (short: -s) Release identifier (git SHA). In GitHub actions, this can be obtained from $GITHUB_SHA');
-        console.log('OPTIONAL: --envFile <path> (short: -E) Override env file (default: .env)');
         console.log('OPTIONAL: --version <version> (short: -V): Specifies the version with a SemVer tag (e.g., "v0.1.0")');
         break;
       default:
