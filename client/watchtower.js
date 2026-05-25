@@ -256,7 +256,7 @@ class Watchtower {
           for (const entry of list.getEntries()) callback(entry)
         })
         observer.observe({ type, buffered: true })
-      } catch (_) {
+      } catch {
         // Entry type unsupported in this browser — degrade silently.
       }
     }
