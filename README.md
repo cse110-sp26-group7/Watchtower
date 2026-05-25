@@ -61,7 +61,12 @@ Add this button to your html file to test your dashboard
 ***
 
 ## Environment Variables
-**WIP**
+### Deployed Endpoints
+
+| Worker | URL |
+|--------|-----|
+| Ingest | https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest |
+| API    | https://watchtower-api.cse110piedpiper7.workers.dev/api/events |
 ***
 
 ## Tech Stack
