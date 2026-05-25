@@ -1,3 +1,4 @@
+/* global refreshProjectCards */
 function navigate(route) {
   // hide all pages
   document.querySelectorAll(".page").forEach((p) => {

@@ -1,3 +1,5 @@
+/* global dashboardData */
+
 // function to add a new project card to the projects page
 window.addProject = function addProject() {
   const grid = document.querySelector(".project-grid");
