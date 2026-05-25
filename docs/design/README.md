@@ -21,12 +21,16 @@ See our full user stories in the GitHub Issues:
 
 ### Why these pages?
 
-We focused on 4 core pages based on our user stories:
+These 4 pages represent our Minimum Viable Product (MVP) —
+the smallest set of pages needed for a developer to monitor their app:
 
 - Login — required for authentication
 - Project Selection — developers can monitor multiple apps
 - Dashboard — quick overview of app status (chart, stats, error logs)
 - Error Log — detailed error investigation
+
+Features like Performance, Feedback, and Deploys will be added
+after the core experience is stable.
 
 ### Why this layout?
 
