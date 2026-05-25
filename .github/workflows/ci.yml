@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        worker: [ingest]  #  will add 'api' once it's scaffolded
+        worker: [ingest, api]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        worker: [ingest]  # will add 'api' once it has tests
+        worker: [ingest, api]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
