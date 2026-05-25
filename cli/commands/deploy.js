@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
  */
 export default async function deploy() {
   const { values } = parseArgs({
-    allowPositionals: true,
+    args: process.argv.slice(3),
     options: {
       version: { type: "string", short: "V" },
       environment: { type: "string", short: "e" },
@@ -81,13 +81,13 @@ export default async function deploy() {
  * @returns {Promise<number>} A promise containing the HTTP status code if the request went through, or -1 if it didn't
  */
 async function sendDeployEventRequest(projectId, gitSha, environment, version) {
-  const WATCHTOWER_BASE_URL = "https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest";
+  const WATCHTOWER_INGEST_URL = "https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest";
   try {
     // Create a sha256 hash of the parameters to serve as a primary key for events that allows for idempotency
     const hash = createHash('sha256').update(`${projectId}:${gitSha}:${environment}`).digest('hex');
     const eventId = `${hash.slice(0,8)}-${hash.slice(8,12)}-${hash.slice(12,16)}-${hash.slice(16,20)}-${hash.slice(20,32)}`;
 
-    const response = await fetch(WATCHTOWER_BASE_URL + "/ingest", {
+    const response = await fetch(WATCHTOWER_INGEST_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

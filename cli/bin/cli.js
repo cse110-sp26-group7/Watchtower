@@ -9,8 +9,9 @@ import deploy from "../commands/deploy.js";
  * Main function for the Watchtower cli. Parses the arguments and dispatches to the corresponding command if provided.
  */
 async function cli() {
-  const { values, positionals } = parseArgs({ 
+  const { values, positionals } = parseArgs({
     allowPositionals: true,
+    strict: false,
     options: {
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
