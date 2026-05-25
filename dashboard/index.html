@@ -114,24 +114,53 @@
               </p>
             </div>
 
-            <!-- response time -->
+            <!-- LCP -->
             <div class="metric-card">
-              <h3>Response Time</h3>
+                <h3>LCP</h3>
 
-              <p
-                class="metric-number response-number"
-                id="avg-response-time"
-              >
-                0ms
-              </p>
+                <p
+                  class="metric-number metric-lcp"
+                  id="lcp-value"
+                >
+                  0ms
+                </p>
 
-              <p
-                class="metric-change decrease"
-                id="response-change"
-              >
-                Loading...
-              </p>
-            </div>
+                <p class="metric-description">
+                  Largest Contentful Paint
+                </p>
+              </div>
+
+              <!-- INP -->
+              <div class="metric-card">
+                <h3>INP</h3>
+
+                <p
+                  class="metric-number metric-inp"
+                  id="inp-value"
+                >
+                  0ms
+                </p>
+
+                <p class="metric-description">
+                  Interaction to Next Paint
+                </p>
+              </div>
+
+              <!-- CLS -->
+              <div class="metric-card">
+                <h3>CLS</h3>
+
+                <p
+                  class="metric-number metric-cls"
+                  id="cls-value"
+                >
+                  0
+                </p>
+
+                <p class="metric-description">
+                  Layout Stability
+                </p>
+              </div>
 
           </section>
 
@@ -147,23 +176,6 @@
                 id="error-rate-chart"
               >
               </div>
-            </div>
-
-            <!-- response time chart -->
-            <div class="chart-card">
-              <h3>Response Time Chart</h3>
-
-              <svg
-                id="response-chart"
-                class="response-chart"
-                viewBox="0 0 300 150"
-              >
-                <polyline
-                  id="response-line"
-                  points=""
-                />
-              </svg>
-
             </div>
 
           </section>
@@ -196,51 +208,51 @@
                   <!-- Recent errors will be populated here -->
                   <tr class="errors-table-row" id="recent-error-1">
 
-                    <th>12:00</th>
-                    <th> <span class="error-level-dot" id="level-dot-1"></span> </th>
-                    <th>this is a very long sentence detailing the crash details of the website you are monitoring. blah balah blahsda </th>
-                    <th>everywhere</th>
-                    <th>10</th>
+                    <td>12:00</td>
+                    <td> <span class="error-level-dot" id="level-dot-1"></span> </td>
+                    <td>this is a very long sentence detailing the crash details of the website you are monitoring. blah balah blahsda </td>
+                    <td>everywhere</td>
+                    <td>10</td>
                     
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-2">
 
-                    <th>20:00</th>
-                    <th> <span class="error-level-dot" id="level-dot-2"></span> </th>
-                    <th>this is another very long sentence detailing an issue with details of the website you are monitoring.</th>
-                    <th>one specific page</th>
-                    <th>22</th>
+                    <td>20:00</td>
+                    <td> <span class="error-level-dot" id="level-dot-2"></span> </td>
+                    <td>this is another very long sentence detailing an issue with details of the website you are monitoring.</td>
+                    <td>one specific page</td>
+                    <td>22</td>
 
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-3">
 
-                    <th>placeholder 3</th>
-                    <th> <span class="error-level-dot" id="level-dot-3"></span> </th>
-                    <th>placeholder</th>
-                    <th>placeholder</th>
-                    <th>placeholder</th>
+                    <td>placeholder 3</td>
+                    <td> <span class="error-level-dot" id="level-dot-3"></span> </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
 
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-4">
 
-                    <th>placeholder 4</th>
-                    <th> <span class="error-level-dot" id="level-dot-4"></span> </th>
-                    <th>placeholder</th>
-                    <th>placeholder</th>
-                    <th>placeholder</th>
+                    <td>placeholder 4</td>
+                    <td> <span class="error-level-dot" id="level-dot-4"></span> </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
 
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-5">
 
-                    <th>placeholder 5</th>
-                    <th> <span class="error-level-dot" id="level-dot-5"></span> </th>
-                    <th>placeholder</th>
-                    <th>placeholder</th>
-                    <th>placeholder</th>
+                    <td>placeholder 5</td>
+                    <td> <span class="error-level-dot" id="level-dot-5"></span> </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
 
                   </tr>
 
