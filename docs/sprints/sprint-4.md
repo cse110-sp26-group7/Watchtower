@@ -84,17 +84,27 @@
 - Silence notification means per-error silencing, not global mute
 - Summary health view replaces "pure charts" focus per professor feedback
 - Auto-create GitHub issues and DDoS detection are out of scope for this sprint
-- General Tasks and Sprint Board to be filled at Sprint 4 planning meeting
+- General Tasks and Sprint Board to be filled at Sprint 4 planning meeting 
+- Backend and QA are connected now 
+- Goals:
+    - Authentication
+    - Frontend and backend team discuss on how to connect the two together
+        - Notifications, alerts → pushed back for now, focus on other edge cases later 
+    - FE BE QA team workflow is automated
+- Come up with a different name for WatchTower
+- Repo review Team 9's project
 
 ---
 
 ## Retrospective _(fill at end of sprint)_
 
 **What went well:**
--
+- We had a lot of features implemented
+- Discussed our progress during each meeting
+- Active in pull reviews
 
 **What didn't go well:**
--
+- Communication across the teams; teams got a little bit out of sync
 
 **What to improve next sprint:**
--
+- Add jsdocs to files
