@@ -1,0 +1,12 @@
+{
+  "name": "watchtower-client",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "~3.2.0"
+  }
+}
