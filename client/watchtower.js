@@ -420,7 +420,7 @@ class Watchtower {
 
 // Support both CommonJS/module environments and plain script-tag usage.
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { Watchtower }
+  module.exports = { Watchtower, getRating }
 } else {
   window.Watchtower = Watchtower
 }
