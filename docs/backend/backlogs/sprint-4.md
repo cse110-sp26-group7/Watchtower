@@ -37,7 +37,7 @@ Scope this sprint: auth + project CRUD + summary. Deploy signal tracking, event-
 
 ## How we work
 
-- Owners are open. Each member claims at least one task at the Sprint 4 planning meeting. Dependencies are listed per task.
+- Owners are open. Each member claims at least one task. Dependencies are listed per task.
 - New tasks get a GitHub issue before work starts (present title + body for approval first, per repo convention).
 - The auth tasks (4-9) are written against the grounded defaults summarized under Task 4. Task 4 ratifies them via ADR-0005 and decides the three open items; if the team rejects a default, revisit the affected task.
 
@@ -45,17 +45,17 @@ Scope this sprint: auth + project CRUD + summary. Deploy signal tracking, event-
 
 ## Task summary
 
-| #   | Task                                                     | Owner | Depends |
-| --- | -------------------------------------------------------- | ----- | ------- |
-| 1   | FE-BE integration carryover (`/api/events` cutover)      | Theo  |         |
-| 2   | `GET /api/summary`                                       | open  |         |
-| 3   | `projects` table + demo seed + ingest `project_id` check | open  |         |
-| 4   | ADR-0005 (ratify defaults + decide open items)           | open  |         |
-| 5   | Auth schema migration (users, sessions, projects.owner)  | open  | #3, #4  |
-| 6   | `POST /api/login` + PBKDF2 hashing                       | open  | #5      |
-| 7   | Session middleware + CORS change + `POST /api/logout`    | open  | #6, #2  |
-| 8   | `GET/POST /api/projects` (user-scoped)                   | open  | #5, #7  |
-| 9   | FE auth cutover + re-gate `/api/events`                  | open  | #6, #7  |
+| #   | Task                                                     | Owner      | Depends |
+| --- | -------------------------------------------------------- | ---------- | ------- |
+| 1   | FE-BE integration carryover (`/api/events` cutover)      | Theo      |         |
+| 2   | `GET /api/summary`                                       | Gabrielle |         |
+| 3   | `projects` table + demo seed + ingest `project_id` check | Michael   |         |
+| 4   | ADR-0005 (ratify defaults + decide open items)           | Theo      |         |
+| 5   | Auth schema migration (users, sessions, projects.owner)  | Bishal    | #3, #4  |
+| 6   | `POST /api/login` + PBKDF2 hashing                       | open      | #5      |
+| 7   | Session middleware + CORS change + `POST /api/logout`    | open      | #6, #2  |
+| 8   | `GET/POST /api/projects` (user-scoped)                   | open      | #5, #7  |
+| 9   | FE auth cutover + re-gate `/api/events`                  | open      | #6, #7  |
 
 ---
 
@@ -78,7 +78,7 @@ Continues the Sprint 3 FE-BE integration work.
 
 ### 2. `GET /api/summary`
 
-Owner: open
+Owner: Gabrielle
 Issue: new (Sprint 3 #64 was a summary stretch that never started; reuse or close it)
 
 Deliverables:
@@ -95,7 +95,7 @@ Serves the High-priority "Summary View" and "Track Crashes Over Time" stories fr
 
 ### 3. `projects` table + demo seed + ingest `project_id` validation
 
-Owner: open
+Owner: Michael
 Issue: new (create before starting)
 
 Deliverables:
@@ -112,7 +112,7 @@ Why now: `project_id` is currently unvalidated, and the `projects` table is a pr
 
 ### 4. ADR-0005 (signed-cookie-auth)
 
-Owner: open
+Owner: Theo
 Issue: new (the Sprint 4 doc lists "Writing ADR" as a goal)
 
 Deliverables:
@@ -124,7 +124,7 @@ Why first: it ratifies the decisions the rest of the auth tasks build on. Bring 
 
 ### 5. Auth schema migration + demo user seed
 
-Owner: open
+Owner: Bishal
 Depends on: Task 3 (the `projects` table), Task 4 (ratified column shape)
 Issue: new
 
@@ -182,7 +182,7 @@ Depends on: Task 6, Task 7
 Issue: new
 
 Deliverables:
-- Once login and the CORS change land, FE adds `credentials: 'include'` to the `api-client.js` fetches so the session cookie rides along.
+- Once login and the CORS change land, FE adds `credentials: 'include'` and the `X-Watchtower-Auth` header to the `api-client.js` fetches so the session cookie rides along and passes the CSRF check.
 - Re-gate `/api/events` (left ungated in Task 1) behind the middleware, and confirm the dashboard still loads end to end after gating.
 - Coordinate timing with the FE owners so the cutover and gating land together, not split across a broken window.
 
