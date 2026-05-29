@@ -258,3 +258,186 @@ describe('GET /api/events: pagination', () => {
 		expect(b2.next_cursor).toBeNull();
 	});
 });
+
+describe('GET /api/summary', () => {
+	const PROJECT_S = 'wt_sum';
+	const MIN = 60_000;
+
+	// Insert one event of `type` for PROJECT_S at `agoMs` before now, with the
+	// given payload. received_at + payload are NOT NULL in the schema.
+	async function seedEvent(type, agoMs, payload) {
+		const ts = new Date(Date.now() - agoMs).toISOString();
+		await insert({
+			event_id: `s-${type}-${agoMs}-${Math.random().toString(36).slice(2)}`,
+			project_id: PROJECT_S,
+			event_type: type,
+			timestamp: ts,
+			environment: 'prod',
+			received_at: ts,
+			payload: JSON.stringify(payload),
+		});
+	}
+
+	it('missing project_id -> 400 missing_param', async () => {
+		const r = await SELF.fetch('http://x/api/summary');
+		expect(r.status).toBe(400);
+		expect(await r.json()).toEqual({ error: 'missing_param', param: 'project_id' });
+	});
+
+	it('window=1h -> 200 with 60 one-minute buckets', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=1h`);
+		expect(r.status).toBe(200);
+		const b = await r.json();
+		expect(b.window).toBe('1h');
+		expect(b.timeseries.bucket_size).toBe('1m');
+		expect(b.timeseries.errors).toHaveLength(60);
+		const s = b.timeseries.errors;
+		expect(new Date(s[1].t) - new Date(s[0].t)).toBe(60_000); // one minute apart
+	});
+
+	it('window=5d -> 400 invalid_param=window', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=5d`);
+		expect(r.status).toBe(400);
+		expect((await r.json()).param).toBe('window');
+	});
+
+	it('unknown project -> zeroed 200 with full shape (auth deferred, mirrors /api/events)', async () => {
+		const r = await SELF.fetch('http://x/api/summary?project_id=wt_nobody');
+		expect(r.status).toBe(200);
+		const b = await r.json();
+		expect(b.project_id).toBe('wt_nobody');
+		expect(b.window).toBe('24h');
+		expect(typeof b.generated_at).toBe('string');
+		expect(b.totals.errors).toBe(0);
+		expect(b.totals.feedback_count).toBe(0);
+		expect(b.totals.feedback_avg).toBeNull();
+		expect(b.totals.performance_p75).toEqual({ LCP: null, FCP: null, TTFB: null, CLS: null, INP: null });
+		expect(b.timeseries.bucket_size).toBe('1h');
+		expect(b.timeseries.errors).toHaveLength(24);
+		expect(b.timeseries.feedback).toHaveLength(24);
+		expect(b.timeseries.errors.every((p) => p.count === 0)).toBe(true);
+		expect(b.timeseries.feedback.every((p) => p.count === 0 && p.avg === null)).toBe(true);
+		expect(b.site_status).toBe('ok');
+	});
+
+	it('errors: total = sum of buckets, zero-filled to 24 ascending 1h buckets, window-bounded', async () => {
+		await seedEvent('error', 30 * MIN, { message: 'a', name: 'Error', handled: false });
+		await seedEvent('error', 2 * 60 * MIN, { message: 'b', name: 'Error', handled: false });
+		await seedEvent('error', 5 * 60 * MIN, { message: 'c', name: 'Error', handled: false });
+		await seedEvent('error', 25 * 60 * MIN, { message: 'old', name: 'Error', handled: false }); // outside 24h
+
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const b = await r.json();
+
+		expect(b.totals.errors).toBe(3); // the 25h-old one is excluded
+		const series = b.timeseries.errors;
+		expect(series).toHaveLength(24);
+		expect(series.reduce((acc, p) => acc + p.count, 0)).toBe(3);
+		// strictly ascending, exactly 1h apart
+		for (let i = 1; i < series.length; i++) {
+			const dt = new Date(series[i].t) - new Date(series[i - 1].t);
+			expect(dt).toBe(60 * MIN);
+		}
+	});
+
+	it('only errors count toward totals.errors (type isolation)', async () => {
+		await seedEvent('error', 10 * MIN, { message: 'e', name: 'Error', handled: false });
+		await seedEvent('performance', 10 * MIN, { metric_name: 'LCP', metric_value: 1000, metric_rating: 'good' });
+		await seedEvent('feedback', 10 * MIN, { feedback_rating: 5 });
+
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const b = await r.json();
+		expect(b.totals.errors).toBe(1);
+	});
+
+	it('feedback: count-weighted average rounded to 1 decimal', async () => {
+		await seedEvent('feedback', 10 * MIN, { feedback_rating: 4 });
+		await seedEvent('feedback', 20 * MIN, { feedback_rating: 4 });
+		await seedEvent('feedback', 30 * MIN, { feedback_rating: 5 });
+
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const b = await r.json();
+		expect(b.totals.feedback_count).toBe(3);
+		expect(b.totals.feedback_avg).toBe(4.3); // 13/3 = 4.333 -> 4.3
+		// feedback series carries non-null avg only where there is data
+		const withData = b.timeseries.feedback.filter((p) => p.count > 0);
+		expect(withData.reduce((acc, p) => acc + p.count, 0)).toBe(3);
+	});
+
+	it('performance_p75 per metric, null for metrics with no samples', async () => {
+		for (const v of [100, 200, 300, 400]) {
+			await seedEvent('performance', 10 * MIN, { metric_name: 'LCP', metric_value: v, metric_rating: 'good' });
+		}
+		for (const v of [0.1, 0.2, 0.3, 0.4]) {
+			await seedEvent('performance', 10 * MIN, { metric_name: 'CLS', metric_value: v, metric_rating: 'good' });
+		}
+		await seedEvent('performance', 10 * MIN, { metric_name: 'INP', metric_value: 50, metric_rating: 'good' });
+
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const p75 = (await r.json()).totals.performance_p75;
+		expect(p75.LCP).toBe(300); // ceil(0.75*4)=3 -> 3rd smallest
+		expect(p75.CLS).toBe(0.3); // precision preserved
+		expect(p75.INP).toBe(50); // single sample -> that value
+		expect(p75.FCP).toBeNull();
+		expect(p75.TTFB).toBeNull();
+	});
+
+	it('site_status: issues when an error is within the last 15 min, else ok', async () => {
+		await seedEvent('error', 5 * MIN, { message: 'recent', name: 'Error', handled: false });
+		const r1 = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		expect((await r1.json()).site_status).toBe('issues');
+	});
+
+	it('site_status: ok when the only error is older than 15 min', async () => {
+		await seedEvent('error', 60 * MIN, { message: 'stale', name: 'Error', handled: false });
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const b = await r.json();
+		expect(b.totals.errors).toBe(1); // still inside the 24h window
+		expect(b.site_status).toBe('ok'); // but outside the 15-min status window
+	});
+
+	it('upper-bound invariant: a lone future-dated error counts nowhere (totals 0, site_status ok)', async () => {
+		// Clock skew: an event timestamped after "now" must be excluded from every
+		// aggregate (errors >= windowStart AND <= now), so totals, the grid, and
+		// site_status stay consistent rather than diverging.
+		await seedEvent('error', -10 * MIN, { message: 'future', name: 'Error', handled: false });
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const b = await r.json();
+		expect(b.totals.errors).toBe(0);
+		expect(b.timeseries.errors.reduce((acc, p) => acc + p.count, 0)).toBe(0);
+		expect(b.site_status).toBe('ok');
+	});
+
+	it('does not count other projects', async () => {
+		await insert({
+			event_id: 's-other',
+			project_id: 'wt_other',
+			event_type: 'error',
+			timestamp: new Date(Date.now() - 10 * MIN).toISOString(),
+			environment: 'prod',
+			received_at: new Date(Date.now() - 10 * MIN).toISOString(),
+			payload: JSON.stringify({ message: 'x', name: 'Error', handled: false }),
+		});
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		expect((await r.json()).totals.errors).toBe(0);
+	});
+
+	it('window=7d -> 168 hourly buckets', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=7d`);
+		const b = await r.json();
+		expect(b.window).toBe('7d');
+		expect(b.timeseries.bucket_size).toBe('1h');
+		expect(b.timeseries.errors).toHaveLength(168);
+	});
+
+	it('window=30d -> 30 daily buckets', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=30d`);
+		const b = await r.json();
+		expect(b.window).toBe('30d');
+		expect(b.timeseries.bucket_size).toBe('1d');
+		expect(b.timeseries.errors).toHaveLength(30);
+		// daily buckets are exactly 24h apart
+		const s = b.timeseries.errors;
+		expect(new Date(s[1].t) - new Date(s[0].t)).toBe(24 * 60 * MIN);
+	});
+});

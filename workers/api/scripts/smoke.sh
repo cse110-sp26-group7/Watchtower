@@ -13,6 +13,7 @@ set -euo pipefail
 
 INGEST_URL="${INGEST_URL:-http://localhost:8787/ingest}"
 API_URL="${API_URL:-http://localhost:8788/api/events}"
+SUMMARY_URL="${SUMMARY_URL:-http://localhost:8788/api/summary}"
 PROJECT="${PROJECT:-wt_smoke}"
 EVENT_ID="$(uuidgen | tr '[:upper:]' '[:lower:]')"
 NOW="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
@@ -40,3 +41,9 @@ echo
 
 echo "GET $API_URL?project_id=$PROJECT&since=1h"
 curl -fsS "$API_URL?project_id=$PROJECT&since=1h" | python3 -m json.tool
+echo
+
+echo "GET $SUMMARY_URL?project_id=$PROJECT&window=24h"
+# The just-ingested error should show in totals.errors, the latest 1h bucket of
+# timeseries.errors, and flip site_status to "issues" (error within 15 min).
+curl -fsS "$SUMMARY_URL?project_id=$PROJECT&window=24h" | python3 -m json.tool

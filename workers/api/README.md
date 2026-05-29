@@ -2,7 +2,7 @@
 
 Cloudflare Worker that serves dashboard read traffic. See `docs/ARCHITECTURE.md` §3.4 and `docs/backend/api/endpoints-draft.md` for the endpoint contract.
 
-Implemented: `GET /api/events` (filter + cursor-paginated listing). Auth (signed session cookie per ADR-0005) and the remaining reporting routes are sprint-4 work.
+Implemented: `GET /api/events` (filter + cursor-paginated listing) and `GET /api/summary` (aggregated counts + timeseries for the overview). Auth (signed session cookie per ADR-0005) and the remaining reporting routes are sprint-4 work.
 
 ## Prerequisites
 
@@ -65,6 +65,23 @@ curl 'http://localhost:8787/api/events?project_id=wt_a1b2c3d4&cursor=<next_curso
 
 `400` responses carry `{ "error": "missing_param" | "invalid_param", "param": "<name>" }`.
 
+### GET /api/summary
+
+Aggregated counts plus a zero-filled timeseries for the dashboard overview. Full contract: `docs/backend/api/endpoints-draft.md` §`GET /api/summary`.
+
+```sh
+curl 'http://localhost:8787/api/summary?project_id=wt_a1b2c3d4&window=24h'
+```
+
+Query params:
+
+- `project_id` (required)
+- `window` (optional, default `24h`): one of `1h | 24h | 7d | 30d`. Bucket size scales with the window and is reported in `timeseries.bucket_size`: `1m` for `1h` (60 buckets), `1h` for `24h`/`7d`, `1d` for `30d`. `timezone` is not yet honored — buckets are UTC.
+
+Response (`200`): `totals` (`errors`, `feedback_count`, `feedback_avg`, `performance_p75` per Web Vital), `timeseries.errors` / `timeseries.feedback` (each a continuous, zero-filled array of `{ t, count[, avg] }`), and `site_status` (`"issues"` if any error in the last 15 min, else `"ok"`). `feedback_avg` and per-metric `performance_p75` are `null` when there is nothing to average. `performance_p75` uses nearest-rank (an actual observed value, no interpolation).
+
+Like `/api/events`, an unknown `project_id` currently returns a zeroed `200` (auth is deferred to Sprint 4 per ADR-0005; a `TODO(sprint-4)` marks where this becomes `403`/`404`). `400` responses carry `{ "error", "param" }`.
+
 ## End-to-end smoke test
 
 `scripts/smoke.sh` runs the ingest→read flow end-to-end: it `POST`s an error event to `workers/ingest` (`/ingest`), which writes it to D1, then reads it back via `GET /api/events`. Start both workers locally first (ingest on `:8787`, this worker on `:8788` — see above), then run it.
@@ -109,8 +126,9 @@ Requires a Cloudflare account and a one-time `npx wrangler login`. CI handles de
 ```
 workers/api/
 ├── src/
-│   ├── index.js              # Worker entry (router + GET /api/events handler)
-│   └── query.js              # Query parsing, cursor codec, row shaping
+│   ├── index.js              # Worker entry (router + GET /api/events, /api/summary handlers)
+│   ├── query.js              # GET /api/events: query parsing, cursor codec, row shaping
+│   └── summary.js            # GET /api/summary: param parsing, bucket grid, p75, response assembly
 ├── test/
 │   ├── index.spec.js         # vitest specs (router + GET /api/events)
 │   └── apply-migrations.js   # Applies db/migrations/ to the in-memory D1 once per session
