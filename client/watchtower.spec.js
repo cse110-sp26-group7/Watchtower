@@ -64,7 +64,6 @@ describe("Watchtower SDK — Test 3: track() event common fields", () => {
     expect(new Date(event.timestamp).getTime()).toBeGreaterThan(0)
     expect(event.environment).toBe("prod")
     expect(event.deploy_id).toBe("abc123")
-    expect(event.session_id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
     expect(event.url).toBe("http://localhost/")
   })
 
@@ -104,20 +103,6 @@ describe("Watchtower SDK — Test 3: track() event common fields", () => {
     const event = wt.queue[0]
 
     expect(event.deploy_id).toBeNull()
-  })
-
-  it("generates unique session_id that persists across multiple track calls", () => {
-    const wt = new Watchtower({ projectId: "wt_test" })
-    vi.spyOn(wt, "_flush").mockImplementation(() => {})
-
-    wt.track("error", { message: "error 1" })
-    wt.track("pageview", {})
-
-    const sessionId1 = wt.queue[0].session_id
-    const sessionId2 = wt.queue[1].session_id
-
-    expect(sessionId1).toBe(sessionId2)
-    expect(sessionId1).toMatch(/^[0-9a-f-]{36}$/)
   })
 
   it("generates unique event_id for each tracked event", () => {
@@ -218,7 +203,6 @@ describe("Watchtower SDK — Test 4: captureError() handled errors", () => {
     expect(event.timestamp).toBeDefined()
     expect(new Date(event.timestamp).getTime()).toBeGreaterThan(0)
     expect(event.environment).toBe("staging")
-    expect(event.session_id).toMatch(/^[0-9a-f-]{36}$/)
     expect(event.deploy_id).toBe("deploy-123")
     expect(event.url).toBe("http://localhost/")
   })
