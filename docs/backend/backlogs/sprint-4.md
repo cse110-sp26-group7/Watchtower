@@ -48,7 +48,7 @@ Scope this sprint: auth + project CRUD + summary. Deploy signal tracking, event-
 | #   | Task                                                     | Owner | Depends |
 | --- | -------------------------------------------------------- | ----- | ------- |
 | 1   | FE-BE integration carryover (`/api/events` cutover)      | Theo  |         |
-| 2   | `GET /api/summary`                                       | open  |         |
+| 2   | `GET /api/summary`                                       | Gabrielle  |         |
 | 3   | `projects` table + demo seed + ingest `project_id` check | open  |         |
 | 4   | ADR-0005 (ratify defaults + decide open items)           | open  |         |
 | 5   | Auth schema migration (users, sessions, projects.owner)  | open  | #3, #4  |
