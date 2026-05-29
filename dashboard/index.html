@@ -15,6 +15,7 @@
 
     <!--Add others' pages css here-->
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/projects_selection.css" />
     <link rel="stylesheet" href="css/performance_summary.css" />
   </head>
   <body>
@@ -69,10 +70,38 @@
       <!-- PROJECT SELECTION -->
       <div class="page" id="page-projects">
         <div class="page-header">
-          <div class="page-title">Your Projects</div>
+          <div>
+            <div class="page-title">Your Projects</div>
+            <div class="page-sub">Select a project to open its dashboard</div>
+          </div>
         </div>
-        <!-- project cards go here -->
-        <p>This is projects page</p>
+
+        <!-- Recent -->
+        <p class="project-section-label">Recent</p>
+
+        <!-- Project Cards -->
+        <div class="project-grid">
+          <div class="project-card" onclick="navigate('dashboard')">
+            <div class="project-card-top">
+              <div class="project-logo">logo</div>
+              <span class="project-status dot-up"></span>
+            </div>
+            <div class="project-name">Project Name</div>
+            <div class="project-divider"></div>
+            <div class="project-stats">
+              <span>errors: 0</span>
+              <span>LCP: 0ms</span>
+              <span>INP: 0ms</span>
+              <span>CLS: 0</span>
+            </div>
+          </div>
+
+          <!-- Add New Project -->
+          <button class="project-card-add" onclick="addProject()">
+            <span>+</span>
+            <p>add new project</p>
+          </button>
+        </div>
       </div>
 
       <!-- HOME DASHBOARD -->
@@ -83,113 +112,72 @@
         <!-- KPI cards, charts, recent errors go here -->
         <!-- <p>This is dashboard</p> -->
         <section class="dashboard-content">
-
           <!-- status -->
           <div class="live-status-container">
             <span id="site-status-dot" class="live-dot"></span>
 
-            <span id="site-status" class="live-text">
-              LIVE
-            </span>
+            <span id="site-status" class="live-text"> LIVE </span>
           </div>
 
           <!-- performance summary -->
           <section class="metrics-row">
-
             <!-- total errors -->
             <div class="metric-card">
               <h3>Total Errors</h3>
-              <p
-                class="metric-number error-number"
-                id="total-errors"
-              >
-                0
-              </p>
+              <p class="metric-number error-number" id="total-errors">0</p>
 
-              <p
-                class="metric-change increase"
-                id="error-change"
-              >
-                Loading...
-              </p>
+              <p class="metric-change increase" id="error-change">Loading...</p>
             </div>
 
             <!-- LCP -->
             <div class="metric-card">
-                <h3>LCP</h3>
+              <h3>LCP</h3>
 
-                <p
-                  class="metric-number metric-lcp"
-                  id="lcp-value"
-                >
-                  0ms
-                </p>
+              <p class="metric-number metric-lcp" id="lcp-value">0ms</p>
 
-                <p class="metric-description">
-                  Largest Contentful Paint
-                </p>
-              </div>
+              <p class="metric-description">Largest Contentful Paint</p>
+            </div>
 
-              <!-- INP -->
-              <div class="metric-card">
-                <h3>INP</h3>
+            <!-- INP -->
+            <div class="metric-card">
+              <h3>INP</h3>
 
-                <p
-                  class="metric-number metric-inp"
-                  id="inp-value"
-                >
-                  0ms
-                </p>
+              <p class="metric-number metric-inp" id="inp-value">0ms</p>
 
-                <p class="metric-description">
-                  Interaction to Next Paint
-                </p>
-              </div>
+              <p class="metric-description">Interaction to Next Paint</p>
+            </div>
 
-              <!-- CLS -->
-              <div class="metric-card">
-                <h3>CLS</h3>
+            <!-- CLS -->
+            <div class="metric-card">
+              <h3>CLS</h3>
 
-                <p
-                  class="metric-number metric-cls"
-                  id="cls-value"
-                >
-                  0
-                </p>
+              <p class="metric-number metric-cls" id="cls-value">0</p>
 
-                <p class="metric-description">
-                  Layout Stability
-                </p>
-              </div>
-
+              <p class="metric-description">Layout Stability</p>
+            </div>
           </section>
 
           <!-- graphs -->
           <section class="charts-row">
-
             <!-- Error Rate Chart -->
             <div class="chart-card">
               <h3>Error Rate Chart</h3>
 
-              <div
-                class="bar-chart"
-                id="error-rate-chart"
-              >
-              </div>
+              <div class="bar-chart" id="error-rate-chart"></div>
             </div>
-
           </section>
 
           <!-- Recent Errors Logs -->
           <section class="recent-errors-logs">
-
             <div class="recent-errors">
               <div class="recent-errors-header">
                 <h3>Recent Errors</h3>
-                <a id="view-all-errors" data-route="errors" onclick="navigate('errors')">
-                  <u>
-                    View All Errors &rarr;
-                  </u>
+                <a
+                  id="view-all-errors"
+                  data-route="errors"
+                  onclick="navigate('errors')"
+                >
+                  <u> View All Errors &rarr; </u>
                 </a>
               </div>
 
@@ -207,61 +195,64 @@
                 <tbody id="recent-errors-body">
                   <!-- Recent errors will be populated here -->
                   <tr class="errors-table-row" id="recent-error-1">
-
                     <td>12:00</td>
-                    <td> <span class="error-level-dot" id="level-dot-1"></span> </td>
-                    <td>this is a very long sentence detailing the crash details of the website you are monitoring. blah balah blahsda </td>
+                    <td>
+                      <span class="error-level-dot" id="level-dot-1"></span>
+                    </td>
+                    <td>
+                      this is a very long sentence detailing the crash details
+                      of the website you are monitoring. blah balah blahsda
+                    </td>
                     <td>everywhere</td>
                     <td>10</td>
-                    
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-2">
-
                     <td>20:00</td>
-                    <td> <span class="error-level-dot" id="level-dot-2"></span> </td>
-                    <td>this is another very long sentence detailing an issue with details of the website you are monitoring.</td>
+                    <td>
+                      <span class="error-level-dot" id="level-dot-2"></span>
+                    </td>
+                    <td>
+                      this is another very long sentence detailing an issue with
+                      details of the website you are monitoring.
+                    </td>
                     <td>one specific page</td>
                     <td>22</td>
-
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-3">
-
                     <td>placeholder 3</td>
-                    <td> <span class="error-level-dot" id="level-dot-3"></span> </td>
+                    <td>
+                      <span class="error-level-dot" id="level-dot-3"></span>
+                    </td>
                     <td>placeholder</td>
                     <td>placeholder</td>
                     <td>placeholder</td>
-
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-4">
-
                     <td>placeholder 4</td>
-                    <td> <span class="error-level-dot" id="level-dot-4"></span> </td>
+                    <td>
+                      <span class="error-level-dot" id="level-dot-4"></span>
+                    </td>
                     <td>placeholder</td>
                     <td>placeholder</td>
                     <td>placeholder</td>
-
                   </tr>
 
                   <tr class="errors-table-row" id="recent-error-5">
-
                     <td>placeholder 5</td>
-                    <td> <span class="error-level-dot" id="level-dot-5"></span> </td>
+                    <td>
+                      <span class="error-level-dot" id="level-dot-5"></span>
+                    </td>
                     <td>placeholder</td>
                     <td>placeholder</td>
                     <td>placeholder</td>
-
                   </tr>
-
                 </tbody>
               </table>
-
             </div>
           </section>
-
         </section>
       </div>
 
@@ -284,8 +275,9 @@
     </main>
 
     <!--Add scripts here-->
+    <script src="js/mock_dashboard_data.js"></script>
+    <script src="js/projects_selection.js"></script>
     <script src="js/router.js"></script>
     <script src="js/darkmode.js" defer></script>
-    <script src="js/mock_dashboard_data.js"></script>
   </body>
 </html>

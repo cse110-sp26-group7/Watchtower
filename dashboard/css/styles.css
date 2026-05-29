@@ -177,7 +177,7 @@ body {
   font-weight: 700;
 }
 .page-sub {
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--dim);
   margin-top: 3px;
 }
