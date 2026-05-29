@@ -295,6 +295,32 @@ describe('GET /api/summary', () => {
 		expect(new Date(s[1].t) - new Date(s[0].t)).toBe(60_000); // one minute apart
 	});
 
+	it('no timezone -> echoes timezone "UTC", no warnings field', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		expect(r.status).toBe(200);
+		const b = await r.json();
+		expect(b.timezone).toBe('UTC');
+		expect(b).not.toHaveProperty('warnings');
+	});
+
+	it('timezone=UTC -> honored, no warnings', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&timezone=UTC`);
+		const b = await r.json();
+		expect(b.timezone).toBe('UTC');
+		expect(b).not.toHaveProperty('warnings');
+	});
+
+	it('non-UTC timezone -> unsupported_param warning, buckets still UTC', async () => {
+		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&timezone=America/New_York`);
+		expect(r.status).toBe(200);
+		const b = await r.json();
+		expect(b.timezone).toBe('UTC'); // requested tz not applied
+		expect(b.warnings).toEqual([{ code: 'unsupported_param', param: 'timezone' }]);
+		// buckets are unchanged — still the UTC-aligned 24h grid
+		expect(b.timeseries.errors).toHaveLength(24);
+		expect(b.timeseries.errors[0].t).toMatch(/Z$/);
+	});
+
 	it('window=5d -> 400 invalid_param=window', async () => {
 		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=5d`);
 		expect(r.status).toBe(400);
