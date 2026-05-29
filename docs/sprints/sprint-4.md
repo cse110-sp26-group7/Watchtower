@@ -8,10 +8,21 @@
 
 ## Goals
 
+- [X] Implement CLI deploy
+- [ ] FE dashboard connected to real BE data (no more mock data) - Move to Sprint 4
+- [ ] Real errors from Test App are visible on the dashboard  - Move to sprint 3
+- [ ] Log Viewer functional with real data and search by type - Move to Sprint 4
+- [ ] Basic Data Visualizer charts showing real error frequency - Move to Sprint 4
+- [ ] QA executes test plan against the fully connected system - Move to Sprint 4
 - [ ] Basic authentication — login page with username and password
-- [ ] Alert and notification system when new errors are detected
-- [ ] Summary health view — "Is the site up? Is it throwing errors? Is it performing well?"
-- [ ] Deploy signal tracking visible alongside error timeline
+- [ ] Frontend + Backend second meeting
+- [ ] Code review for Team 9
+- [ ] Writting ADR
+
+# Move to later Sprint 4 - possibly to Sprint 5
+- [ ] Alert and notification system when new errors are detected - Move to later sprint 4, potentially move to sprint 5
+- [ ] Summary health view — "Is the site up? Is it throwing errors? Is it performing well?" - Move to later sprint 4, potentially move to sprint 5
+- [ ] Deploy signal tracking visible alongside error timeline 
 - [ ] UI polish and bug fixes from Sprint 3 retrospective
 - [ ] QA regression testing on all Sprint 3 + Sprint 4 features
 
