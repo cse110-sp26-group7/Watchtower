@@ -1,0 +1,13 @@
+{
+  "name": "@watchtower/client",
+  "version": "1.0.0-alpha",
+  "description": "Watchtower browser SDK",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.0"
+  }
+}

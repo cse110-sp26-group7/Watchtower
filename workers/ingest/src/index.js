@@ -85,12 +85,21 @@ export default {
       return err(400, 'bad_envelope', 'Expected { project_id: string, events: array }');
     }
     if (body.events.length === 0) return ok204();
+
     if (body.events.length > MAX_EVENTS) {
       return err(413, 'batch_too_large', `Max ${MAX_EVENTS} events per batch`);
     }
 
     // TODO(Sprint 4): project_id lookup → 401 on unknown id.
     // TODO: rate limiting per provisional policy (60/s per project, 30/s per IP).
+    const project = await env.DB
+      .prepare("SELECT 1 FROM projects WHERE project_id = ?")
+      .bind(body.project_id)
+      .first();
+      
+    if (!project) {
+      return err(401, 'unauthorized', 'Unknown project_id');
+    }
 
     const ctx = {
       projectId: body.project_id,
