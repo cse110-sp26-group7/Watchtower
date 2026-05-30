@@ -1,26 +1,11 @@
 /**
- * Watchtower SDK
- *
- * Usage (ADR-0006):
- *   <script src="./watchtower.js"></script>
- *
- *   const wt = new Watchtower({
- *     projectId: "wt_a1b2c3d4",
- *     endpoint:  "https://your-worker.workers.dev/ingest"
- *   })
- *   wt.init()
- */
-
-/**
  * Per-metric thresholds used to classify a Web Vital value as
  * "good", "needs-improvement", or "poor".
- *
+ * 
  * Each metric uses independent units — thresholds must never be shared:
  *   - LCP, FCP, INP, TTFB: milliseconds
  *   - CLS: unitless cumulative score
- *
  * @see https://web.dev/vitals/
- *
  * @type {Object.<string, {good: number, poor: number}>}
  */
 const THRESHOLDS = {
@@ -29,7 +14,7 @@ const THRESHOLDS = {
   CLS:  { good: 0.1,  poor: 0.25  },
   FCP:  { good: 1800, poor: 3000  },
   TTFB: { good: 800,  poor: 1800  },
-}
+};
 
 /**
  * Returns a Web Vitals rating for a given metric value by comparing it
@@ -37,17 +22,16 @@ const THRESHOLDS = {
  *
  * Returns "good" for unknown metric names so unrecognised metrics never
  * produce false "poor" alerts.
- *
  * @param {string} metricName - One of "LCP" | "INP" | "CLS" | "FCP" | "TTFB".
  * @param {number} value      - The raw metric value in the metric's native unit.
  * @returns {"good"|"needs-improvement"|"poor"} The Web Vitals rating bucket.
  */
 function getRating(metricName, value) {
-  const t = THRESHOLDS[metricName]
-  if (!t) return "good"
-  if (value <= t.good) return "good"
-  if (value <= t.poor) return "needs-improvement"
-  return "poor"
+  const t = THRESHOLDS[metricName];
+  if (!t) return "good";
+  if (value <= t.good) return "good";
+  if (value <= t.poor) return "needs-improvement";
+  return "poor";
 }
 
 /**
@@ -82,59 +66,34 @@ class Watchtower {
    * @param {boolean} [config.debug=false]   - When true, logs every outbound batch to the console.
    */
   constructor(config = {}) {
-    this.projectId   = config.projectId || document.currentScript?.dataset?.project || null
-    this.endpoint    = config.endpoint  || "/ingest"
-    this.environment = config.environment || "prod"
-    // FIX (michael-marras): accept deploy_id from config so it propagates to every event.
-    this.deployId    = config.deployId  || null
-    this.debug       = config.debug || false
-    this.sessionId   = this._getSessionId()
-    this.queue       = []
-    this.isFlushing  = false
-    // NOTE: init() is NOT called here — consumer calls it explicitly (ADR-0006).
+    this.projectId   = config.projectId || document.currentScript?.dataset?.project || null;
+    this.endpoint    = config.endpoint  || "/ingest";
+    this.environment = config.environment || "prod";
+    this.deployId    = config.deployId  || null;
+    this.debug       = config.debug || false;
+    this.queue       = [];
+    this.isFlushing  = false;
   }
 
   /**
    * Starts all automatic tracking: page view, uncaught errors, and Web Vitals.
-   *
-   * Must be called once by the consumer after constructing the instance (ADR-0006).
    * Calling it more than once will register duplicate event listeners.
-   *
    * @returns {void}
    */
   init() {
-    this._trackPageView()
-    this._setupErrorTracking()
-    this._setupPerformanceTracking()
-  }
-
-  /**
-   * Returns the current session ID, creating and persisting a new one via
-   * `sessionStorage` if none exists yet.
-   *
-   * Session IDs are scoped to the browser tab (sessionStorage lifetime) so
-   * each new tab or window begins a fresh session.
-   *
-   * @private
-   * @returns {string} A UUID v4 session identifier.
-   */
-  _getSessionId() {
-    let id = sessionStorage.getItem("wt_session_id")
-    if (!id) {
-      id = crypto.randomUUID()
-      sessionStorage.setItem("wt_session_id", id)
-    }
-    return id
+    console.log("Watchtower Initialized");
+    console.log("Debug Mode", this.debug);
+    this._trackPageView();
+    this._setupErrorTracking();
+    this._setupPerformanceTracking();
   }
 
   /**
    * Enqueues a single analytics event and triggers a flush.
-   *
    * The event is silently dropped if no `projectId` is configured.
    * Common fields (event_id, timestamp, url, session_id, etc.) are
    * added automatically; fields in `data` are merged in and can
    * override defaults.
-   *
    * @param {string} eventType          - The event category, e.g. "error", "performance",
    *                                      "pageview", or "feedback".
    * @param {object} [data={}]          - Additional fields to merge into the event payload.
@@ -146,13 +105,11 @@ class Watchtower {
       return
     }
     const event = {
-      event_id:    crypto.randomUUID(),
       event_type:  eventType,
+      event_id:    crypto.randomUUID(),
       timestamp:   new Date().toISOString(),
       environment: this.environment,
       url:         window.location.href,
-      session_id:  this.sessionId,
-      // FIX (michael-marras): populate deploy_id from instance config rather than hardcoding null.
       deploy_id:   this.deployId,
       ...data,
     }
@@ -184,29 +141,26 @@ class Watchtower {
       events: this.queue.splice(0, 100),
     }
 
-    if (this.debug) console.log("WATCHTOWER BATCH:", batch)
-
+    if (this.debug) console.log(`WATCHTOWER: flushing ${batch.events.length} event(s) to ${this.endpoint}:`, batch)
     const payload = JSON.stringify(batch)
-
+    
     try {
-      // FIX (michael-marras): check sendBeacon's return value. It returns false when the
-      // browser cannot queue the request (e.g. payload too large), so we must fall back
-      // to fetch in that case rather than silently losing the batch.
       const beaconQueued = navigator.sendBeacon
         ? navigator.sendBeacon(this.endpoint, new Blob([payload], { type: "text/plain;charset=UTF-8" }))
         : false
-
       if (!beaconQueued) {
         fetch(this.endpoint, {
           method:    "POST",
           headers:   { "Content-Type": "application/json" },
           body:      payload,
           keepalive: true,
+        }).catch(err => {
+          if (this.debug) console.error("Watchtower fetch failed:", err.message)
         })
       }
     } catch (err) {
       // Analytics must never throw in the host app.
-      if (this.debug) console.error("Watchtower send error:", err)
+      if (this.debug) console.error("Watchtower send error:", err.message)
     }
 
     this.isFlushing = false
@@ -219,7 +173,6 @@ class Watchtower {
    * @returns {void}
    */
   _trackPageView() {
-    // FIX (michael-marras): changed event type from "page_view" to "pageview" to match schema.
     this.track("pageview", {
       referrer: document.referrer || null,
     })
@@ -303,7 +256,7 @@ class Watchtower {
           for (const entry of list.getEntries()) callback(entry)
         })
         observer.observe({ type, buffered: true })
-      } catch (_) {
+      } catch {
         // Entry type unsupported in this browser — degrade silently.
       }
     }
@@ -337,8 +290,6 @@ class Watchtower {
     // Per-entry CLS values are meaningless in isolation; the metric is
     // the sum of all unexpected layout shifts across the session.
     let clsTotal    = 0
-    // FIX (michael-marras): guard against duplicate flushes when both visibilitychange
-    // and pagehide fire in the same unload sequence (common in Chrome/Safari bfcache).
     let clsFlushed  = false
 
     observe("layout-shift", (entry) => {
@@ -420,7 +371,7 @@ class Watchtower {
 
 // Support both CommonJS/module environments and plain script-tag usage.
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { Watchtower }
+  module.exports = { Watchtower, getRating }
 } else {
   window.Watchtower = Watchtower
 }

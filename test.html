@@ -8,7 +8,7 @@
   <h1>Watchtower SDK Test Page</h1>
 
   <!-- 1. Load the SDK -->
-  <script src="./watchtower.js"></script>
+  <script src="client/watchtower.js"></script>
 
   <!-- 2. Consumer controls initialization (ADR-0006) -->
   <script>
@@ -21,9 +21,19 @@
     wt.init()
 
     // Manual test event
-    window.addEventListener("load", () => {
-      wt.track("manual_test_event", { source: "test_page" })
-    })
+    //window.addEventListener("load", () => {
+      //wt.track("manual_test_event", { source: "test_page" })
+    //})
+  </script>
+
+  <button id="trigger-error">Trigger Test Error</button>
+  <script>
+    document
+      .getElementById("trigger-error")
+      .addEventListener("click", () => {
+        // Simulate a runtime error
+        throw new Error("Manual test error triggered");
+      });
   </script>
 </body>
 </html>
