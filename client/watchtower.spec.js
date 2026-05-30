@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest"
-import { Watchtower } from "./watchtower.js"
+import { Watchtower, getRating } from "./watchtower.js"
 
 /**
  * Shared setup: mock browser globals
@@ -41,6 +41,88 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks()
+})
+
+describe("Watchtower SDK — Test 1: getRating() metric classification", () => {
+  it("classifies LCP values at and around each threshold boundary", () => {
+    expect(getRating("LCP", 1000)).toBe("good")
+    expect(getRating("LCP", 2500)).toBe("good")
+    expect(getRating("LCP", 2501)).toBe("needs-improvement")
+    expect(getRating("LCP", 4000)).toBe("needs-improvement")
+    expect(getRating("LCP", 4001)).toBe("poor")
+    expect(getRating("LCP", 8000)).toBe("poor")
+  })
+
+  it("classifies INP values correctly", () => {
+    expect(getRating("INP", 100)).toBe("good")
+    expect(getRating("INP", 200)).toBe("good")
+    expect(getRating("INP", 201)).toBe("needs-improvement")
+    expect(getRating("INP", 500)).toBe("needs-improvement")
+    expect(getRating("INP", 501)).toBe("poor")
+  })
+
+  it("classifies CLS (unitless) values correctly", () => {
+    expect(getRating("CLS", 0.05)).toBe("good")
+    expect(getRating("CLS", 0.1)).toBe("good")
+    expect(getRating("CLS", 0.20)).toBe("needs-improvement")
+    expect(getRating("CLS", 0.25)).toBe("needs-improvement")
+    expect(getRating("CLS", 0.30)).toBe("poor")
+  })
+
+  it("classifies FCP values correctly", () => {
+    expect(getRating("FCP", 1000)).toBe("good")
+    expect(getRating("FCP", 1800)).toBe("good")
+    expect(getRating("FCP", 2000)).toBe("needs-improvement")
+    expect(getRating("FCP", 3000)).toBe("needs-improvement")
+    expect(getRating("FCP", 3001)).toBe("poor")
+  })
+
+  it("classifies TTFB values correctly", () => {
+    expect(getRating("TTFB", 400)).toBe("good")
+    expect(getRating("TTFB", 800)).toBe("good")
+    expect(getRating("TTFB", 1000)).toBe("needs-improvement")
+    expect(getRating("TTFB", 1800)).toBe("needs-improvement")
+    expect(getRating("TTFB", 1801)).toBe("poor")
+  })
+
+  it("returns 'good' for unknown metric names", () => {
+    expect(getRating("UNKNOWN_METRIC", 99999)).toBe("good")
+    expect(getRating("", 100)).toBe("good")
+    expect(getRating(undefined, 500)).toBe("good")
+  })
+})
+
+describe("Watchtower SDK — Test 2: track() no-op without projectId", () => {
+  it("keeps queue empty when no projectId is configured", () => {
+    const wt = new Watchtower({})
+    wt.track("pageview", {})
+    expect(wt.queue).toHaveLength(0)
+  })
+
+  it("keeps queue empty after captureError when no projectId is configured", () => {
+    const wt = new Watchtower({})
+    wt.captureError(new Error("boom"))
+    expect(wt.queue).toHaveLength(0)
+  })
+
+  it("keeps queue empty after feedback() when no projectId is configured", () => {
+    const wt = new Watchtower({})
+    wt.feedback(5, "great app")
+    expect(wt.queue).toHaveLength(0)
+  })
+
+  it("does not call sendBeacon when projectId is missing", () => {
+    const wt = new Watchtower({})
+    wt.track("pageview", {})
+    expect(navigator.sendBeacon).not.toHaveBeenCalled()
+  })
+
+  it("enqueues events when projectId is provided (control case)", () => {
+    const wt = new Watchtower({ projectId: "wt_test" })
+    vi.spyOn(wt, "_flush").mockImplementation(() => {})
+    wt.track("pageview", {})
+    expect(wt.queue).toHaveLength(1)
+  })
 })
 
 describe("Watchtower SDK — Test 3: track() event common fields", () => {
