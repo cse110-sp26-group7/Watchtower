@@ -46,7 +46,7 @@ This is mostly an integration sprint. We are not building auth, project CRUD, ev
 | 4   | Cloudflare prod deploy + CORS verification           | open      | #3        |
 | 5   | SDK end-to-end on Ethan's Test App                   | open      | #4        |
 | 6   | FE-BE integration sync (Log Viewer, Data Visualizer) | Theo      | #4        |
-| 7   | `GET /api/summary` for Data Visualizer               | open      | #2, #3    |
+| 7   | `GET /api/summary` for Data Visualizer               | Gabrielle | #2, #3    |
 
 ---
 

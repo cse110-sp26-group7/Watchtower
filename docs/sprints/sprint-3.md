@@ -8,12 +8,12 @@
 
 ## Goals
 
-- [ ] FE dashboard connected to real BE data (no more mock data)
-- [ ] Real errors from Test App are visible on the dashboard
-- [ ] Log Viewer functional with real data and search by type
-- [ ] Basic Data Visualizer charts showing real error frequency
-- [ ] QA executes test plan against the fully connected system
-- [ ] Video updating current status of the team.
+- [ ] FE dashboard connected to real BE data (no more mock data) - Move to Sprint 4
+- [ ] Real errors from Test App are visible on the dashboard  - Move to sprint 3
+- [ ] Log Viewer functional with real data and search by type - Move to Sprint 4
+- [ ] Basic Data Visualizer charts showing real error frequency - Move to Sprint 4
+- [ ] QA executes test plan against the fully connected system - Move to Sprint 4
+- [X] Video updating current status of the team.
 
 ---
 
