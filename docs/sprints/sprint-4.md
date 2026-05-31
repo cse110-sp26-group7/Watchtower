@@ -9,15 +9,15 @@
 ## Goals
 
 - [X] Implement CLI deploy
-- [ ] FE dashboard connected to real BE data (no more mock data) - Move to Sprint 4
-- [ ] Real errors from Test App are visible on the dashboard  - Move to sprint 3
-- [ ] Log Viewer functional with real data and search by type - Move to Sprint 4
-- [ ] Basic Data Visualizer charts showing real error frequency - Move to Sprint 4
-- [ ] QA executes test plan against the fully connected system - Move to Sprint 4
+- [ ] FE dashboard connected to real BE data (no more mock data) 
+- [ ] Real errors from Test App are visible on the dashboard 
+- [ ] Log Viewer functional with real data and search by type 
+- [ ] Basic Data Visualizer charts showing real error frequency
+- [ ] QA executes test plan against the fully connected system 
 - [ ] Basic authentication — login page with username and password
 - [ ] Frontend + Backend second meeting
-- [ ] Code review for Team 9
-- [ ] Writting ADR
+- [X] Code review for Team 9
+- [X] Writting ADR
 
 # Move to later Sprint 4 - possibly to Sprint 5
 - [ ] Alert and notification system when new errors are detected - Move to later sprint 4, potentially move to sprint 5
@@ -71,10 +71,10 @@
 
 | Dependency | Teams Involved | Status |
 |---|---|---|
-| Sprint 3 MVP must be stable before Sprint 4 features are layered on | All Teams | Unresolved |
-| Authentication must be in place before QA can test user-specific views | FE + BE → QA | Unresolved |
-| Alert system requires BE to support notification triggers | FE → BE | Unresolved |
-| Deploy signal tracking requires GitHub Actions to post deploy events to ingest Worker | DevOps → BE | Unresolved |
+| Sprint 3 MVP must be stable before Sprint 4 features are layered on | All Teams | Most sprints from sprint 3 were moved to Sprint 4 |
+| Authentication must be in place before QA can test user-specific views | FE + BE → QA | BE team is in progress |
+| Alert system requires BE to support notification triggers | FE → BE | Could be moved to next speint |
+| Deploy signal tracking requires GitHub Actions to post deploy events to ingest Worker | DevOps → BE | In progress |
 
 ---
 
