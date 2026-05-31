@@ -1,5 +1,5 @@
 /* global refreshProjectCards */
-function navigate(route) {
+window.navigate = function navigate(route) {
   // hide all pages
   document.querySelectorAll(".page").forEach((p) => {
     p.classList.remove("active");
@@ -18,13 +18,18 @@ function navigate(route) {
   const btn = document.querySelector(`[data-route="${route}"]`);
   if (btn) btn.classList.add("active");
 
+  // load dashboard data when navigating to dashboard
+  if (route === "dashboard" && typeof loadDashboard === "function") {
+    loadDashboard();
+  }
+
   //when navigating to projects page, refresh project cards to update the status and stats of each project
   if (route === "projects" && typeof refreshProjectCards === "function") {
     refreshProjectCards();
   }
   // update URL hash
   window.location.hash = "/" + route;
-}
+};
 
 // on page load, read hash and navigate
 window.addEventListener("load", () => {
