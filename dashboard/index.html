@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="css/projects_selection.css" />
     <link rel="stylesheet" href="css/performance_summary.css" />
+    <link rel="stylesheet" href="css/error_log.css" />
   </head>
   <body>
     <!--NavBar-->
@@ -181,8 +182,8 @@
                 </a>
               </div>
 
-              <table class="errors-table">
-                <thead class="errors-table-row" id="recent-errors-header">
+              <table class="recent-errors-table">
+                <thead class="recent-errors-table-row" id="recent-errors-header">
                   <tr>
                     <th>Time</th>
                     <th>Level</th>
@@ -197,7 +198,7 @@
                   <tr class="errors-table-row" id="recent-error-1">
                     <td>12:00</td>
                     <td>
-                      <span class="error-level-dot" id="level-dot-1"></span>
+                      <span class="recent-error-level-dot" id="mini-level-dot-1"></span>
                     </td>
                     <td>
                       this is a very long sentence detailing the crash details
@@ -210,7 +211,7 @@
                   <tr class="errors-table-row" id="recent-error-2">
                     <td>20:00</td>
                     <td>
-                      <span class="error-level-dot" id="level-dot-2"></span>
+                      <span class="recent-error-level-dot" id="mini-level-dot-2"></span>
                     </td>
                     <td>
                       this is another very long sentence detailing an issue with
@@ -223,7 +224,7 @@
                   <tr class="errors-table-row" id="recent-error-3">
                     <td>placeholder 3</td>
                     <td>
-                      <span class="error-level-dot" id="level-dot-3"></span>
+                      <span class="recent-error-level-dot" id="mini-level-dot-3"></span>
                     </td>
                     <td>placeholder</td>
                     <td>placeholder</td>
@@ -233,7 +234,7 @@
                   <tr class="errors-table-row" id="recent-error-4">
                     <td>placeholder 4</td>
                     <td>
-                      <span class="error-level-dot" id="level-dot-4"></span>
+                      <span class="recent-error-level-dot" id="mini-level-dot-4"></span>
                     </td>
                     <td>placeholder</td>
                     <td>placeholder</td>
@@ -243,7 +244,7 @@
                   <tr class="errors-table-row" id="recent-error-5">
                     <td>placeholder 5</td>
                     <td>
-                      <span class="error-level-dot" id="level-dot-5"></span>
+                      <span class="recent-error-level-dot" id="mini-level-dot-5"></span>
                     </td>
                     <td>placeholder</td>
                     <td>placeholder</td>
@@ -262,7 +263,100 @@
           <div class="page-title">Error Log</div>
         </div>
         <!-- search bar, filter, table go here -->
-        <p>This is error log</p>
+        <div class="error-log-controls">
+          <!-- search bar -->
+          <input type="search" id="search" placeholder="Search logs..." />
+
+          <!-- filter -->
+          <select id="filter">
+            <option value="all">All Levels</option>
+            <option value="error">Errors</option>
+            <option value="warning">Warnings</option>
+            <option value="minimal">Minimal</option>
+          </select>
+        </div>
+
+        <!-- full error log table -->
+        <section class="full-error-logs">
+          <!-- error log table -->
+          <div class="full-errors-header">
+              <h3>Full Error Log</h3>
+
+            <!--page navigation for table-->
+
+          </div>
+
+          <table class="full-errors-table">
+            <thead id="full-errors-header">
+                <tr class="full-errors-table-row" id="full-error-header">
+                  <th>Time</th>
+                  <th>Level</th>
+                  <th>Message</th>
+                  <th>Location</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+
+              <tbody id="full-errors-body">
+                <!-- Full errors will be populated here -->
+                <tr class="full-errors-table-row" id="full-error-1">
+                  <td>12:00</td>
+                  <td class="full-level-status"> 
+                    <span class="full-error-level-dot" id="full-level-dot-1"></span> ERROR 
+                  </td>
+                  <td>
+                    this is a very long sentence detailing the crash details of the 
+                    website you are monitoring. blah balah blahsda
+                  </td>
+                  <td>everywhere</td>
+                  <td>10</td>    
+                </tr>
+
+                <tr class="full-errors-table-row" id="full-error-2">
+                  <td>20:00</td>
+                  <td class="full-level-status"> 
+                    <span class="full-error-level-dot" id="full-level-dot-2"></span> WARNING 
+                  </td>
+                  <td>
+                    this is another very long sentence detailing an issue with
+                    details of the website you are monitoring.
+                  </td>
+                  <td>one specific page</td>
+                  <td>22</td>
+                </tr>
+                  
+                <tr class="full-errors-table-row" id="full-error-3">
+                    <td>placeholder 3</td>
+                    <td>
+                      <span class="full-error-level-dot" id="full-level-dot-3"></span> WARNING
+                    </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                </tr>
+
+                <tr class="full-errors-table-row" id="full-error-4">
+                    <td>placeholder 4</td>
+                    <td>
+                      <span class="full-error-level-dot" id="full-level-dot-4"></span> MINIMAL
+                    </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                </tr>
+
+                <tr class="full-errors-table-row" id="full-error-5">
+                    <td>placeholder 5</td>
+                    <td>
+                      <span class="full-error-level-dot" id="full-level-dot-5"></span> WARNING
+                    </td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                    <td>placeholder</td>
+                </tr>
+              </tbody>
+          </table>
+        </section>
       </div>
 
       <!-- SETTINGS -->
@@ -277,6 +371,7 @@
     <!--Add scripts here-->
     <script src="js/mock_dashboard_data.js"></script>
     <script src="js/projects_selection.js"></script>
+    <script src="js/error_log.js"></script>
     <script src="js/router.js"></script>
     <script src="js/darkmode.js" defer></script>
   </body>
