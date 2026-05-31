@@ -38,7 +38,7 @@
 | BE Team | Start API endpoint setup | [#25](https://github.com/cse110-sp26-group7/Watchtower/issues/25) | [N/A]() | 05-15 |
 | DevOps | Connection with Test App | [#45](https://github.com/cse110-sp26-group7/Watchtower/issues/45) | [N/A]() | 05-14 |
 | QA | Test plan + minimal tests | [#46](https://github.com/cse110-sp26-group7/Watchtower/issues/46) | [N/A]() | 05-16 |
-
+(More in Github Project)
 ---
 
 ## Definition of Done
@@ -70,13 +70,14 @@
 
 ---
 
-## Retrospective _(N/A)_
+## Retrospective _(5/11/2026)_
 
 **What went well:**
--
+- Good Communiation
+- Clear Tasks
 
 **What didn't go well:**
--
+- Hard to schedule team meeting
 
 **What to improve next sprint:**
--
+- More active communication between team lead to choose their match time since finding 2 person's common schedule is easier than many people. 
