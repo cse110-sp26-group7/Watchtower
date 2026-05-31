@@ -1,4 +1,5 @@
-/* global refreshProjectCards */
+/* global loadDashboard, loadErrorLog, refreshProjectCards */
+
 window.navigate = function navigate(route) {
   // hide all pages
   document.querySelectorAll(".page").forEach((p) => {
@@ -39,5 +40,5 @@ window.navigate = function navigate(route) {
 // on page load, read hash and navigate
 window.addEventListener("load", () => {
   const hash = window.location.hash.replace("#/", "");
-  navigate(hash || "projects");
+  window.navigate(hash || "projects");
 });
