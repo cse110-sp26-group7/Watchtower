@@ -23,6 +23,11 @@ window.navigate = function navigate(route) {
     loadDashboard();
   }
 
+  //load error log when navigating to errors page
+  if (route === "errors" && typeof loadErrorLog === "function") {
+    loadErrorLog();
+  }
+
   //when navigating to projects page, refresh project cards to update the status and stats of each project
   if (route === "projects" && typeof refreshProjectCards === "function") {
     refreshProjectCards();

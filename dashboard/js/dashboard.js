@@ -5,10 +5,33 @@
  */
 window.loadDashboard = async function loadDashboard() {
   try {
+    //fetch errors
     const { events } = await getEvents("wt_demo", {
       type: "error",
       since: "7d",
     });
+
+    // fetch performance
+    const { events: perfEvents } = await getEvents("wt_demo", {
+      type: "performance",
+      since: "7d",
+    });
+
+    // find latest LCP, FCP, CLS values
+    const lcp = perfEvents.find((e) => e.metric_name === "LCP");
+    const fcp = perfEvents.find((e) => e.metric_name === "FCP");
+    const cls = perfEvents.find((e) => e.metric_name === "CLS");
+
+    // update cards
+    document.getElementById("lcp-value").textContent = lcp
+      ? `${lcp.metric_value}ms`
+      : "N/A";
+    document.getElementById("fcp-value").textContent = fcp
+      ? `${fcp.metric_value}ms`
+      : "N/A";
+    document.getElementById("cls-value").textContent = cls
+      ? parseFloat(cls.metric_value ?? "N/A").toFixed(2)
+      : "N/A";
 
     // update total errors card
     document.getElementById("total-errors").textContent = events.length;
