@@ -172,7 +172,7 @@
 }
 
 /* recent errors table */
-.errors-table {
+.recent-errors-table {
   width: 100%;
   color: var(--text);
   
@@ -189,16 +189,16 @@
   th:nth-child(5), td:nth-child(5) {width: 10%;};
 }
 
-.errors-table th {
+.recent-errors-table th {
   text-decoration: underline;
 }
 
-.errors-table td {
+.recent-errors-table td {
   font-weight: bold;
   text-align: center;
 }
 
-.error-level-dot {
+.recent-error-level-dot {
   display: inline-block;
   width: 32px;
   height: 16px;
@@ -207,11 +207,11 @@
 }
 
 /* error-level-dot colors */
-#level-dot-1 { background: var(--red); }
-#level-dot-2 { background: var(--amber); }
-#level-dot-3 { background: var(--clear); }
-#level-dot-4 { background: var(--green); }
-#level-dot-5 { background: var(--amber); }
+#mini-level-dot-1 { background: var(--red); }
+#mini-level-dot-2 { background: var(--amber); }
+#mini-level-dot-3 { background: var(--amber); }
+#mini-level-dot-4 { background: var(--green); }
+#mini-level-dot-5 { background: var(--amber); }
 
 .metric-description {
   margin-top: 10px;
