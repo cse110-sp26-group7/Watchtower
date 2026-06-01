@@ -92,7 +92,7 @@
             <div class="project-stats">
               <span>errors: 0</span>
               <span>LCP: 0ms</span>
-              <span>INP: 0ms</span>
+              <span>FCP: 0ms</span>
               <span>CLS: 0</span>
             </div>
           </div>
@@ -139,13 +139,13 @@
               <p class="metric-description">Largest Contentful Paint</p>
             </div>
 
-            <!-- INP -->
+            <!-- FCP -->
             <div class="metric-card">
-              <h3>INP</h3>
+              <h3>FCP</h3>
 
-              <p class="metric-number metric-inp" id="inp-value">0ms</p>
+              <p class="metric-number metric-fcp" id="fcp-value">0ms</p>
 
-              <p class="metric-description">Interaction to Next Paint</p>
+              <p class="metric-description">First Contentful Paint</p>
             </div>
 
             <!-- CLS -->
@@ -183,7 +183,10 @@
               </div>
 
               <table class="recent-errors-table">
-                <thead class="recent-errors-table-row" id="recent-errors-header">
+                <thead
+                  class="recent-errors-table-row"
+                  id="recent-errors-header"
+                >
                   <tr>
                     <th>Time</th>
                     <th>Level</th>
@@ -195,61 +198,6 @@
 
                 <tbody id="recent-errors-body">
                   <!-- Recent errors will be populated here -->
-                  <tr class="errors-table-row" id="recent-error-1">
-                    <td>12:00</td>
-                    <td>
-                      <span class="recent-error-level-dot" id="mini-level-dot-1"></span>
-                    </td>
-                    <td>
-                      this is a very long sentence detailing the crash details
-                      of the website you are monitoring. blah balah blahsda
-                    </td>
-                    <td>everywhere</td>
-                    <td>10</td>
-                  </tr>
-
-                  <tr class="errors-table-row" id="recent-error-2">
-                    <td>20:00</td>
-                    <td>
-                      <span class="recent-error-level-dot" id="mini-level-dot-2"></span>
-                    </td>
-                    <td>
-                      this is another very long sentence detailing an issue with
-                      details of the website you are monitoring.
-                    </td>
-                    <td>one specific page</td>
-                    <td>22</td>
-                  </tr>
-
-                  <tr class="errors-table-row" id="recent-error-3">
-                    <td>placeholder 3</td>
-                    <td>
-                      <span class="recent-error-level-dot" id="mini-level-dot-3"></span>
-                    </td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                  </tr>
-
-                  <tr class="errors-table-row" id="recent-error-4">
-                    <td>placeholder 4</td>
-                    <td>
-                      <span class="recent-error-level-dot" id="mini-level-dot-4"></span>
-                    </td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                  </tr>
-
-                  <tr class="errors-table-row" id="recent-error-5">
-                    <td>placeholder 5</td>
-                    <td>
-                      <span class="recent-error-level-dot" id="mini-level-dot-5"></span>
-                    </td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -280,81 +228,25 @@
         <section class="full-error-logs">
           <!-- error log table -->
           <div class="full-errors-header">
-              <h3>Full Error Log</h3>
+            <h3>Full Error Log</h3>
 
             <!--page navigation for table-->
-
           </div>
 
           <table class="full-errors-table">
             <thead id="full-errors-header">
-                <tr class="full-errors-table-row" id="full-error-header">
-                  <th>Time</th>
-                  <th>Level</th>
-                  <th>Message</th>
-                  <th>Location</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
+              <tr class="full-errors-table-row" id="full-error-header">
+                <th>Time</th>
+                <th>Level</th>
+                <th>Message</th>
+                <th>Location</th>
+                <th>Count</th>
+              </tr>
+            </thead>
 
-              <tbody id="full-errors-body">
-                <!-- Full errors will be populated here -->
-                <tr class="full-errors-table-row" id="full-error-1">
-                  <td>12:00</td>
-                  <td class="full-level-status"> 
-                    <span class="full-error-level-dot" id="full-level-dot-1"></span> ERROR 
-                  </td>
-                  <td>
-                    this is a very long sentence detailing the crash details of the 
-                    website you are monitoring. blah balah blahsda
-                  </td>
-                  <td>everywhere</td>
-                  <td>10</td>    
-                </tr>
-
-                <tr class="full-errors-table-row" id="full-error-2">
-                  <td>20:00</td>
-                  <td class="full-level-status"> 
-                    <span class="full-error-level-dot" id="full-level-dot-2"></span> WARNING 
-                  </td>
-                  <td>
-                    this is another very long sentence detailing an issue with
-                    details of the website you are monitoring.
-                  </td>
-                  <td>one specific page</td>
-                  <td>22</td>
-                </tr>
-                  
-                <tr class="full-errors-table-row" id="full-error-3">
-                    <td>placeholder 3</td>
-                    <td>
-                      <span class="full-error-level-dot" id="full-level-dot-3"></span> WARNING
-                    </td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                </tr>
-
-                <tr class="full-errors-table-row" id="full-error-4">
-                    <td>placeholder 4</td>
-                    <td>
-                      <span class="full-error-level-dot" id="full-level-dot-4"></span> MINIMAL
-                    </td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                </tr>
-
-                <tr class="full-errors-table-row" id="full-error-5">
-                    <td>placeholder 5</td>
-                    <td>
-                      <span class="full-error-level-dot" id="full-level-dot-5"></span> WARNING
-                    </td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                    <td>placeholder</td>
-                </tr>
-              </tbody>
+            <tbody id="full-errors-body">
+              <!-- Full error logs will be populated here -->
+            </tbody>
           </table>
         </section>
       </div>
@@ -369,7 +261,8 @@
     </main>
 
     <!--Add scripts here-->
-    <script src="js/mock_dashboard_data.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/dashboard.js"></script>
     <script src="js/projects_selection.js"></script>
     <script src="js/error_log.js"></script>
     <script src="js/router.js"></script>
