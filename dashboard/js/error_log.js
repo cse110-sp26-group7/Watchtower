@@ -54,7 +54,7 @@ window.loadErrorLog = async function loadErrorLog() {
   try {
     const { events } = await getEvents("wt_demo", {
       type: "error",
-      since: "7d",
+      since: "30d",
     });
 
     const tbody = document.getElementById("full-errors-body");
