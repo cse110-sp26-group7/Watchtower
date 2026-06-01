@@ -53,3 +53,28 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_CICD_V1 }}
         run: npx wrangler deploy
+  
+  notify-deploy:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST deploy event to ingest
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          EVENT_ID=$(uuidgen)
+          TS=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+          curl -fsS -X POST https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"project_id\": \"wt_demo\",
+              \"events\": [{
+                \"event_id\": \"$EVENT_ID\",
+                \"event_type\": \"deploy\",
+                \"timestamp\": \"$TS\",
+                \"environment\": \"prod\",
+                \"deploy_id\": \"${GITHUB_SHA}\",
+                \"version\": \"${GITHUB_REF_NAME}\"
+              }]
+            }"
