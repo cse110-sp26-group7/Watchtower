@@ -8,13 +8,13 @@ window.loadDashboard = async function loadDashboard() {
     //fetch errors
     const { events } = await getEvents("wt_demo", {
       type: "error",
-      since: "7d",
+      since: "30d",
     });
 
     // fetch performance
     const { events: perfEvents } = await getEvents("wt_demo", {
       type: "performance",
-      since: "7d",
+      since: "30d",
     });
 
     // find latest LCP, FCP, CLS values
@@ -35,7 +35,8 @@ window.loadDashboard = async function loadDashboard() {
 
     // update total errors card
     document.getElementById("total-errors").textContent = events.length;
-    document.getElementById("error-change").textContent = "Last 7 days";
+    document.getElementById("error-change").textContent =
+      events.length === 0 ? "No errors in last 30 days" : "Last 30 days";
 
     // update bar chart
     updateErrorChart(events);
