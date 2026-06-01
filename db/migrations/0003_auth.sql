@@ -32,4 +32,4 @@ VALUES (
 );
 
 -- backfill demo project owner
-UPDATE projects SET owner_id = 'usr_demo' WHERE project_id = 'we_demo';
+UPDATE projects SET owner_id = 'usr_demo' WHERE project_id = 'wt_demo';
