@@ -2,7 +2,6 @@
  * API client for the dashboard.
  * This module provides functions to interact with the backend API.
  */
-//Test locally for now, need to replace this with the production URL
 const API_BASE_URL = "https://watchtower-api.cse110piedpiper7.workers.dev";
 
 /**
