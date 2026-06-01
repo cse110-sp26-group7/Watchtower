@@ -1,0 +1,80 @@
+name: Deploy
+
+on:
+  push:
+    tags: ['v*']  # e.g., v0.1.0, v1.2.3-rc.1
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: workers/ingest/package-lock.json
+
+      - name: Install ingest dependencies
+        working-directory: workers/ingest
+        run: npm ci
+
+      - name: Apply D1 migrations
+        working-directory: workers/ingest
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_CICD_V1 }}
+        run: npx wrangler d1 migrations apply watchtower --remote
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker: [ingest, api]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: workers/${{ matrix.worker }}/package-lock.json
+
+      - name: Install ${{ matrix.worker }} dependencies
+        working-directory: workers/${{ matrix.worker }}
+        run: npm ci
+
+      - name: Deploy ${{ matrix.worker }} worker
+        working-directory: workers/${{ matrix.worker }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_CICD_V1 }}
+        run: npx wrangler deploy
+  
+  notify-deploy:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST deploy event to ingest
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          EVENT_ID=$(uuidgen)
+          TS=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+          curl -fsS -X POST https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"project_id\": \"wt_demo\",
+              \"events\": [{
+                \"event_id\": \"$EVENT_ID\",
+                \"event_type\": \"deploy\",
+                \"timestamp\": \"$TS\",
+                \"environment\": \"prod\",
+                \"deploy_id\": \"${GITHUB_SHA}\",
+                \"version\": \"${GITHUB_REF_NAME}\"
+              }]
+            }"

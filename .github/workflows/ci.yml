@@ -1,17 +1,64 @@
 name: CI
 
 on:
-    pull_request:
-        branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                node-version: 20
-            - run: npm isntall
-            - run: npx eslint .
-        
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint .
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker: [ingest, api]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: workers/${{ matrix.worker }}/package-lock.json
+
+      - name: Install ${{ matrix.worker }} dependencies
+        working-directory: workers/${{ matrix.worker }}
+        run: npm ci
+
+      - name: Build ${{ matrix.worker }} worker
+        working-directory: workers/${{ matrix.worker }}
+        run: npx wrangler deploy --dry-run
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker: [ingest, api]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: workers/${{ matrix.worker }}/package-lock.json
+
+      - name: Install ${{ matrix.worker }} dependencies
+        working-directory: workers/${{ matrix.worker }}
+        run: npm ci
+
+      - name: Test ${{ matrix.worker }} worker
+        working-directory: workers/${{ matrix.worker }}
+        run: npm test

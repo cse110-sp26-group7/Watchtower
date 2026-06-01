@@ -15,7 +15,9 @@
 
     <!--Add others' pages css here-->
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/projects_selection.css" />
     <link rel="stylesheet" href="css/performance_summary.css" />
+    <link rel="stylesheet" href="css/error_log.css" />
   </head>
   <body>
     <!--NavBar-->
@@ -69,10 +71,38 @@
       <!-- PROJECT SELECTION -->
       <div class="page" id="page-projects">
         <div class="page-header">
-          <div class="page-title">Your Projects</div>
+          <div>
+            <div class="page-title">Your Projects</div>
+            <div class="page-sub">Select a project to open its dashboard</div>
+          </div>
         </div>
-        <!-- project cards go here -->
-        <p>This is projects page</p>
+
+        <!-- Recent -->
+        <p class="project-section-label">Recent</p>
+
+        <!-- Project Cards -->
+        <div class="project-grid">
+          <div class="project-card" onclick="navigate('dashboard')">
+            <div class="project-card-top">
+              <div class="project-logo">logo</div>
+              <span class="project-status dot-up"></span>
+            </div>
+            <div class="project-name">Project Name</div>
+            <div class="project-divider"></div>
+            <div class="project-stats">
+              <span>errors: 0</span>
+              <span>LCP: 0ms</span>
+              <span>FCP: 0ms</span>
+              <span>CLS: 0</span>
+            </div>
+          </div>
+
+          <!-- Add New Project -->
+          <button class="project-card-add" onclick="addProject()">
+            <span>+</span>
+            <p>add new project</p>
+          </button>
+        </div>
       </div>
 
       <!-- HOME DASHBOARD -->
@@ -83,92 +113,96 @@
         <!-- KPI cards, charts, recent errors go here -->
         <!-- <p>This is dashboard</p> -->
         <section class="dashboard-content">
-
           <!-- status -->
           <div class="live-status-container">
             <span id="site-status-dot" class="live-dot"></span>
 
-            <span id="site-status" class="live-text">
-              LIVE
-            </span>
+            <span id="site-status" class="live-text"> LIVE </span>
           </div>
 
           <!-- performance summary -->
           <section class="metrics-row">
-
             <!-- total errors -->
             <div class="metric-card">
               <h3>Total Errors</h3>
-              <p
-                class="metric-number error-number"
-                id="total-errors"
-              >
-                0
-              </p>
+              <p class="metric-number error-number" id="total-errors">0</p>
 
-              <p
-                class="metric-change increase"
-                id="error-change"
-              >
-                Loading...
-              </p>
+              <p class="metric-change increase" id="error-change">Loading...</p>
             </div>
 
-            <!-- response time -->
+            <!-- LCP -->
             <div class="metric-card">
-              <h3>Response Time</h3>
+              <h3>LCP</h3>
 
-              <p
-                class="metric-number response-number"
-                id="avg-response-time"
-              >
-                0ms
-              </p>
+              <p class="metric-number metric-lcp" id="lcp-value">0ms</p>
 
-              <p
-                class="metric-change decrease"
-                id="response-change"
-              >
-                Loading...
-              </p>
+              <p class="metric-description">Largest Contentful Paint</p>
             </div>
 
+            <!-- FCP -->
+            <div class="metric-card">
+              <h3>FCP</h3>
+
+              <p class="metric-number metric-fcp" id="fcp-value">0ms</p>
+
+              <p class="metric-description">First Contentful Paint</p>
+            </div>
+
+            <!-- CLS -->
+            <div class="metric-card">
+              <h3>CLS</h3>
+
+              <p class="metric-number metric-cls" id="cls-value">0</p>
+
+              <p class="metric-description">Layout Stability</p>
+            </div>
           </section>
 
-    <!-- graphs -->
-    <section class="charts-row">
+          <!-- graphs -->
+          <section class="charts-row">
+            <!-- Error Rate Chart -->
+            <div class="chart-card">
+              <h3>Error Rate Chart</h3>
 
-      <!-- Error Rate Chart -->
-      <div class="chart-card">
-        <h3>Error Rate Chart</h3>
+              <div class="bar-chart" id="error-rate-chart"></div>
+            </div>
+          </section>
 
-        <div
-          class="bar-chart"
-          id="error-rate-chart"
-        >
-        </div>
-      </div>
+          <!-- Recent Errors Logs -->
+          <section class="recent-errors-logs">
+            <div class="recent-errors">
+              <div class="recent-errors-header">
+                <h3>Recent Errors</h3>
+                <a
+                  id="view-all-errors"
+                  data-route="errors"
+                  onclick="navigate('errors')"
+                >
+                  <u> View All Errors &rarr; </u>
+                </a>
+              </div>
 
-      <!-- response time chart -->
-      <div class="chart-card">
-        <h3>Response Time Chart</h3>
+              <table class="recent-errors-table">
+                <thead
+                  class="recent-errors-table-row"
+                  id="recent-errors-header"
+                >
+                  <tr>
+                    <th>Time</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                    <th>Location</th>
+                    <th>Count</th>
+                  </tr>
+                </thead>
 
-        <svg
-          id="response-chart"
-          class="response-chart"
-          viewBox="0 0 300 150"
-        >
-          <polyline
-            id="response-line"
-            points=""
-          />
-        </svg>
-
-      </div>
-
-    </section>
-
-  </section>
+                <tbody id="recent-errors-body">
+                  <!-- Recent errors will be populated here -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
       </div>
 
       <!-- ERROR LOG -->
@@ -177,7 +211,44 @@
           <div class="page-title">Error Log</div>
         </div>
         <!-- search bar, filter, table go here -->
-        <p>This is error log</p>
+        <div class="error-log-controls">
+          <!-- search bar -->
+          <input type="search" id="search" placeholder="Search logs..." />
+
+          <!-- filter -->
+          <select id="filter">
+            <option value="all">All Levels</option>
+            <option value="error">Errors</option>
+            <option value="warning">Warnings</option>
+            <option value="minimal">Minimal</option>
+          </select>
+        </div>
+
+        <!-- full error log table -->
+        <section class="full-error-logs">
+          <!-- error log table -->
+          <div class="full-errors-header">
+            <h3>Full Error Log</h3>
+
+            <!--page navigation for table-->
+          </div>
+
+          <table class="full-errors-table">
+            <thead id="full-errors-header">
+              <tr class="full-errors-table-row" id="full-error-header">
+                <th>Time</th>
+                <th>Level</th>
+                <th>Message</th>
+                <th>Location</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+
+            <tbody id="full-errors-body">
+              <!-- Full error logs will be populated here -->
+            </tbody>
+          </table>
+        </section>
       </div>
 
       <!-- SETTINGS -->
@@ -190,8 +261,11 @@
     </main>
 
     <!--Add scripts here-->
+    <script src="js/api-client.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/error_log.js"></script>
+    <script src="js/projects_selection.js"></script>
     <script src="js/router.js"></script>
     <script src="js/darkmode.js" defer></script>
-    <script src="js/mock_dashboard_data.js"></script>
   </body>
 </html>

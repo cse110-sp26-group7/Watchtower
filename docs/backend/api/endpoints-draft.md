@@ -180,7 +180,7 @@ Filtered event listing with pagination.
 
 Query params:
 - `project_id` (required)
-- `type` (optional, default `error`): `error | performance | feedback | deploy`
+- `type` (optional, default `error`): `error | performance | feedback | deploy | pageview`
 - `since` (optional, default `24h`): ISO 8601 or relative shorthand (`1h`, `24h`, `7d`)
 - `until` (optional): ISO 8601, default now
 - `cursor` (optional): opaque cursor from previous response

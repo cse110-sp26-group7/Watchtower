@@ -8,10 +8,21 @@
 
 ## Goals
 
+- [X] Implement CLI deploy
+- [ ] FE dashboard connected to real BE data (no more mock data) 
+- [ ] Real errors from Test App are visible on the dashboard 
+- [ ] Log Viewer functional with real data and search by type 
+- [ ] Basic Data Visualizer charts showing real error frequency
+- [ ] QA executes test plan against the fully connected system 
 - [ ] Basic authentication — login page with username and password
-- [ ] Alert and notification system when new errors are detected
-- [ ] Summary health view — "Is the site up? Is it throwing errors? Is it performing well?"
-- [ ] Deploy signal tracking visible alongside error timeline
+- [ ] Frontend + Backend second meeting
+- [X] Code review for Team 9
+- [X] Writting ADR
+
+# Move to later Sprint 4 - possibly to Sprint 5
+- [ ] Alert and notification system when new errors are detected - Move to later sprint 4, potentially move to sprint 5
+- [ ] Summary health view — "Is the site up? Is it throwing errors? Is it performing well?" - Move to later sprint 4, potentially move to sprint 5
+- [ ] Deploy signal tracking visible alongside error timeline 
 - [ ] UI polish and bug fixes from Sprint 3 retrospective
 - [ ] QA regression testing on all Sprint 3 + Sprint 4 features
 
@@ -60,10 +71,10 @@
 
 | Dependency | Teams Involved | Status |
 |---|---|---|
-| Sprint 3 MVP must be stable before Sprint 4 features are layered on | All Teams | Unresolved |
-| Authentication must be in place before QA can test user-specific views | FE + BE → QA | Unresolved |
-| Alert system requires BE to support notification triggers | FE → BE | Unresolved |
-| Deploy signal tracking requires GitHub Actions to post deploy events to ingest Worker | DevOps → BE | Unresolved |
+| Sprint 3 MVP must be stable before Sprint 4 features are layered on | All Teams | Most sprints from sprint 3 were moved to Sprint 4 |
+| Authentication must be in place before QA can test user-specific views | FE + BE → QA | BE team is in progress |
+| Alert system requires BE to support notification triggers | FE → BE | Could be moved to next speint |
+| Deploy signal tracking requires GitHub Actions to post deploy events to ingest Worker | DevOps → BE | In progress |
 
 ---
 
@@ -73,17 +84,27 @@
 - Silence notification means per-error silencing, not global mute
 - Summary health view replaces "pure charts" focus per professor feedback
 - Auto-create GitHub issues and DDoS detection are out of scope for this sprint
-- General Tasks and Sprint Board to be filled at Sprint 4 planning meeting
+- General Tasks and Sprint Board to be filled at Sprint 4 planning meeting 
+- Backend and QA are connected now 
+- Goals:
+    - Authentication
+    - Frontend and backend team discuss on how to connect the two together
+        - Notifications, alerts → pushed back for now, focus on other edge cases later 
+    - FE BE QA team workflow is automated
+- Come up with a different name for WatchTower
+- Repo review Team 9's project
 
 ---
 
 ## Retrospective _(fill at end of sprint)_
 
 **What went well:**
--
+- We had a lot of features implemented
+- Discussed our progress during each meeting
+- Active in pull reviews
 
 **What didn't go well:**
--
+- Communication across the teams; teams got a little bit out of sync
 
 **What to improve next sprint:**
--
+- Add jsdocs to files

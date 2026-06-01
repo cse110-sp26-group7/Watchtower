@@ -173,11 +173,11 @@ body {
   margin-bottom: 24px;
 }
 .page-title {
-  font-size: 22px;
+  font-size: 40px;
   font-weight: 700;
 }
 .page-sub {
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--dim);
   margin-top: 3px;
 }
@@ -200,8 +200,8 @@ body {
 
 /* DARK MODE */
 body.dark {
-  --bg: #31201c;
-  --card: #1d1410;
+  --bg: #000000;
+  --card: #31201c;
   --border: #3d2c1e;
   --text: #f5e6d8;
   --dim: #99816a;

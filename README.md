@@ -5,6 +5,8 @@ feedback in one place.
 
 ## Project Status
 **CSE 110 Sp 26 team project. Pre-release.**
+
+[Status Update 1](https://youtu.be/NoIb_ukGxmw)
 ***
 
 ## Prerequisites
@@ -13,7 +15,43 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Installation & Setup
+### Installation
 **WIP**
+### Setup
+#### Step 1 - Register your Project
+Create an account. After that you will have a ProjectId
+
+#### Step 2 - Install SDK
+Add the Watchtower SDK to your html file with the following script
+```
+<script src="https://cdn.jsdelivr.net/gh/cse110-sp26-group7/Watchtower@main/client/watchtower.min.js" defer></script> 
+```
+
+#### Step 3 - Initialize SDK
+Create and initialize a WatchTower object in in your code. Make sure to use your project id
+```
+const wt = new Watchtower({
+  projectId: "your_project_id",
+  endpoint: "https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest",
+  environment: "prod"
+})
+wt.init()
+```
+
+#### Step 4 - Test
+Add this button to your html file to test your dashboard
+```
+<button id="trigger-error">Trigger Test Error</button>
+
+<script>
+  document
+    .getElementById("trigger-error")
+    .addEventListener("click", () => {
+      // Simulate a runtime error
+      throw new Error("Manual test error triggered");
+    });
+</script>
+```
 ***
 
 ## Usage & Common Scripts
@@ -21,16 +59,22 @@ For backend-specific setup, see `/backend/README.md`
 ***
 
 ## Architecture Overview
-**WIP**
+[ARCHITECTURE.md](docs/ARCHITECTURE.md)
 ***
 
 ## Environment Variables
-**WIP**
+
+### Deployed Endpoints
+
+| Worker | URL |
+|--------|-----|
+| Ingest | https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest |
+| API    | https://watchtower-api.cse110piedpiper7.workers.dev/api/events |
 ***
 
 ## Tech Stack
-**Frontend:** JavaScript, HTML, CSS
-**Backend:** Cloudflare Workers
+**Frontend:** JavaScript, HTML, CSS\
+**Backend:** Cloudflare Workers, JavaScript
 ***
 
 ## Features
