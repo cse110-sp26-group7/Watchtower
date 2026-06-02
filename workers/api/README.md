@@ -77,9 +77,9 @@ Query params:
 
 - `project_id` (required)
 - `window` (optional, default `24h`): one of `1h | 24h | 7d | 30d`. Bucket size scales with the window and is reported in `timeseries.bucket_size`: `1m` for `1h` (60 buckets), `1h` for `24h`/`7d`, `1d` for `30d`.
-- `timezone` (optional): **not yet honored** — buckets are always UTC. The response echoes the effective tz as `"timezone": "UTC"`, and a request for any other tz comes back with a `warnings` entry (see below) rather than being silently dropped.
+- `timezone` (optional): **not yet honored** — buckets are always UTC. The param is accepted (and ignored) so callers can keep sending it during the UTC-only sprint.
 
-Response (`200`): `timezone` (always `"UTC"` for now), `totals` (`errors`, `feedback_count`, `feedback_avg`, `performance_p75` per Web Vital), `timeseries.errors` / `timeseries.feedback` (each a continuous, zero-filled array of `{ t, count[, avg] }`), and `site_status` (`"issues"` if any error in the last 15 min, else `"ok"`). `feedback_avg` and per-metric `performance_p75` are `null` when there is nothing to average. `performance_p75` uses nearest-rank (an actual observed value, no interpolation). A non-UTC `timezone` request adds `"warnings": [{ "code": "unsupported_param", "param": "timezone" }]` (the field is omitted entirely when there are no warnings).
+Response (`200`): `totals` (`errors`, `feedback_count`, `feedback_avg`, `performance_p75` per Web Vital), `timeseries.errors` / `timeseries.feedback` (each a continuous, zero-filled array of `{ t, count[, avg] }`), and `site_status` (`"issues"` if any error in the last 15 min, else `"ok"`). `feedback_avg` and per-metric `performance_p75` are `null` when there is nothing to average. `performance_p75` uses nearest-rank (an actual observed value, no interpolation).
 
 Like `/api/events`, an unknown `project_id` currently returns a zeroed `200` (auth is deferred to Sprint 4 per ADR-0005; a `TODO(sprint-4)` marks where this becomes `403`/`404`). `400` responses carry `{ "error", "param" }`.
 

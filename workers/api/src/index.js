@@ -134,7 +134,7 @@ async function handleGetSummary(url, env) {
 		throw err;
 	}
 
-	const { projectId, window, timezone } = params;
+	const { projectId, window } = params;
 	const now = Date.now();
 	const plan = buildBucketPlan(window, now);
 	const nowISO = new Date(now).toISOString();
@@ -189,7 +189,6 @@ async function handleGetSummary(url, env) {
 	const summary = assembleSummary({
 		projectId,
 		window,
-		timezone,
 		plan,
 		generatedAt: nowISO,
 		errorRows: errorRes.results,

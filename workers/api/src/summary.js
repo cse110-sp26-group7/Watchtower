@@ -20,22 +20,13 @@ export const SITE_STATUS_WINDOW_MS = 15 * 60_000;
 // shape is stable; a metric with no samples this window comes back as null.
 const METRICS = ['LCP', 'FCP', 'TTFB', 'CLS', 'INP'];
 
-// The only timezone buckets are computed in today (see buildBucketPlan — the
-// grid is UTC-midnight aligned). `timezone` is an accepted query param, so
-// rather than silently dropping a non-UTC request we echo the effective tz back
-// and attach an `unsupported_param` warning when the caller asked for something
-// else. A param that's accepted-then-ignored is a quiet API lie; this makes the
-// UTC-only limitation visible in the response itself.
-export const EFFECTIVE_TIMEZONE = 'UTC';
-
 // Accepted `window` values → bucketing plan (matches the enum in
 // endpoints-draft.md). Bucket size scales with the window so the chart stays
 // legible: 1h→1m gives 60 points rather than a single bar. The `bucketFmt`
 // strings are a closed internal whitelist (never user input) and are inlined
 // into SQL below — strftime truncates the ISO-8601 timestamp to the bucket
 // boundary, producing keys that match `new Date(...).toISOString()`. Buckets
-// are always UTC; see EFFECTIVE_TIMEZONE for how a `timezone` request is
-// handled.
+// are always UTC; the `timezone` query param is accepted but not yet honored.
 const WINDOWS = {
 	'1h': { windowMs: HOUR, bucketMs: MINUTE, bucketSize: '1m', bucketFmt: '%Y-%m-%dT%H:%M:00.000Z' },
 	'24h': { windowMs: 24 * HOUR, bucketMs: HOUR, bucketSize: '1h', bucketFmt: '%Y-%m-%dT%H:00:00.000Z' },
@@ -54,12 +45,11 @@ export function parseSummaryQuery(url) {
 		throw new ValidationError('invalid_param', 'window');
 	}
 
-	// Passed through to assembleSummary, which decides whether it's honored.
-	// Null when omitted; a supplied non-UTC value is surfaced as a warning rather
-	// than rejected, so callers can keep sending it during the UTC-only sprint.
-	const timezone = sp.get('timezone');
+	// `timezone` is an accepted query param (per endpoints-draft.md) but not yet
+	// honored — buckets are always UTC — so it is read-and-ignored here, not
+	// threaded downstream.
 
-	return { projectId, window, timezone };
+	return { projectId, window };
 }
 
 /**
@@ -102,7 +92,6 @@ function round1(n) {
 export function assembleSummary({
 	projectId,
 	window,
-	timezone,
 	plan,
 	generatedAt,
 	errorRows,
@@ -110,14 +99,6 @@ export function assembleSummary({
 	perfP75Rows,
 	recentErrorCount,
 }) {
-	// We always bucket in UTC. If the caller asked for a different tz, tell them
-	// it wasn't applied instead of letting them assume their value took effect.
-	// Omitted (null) or a literal "UTC" (case-insensitive) both match what we do,
-	// so neither warns.
-	const warnings = [];
-	if (timezone != null && timezone.trim().toUpperCase() !== EFFECTIVE_TIMEZONE) {
-		warnings.push({ code: 'unsupported_param', param: 'timezone' });
-	}
 	// errors timeseries + total (sum of buckets in-window)
 	const errorByBucket = new Map(errorRows.map((r) => [r.bucket, r.count]));
 	let errorTotal = 0;
@@ -152,8 +133,6 @@ export function assembleSummary({
 	return {
 		project_id: projectId,
 		window,
-		timezone: EFFECTIVE_TIMEZONE,
-		...(warnings.length > 0 ? { warnings } : {}),
 		generated_at: generatedAt,
 		totals: {
 			errors: errorTotal,
