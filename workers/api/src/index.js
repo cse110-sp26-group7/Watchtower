@@ -6,13 +6,14 @@
  */
 
 import { encodeCursor, parseQuery, shapeEvent, ValidationError } from './query.js';
+import { verifyPassword, signSession } from './auth.js';
 
 // TODO(sprint-4): once session cookies land (ADR-0005), switch to a specific
 // allowed origin and add `Access-Control-Allow-Credentials: true` — `*` is
 // incompatible with credentialed requests.
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
-	'Access-Control-Allow-Methods': 'GET, OPTIONS',
+	'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 	'Access-Control-Allow-Headers': 'Content-Type',
 };
 
@@ -35,6 +36,9 @@ export default {
 			return handleGetEvents(url, env);
 		}
 
+		if (request.method === 'POST' && url.pathname === '/api/login') {
+			return handleLogin(request, env);
+		}
 		return jsonResponse({ error: 'not_found' }, 404);
 	},
 };
@@ -101,4 +105,56 @@ async function handleGetEvents(url, env) {
 		},
 		200,
 	);
+}
+
+/**
+ * Handle `POST /api/login`.
+ * Verifies email + password, creates a session row, sets signed cookie.
+ */
+async function handleLogin(request, env) {
+  let body;
+  try { body = await request.json(); }
+  catch { return jsonResponse({ error: 'bad_json' }, 400); }
+
+  const { email, password } = body ?? {};
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return jsonResponse({ error: 'missing_fields', message: 'email and password required' }, 400);
+  }
+
+  // Look up user
+  const user = await env.DB.prepare(
+    'SELECT id, email, password_hash, salt, iterations FROM users WHERE email = ?'
+  ).bind(email).first();
+
+  if (!user) return jsonResponse({ error: 'invalid_credentials' }, 401);
+
+  // Verify password
+  const valid = await verifyPassword(password, user.password_hash, user.salt, user.iterations);
+  if (!valid) return jsonResponse({ error: 'invalid_credentials' }, 401);
+
+  // Create session (7-day expiry per ADR-0005)
+  const sessionId = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  await env.DB.prepare(
+    'INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)'
+  ).bind(sessionId, user.id, expiresAt).run();
+
+  // Sign cookie
+  const signed = await signSession(sessionId, env.SESSION_SECRET);
+
+  // Fetch user's projects
+  const { results: projects } = await env.DB.prepare(
+    'SELECT project_id, name FROM projects WHERE owner_id = ?'
+  ).bind(user.id).all();
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...CORS_HEADERS,
+    'Set-Cookie': `wt_session=${signed}; HttpOnly; Secure; SameSite=None; Max-Age=${7 * 24 * 60 * 60}`,
+  };
+
+  return new Response(JSON.stringify({
+    user: { id: user.id, email: user.email },
+    projects,
+  }), { status: 200, headers });
 }

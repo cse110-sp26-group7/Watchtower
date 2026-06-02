@@ -26,8 +26,8 @@ INSERT OR IGNORE INTO users (id, email, password_hash, salt, iterations)
 VALUES (
   'usr_demo',
   'demo@watchtower.dev',
-  'c97031fb20e811fc70af3311c0d5c595279d1a01cac81923c45d6c34b8aa2acc',
-  '758a8abf06cf2d47732cf7091bd5d94d',
+  '876768b5fb082cc511a66826e0f707b3f7f71bf89c0ad84cbf59a2f7d94048b0',
+  'e7969f05280546e27cbbd01cdf459031',
   100000
 );
 
