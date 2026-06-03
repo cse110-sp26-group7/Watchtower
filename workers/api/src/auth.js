@@ -33,6 +33,7 @@ export async function verifyPassword(password, storedHash, salt, iterations) {
  * @returns {Promise<string>} - "sessionId.signature"
  */
 export async function signSession(sessionId, secret) {
+  if (!secret) throw new Error("SESSION_SECRET is not set");
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
