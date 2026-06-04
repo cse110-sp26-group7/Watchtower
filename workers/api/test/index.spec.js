@@ -1,5 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { signSession } from '../src/auth.js';
 import { decodeCursor, encodeCursor } from '../src/query.js';
 
 const PROJECT_A = 'wt_aaaa';
@@ -16,9 +17,34 @@ async function insert(row) {
 		.run();
 }
 
+// All /api/* routes are session-gated (ADR-0005). `fetchAuthed` rides a
+// usr_demo session cookie plus the CSRF header; the gate itself is covered in
+// auth-middleware.spec.js.
+let authHeaders;
+
+async function fetchAuthed(url, init = {}) {
+	return SELF.fetch(url, { ...init, headers: { ...authHeaders, ...init.headers } });
+}
+
 let seed;
 
 beforeEach(async () => {
+	// usr_demo is seeded by the migrations; the test projects must exist and be
+	// owned by it to pass the ownership gate.
+	for (const [id, name] of [[PROJECT_A, 'Project A'], [PROJECT_B, 'Project B']]) {
+		await env.DB.prepare(
+			"INSERT INTO projects (project_id, name, owner_id) VALUES (?, ?, 'usr_demo')",
+		).bind(id, name).run();
+	}
+
+	const sessionId = crypto.randomUUID();
+	await env.DB.prepare(
+		"INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, 'usr_demo', ?)",
+	).bind(sessionId, new Date(Date.now() + HOUR).toISOString()).run();
+	authHeaders = {
+		'Cookie': `wt_session=${await signSession(sessionId, env.SESSION_SECRET)}`,
+		'X-Watchtower-Auth': '1',
+	};
 	const now = Date.now();
 	const t = (ms) => new Date(now - ms).toISOString();
 
@@ -42,61 +68,64 @@ beforeEach(async () => {
 });
 
 describe('watchtower-api: scaffold routing', () => {
-	it('OPTIONS preflight returns 204 with CORS', async () => {
-		const r = await SELF.fetch('http://x/api/events', { method: 'OPTIONS' });
+	it('OPTIONS preflight returns 204 with CORS for the dashboard origin', async () => {
+		const origin = 'https://watchtower-page.pages.dev';
+		const r = await fetchAuthed('http://x/api/events', {
+			method: 'OPTIONS',
+			headers: { Origin: origin },
+		});
 		expect(r.status).toBe(204);
-		expect(r.headers.get('Access-Control-Allow-Origin')).toBe('*');
+		expect(r.headers.get('Access-Control-Allow-Origin')).toBe(origin);
 		expect(r.headers.get('Access-Control-Allow-Methods')).toContain('GET');
 	});
 
 	it('unknown routes return 404', async () => {
-		const r = await SELF.fetch('http://x/api/unknown');
+		const r = await fetchAuthed('http://x/api/unknown');
 		expect(r.status).toBe(404);
 	});
 });
 
 describe('GET /api/events: validation', () => {
 	it('missing project_id -> 400 missing_param', async () => {
-		const r = await SELF.fetch('http://x/api/events');
+		const r = await fetchAuthed('http://x/api/events');
 		expect(r.status).toBe(400);
 		expect(await r.json()).toEqual({ error: 'missing_param', param: 'project_id' });
 	});
 
-	it('unknown project_id -> 200 with empty events', async () => {
-		// sprint-4 (ADR-0005): once session auth lands, unknown/unowned
-		// project_id must return 404 per endpoints-draft.md. Flip this
-		// expectation then; the placeholder behavior is temporary.
-		const r = await SELF.fetch('http://x/api/events?project_id=wt_nope');
-		expect(r.status).toBe(200);
-		expect(await r.json()).toEqual({ events: [], next_cursor: null, has_more: false });
+	it('unknown project_id -> 404 unknown_project', async () => {
+		// ADR-0005 enforcement: unknown project_id is 404 per endpoints-draft.md
+		// (was a 200-empty placeholder before the session gate landed).
+		const r = await fetchAuthed('http://x/api/events?project_id=wt_nope');
+		expect(r.status).toBe(404);
+		expect((await r.json()).error).toBe('unknown_project');
 	});
 
 	it('type=garbage -> 400 invalid_param', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=garbage`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=garbage`);
 		expect(r.status).toBe(400);
 		expect(await r.json()).toEqual({ error: 'invalid_param', param: 'type' });
 	});
 
 	it('limit=0 -> 400 (strict, not clamped)', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=0`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=0`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('limit');
 	});
 
 	it('limit=201 -> 400 (strict, not clamped)', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=201`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=201`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('limit');
 	});
 
 	it('since=not-a-date -> 400', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&since=zzz`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&since=zzz`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('since');
 	});
 
 	it('malformed cursor -> 400', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&cursor=%21%21%21%21`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&cursor=%21%21%21%21`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('cursor');
 	});
@@ -104,7 +133,7 @@ describe('GET /api/events: validation', () => {
 	it('since > until -> 400 invalid_param=until', async () => {
 		const future = new Date(Date.now() + HOUR).toISOString();
 		const past = new Date(Date.now() - HOUR).toISOString();
-		const r = await SELF.fetch(
+		const r = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&since=${future}&until=${past}`,
 		);
 		expect(r.status).toBe(400);
@@ -113,7 +142,7 @@ describe('GET /api/events: validation', () => {
 
 	it('cursor.t before since -> 400 invalid_param=cursor', async () => {
 		const stale = encodeCursor({ t: '2020-01-01T00:00:00.000Z', id: 'x' });
-		const r = await SELF.fetch(
+		const r = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&since=1h&cursor=${encodeURIComponent(stale)}`,
 		);
 		expect(r.status).toBe(400);
@@ -122,7 +151,7 @@ describe('GET /api/events: validation', () => {
 
 	it('cursor.t after until -> 400 invalid_param=cursor', async () => {
 		const future = encodeCursor({ t: '2099-01-01T00:00:00.000Z', id: 'x' });
-		const r = await SELF.fetch(
+		const r = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&cursor=${encodeURIComponent(future)}`,
 		);
 		expect(r.status).toBe(400);
@@ -133,12 +162,12 @@ describe('GET /api/events: validation', () => {
 describe('GET /api/events: SQL-injection safety', () => {
 	it('project_id with SQL meta-chars is bound, not interpolated', async () => {
 		// Belt-and-braces: parameter binding makes this a literal string match
-		// against project_id, so the response should be empty rather than
-		// returning every row in the table.
+		// against project_id, so the ownership lookup finds no such project
+		// (404) rather than matching every row in the table.
 		const evil = encodeURIComponent("' OR 1=1 --");
-		const r = await SELF.fetch(`http://x/api/events?project_id=${evil}`);
-		expect(r.status).toBe(200);
-		expect((await r.json()).events).toEqual([]);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${evil}`);
+		expect(r.status).toBe(404);
+		expect((await r.json()).error).toBe('unknown_project');
 	});
 });
 
@@ -160,7 +189,7 @@ describe('cursor codec', () => {
 
 describe('GET /api/events: filtering and shaping', () => {
 	it('default type=error returns only errors, DESC by timestamp', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		expect(r.status).toBe(200);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toEqual(['e3', 'e2', 'e1']);
@@ -168,7 +197,7 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it('type=performance filters to performance events', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=performance`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=performance`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toEqual(['p1']);
 		expect(body.events[0].metric_name).toBe('LCP');
@@ -176,7 +205,7 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it('type=pageview returns pageviews with referrer + browser context + country', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=pageview`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=pageview`);
 		expect(r.status).toBe(200);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toEqual(['pv1']);
@@ -189,25 +218,25 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it("does not leak other projects' events", async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).not.toContain('eB');
 	});
 
 	it('default since=24h excludes 10-day-old event', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).not.toContain('eOld');
 	});
 
 	it('since=30d includes 10-day-old event', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&since=30d`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&since=30d`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toContain('eOld');
 	});
 
 	it('error row shape: boolean handled, no metric_*/feedback_* keys, server-enriched fields surface', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		const body = await r.json();
 		const e2 = body.events.find((e) => e.event_id === 'e2');
 		expect(e2.handled).toBe(true);
@@ -221,7 +250,7 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it('deploy row shape: version + received_at + country present, no browser-context triplet', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=deploy`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=deploy`);
 		const body = await r.json();
 		expect(body.events).toHaveLength(1);
 		const d = body.events[0];
@@ -238,7 +267,7 @@ describe('GET /api/events: filtering and shaping', () => {
 
 describe('GET /api/events: pagination', () => {
 	it('limit=2 returns 2 errors + non-null next_cursor + has_more=true', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
 		const body = await r.json();
 		expect(body.events).toHaveLength(2);
 		expect(body.has_more).toBe(true);
@@ -247,9 +276,9 @@ describe('GET /api/events: pagination', () => {
 	});
 
 	it('follow next_cursor returns remaining error, has_more=false', async () => {
-		const r1 = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
+		const r1 = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
 		const b1 = await r1.json();
-		const r2 = await SELF.fetch(
+		const r2 = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&limit=2&cursor=${encodeURIComponent(b1.next_cursor)}`,
 		);
 		const b2 = await r2.json();
@@ -262,6 +291,14 @@ describe('GET /api/events: pagination', () => {
 describe('GET /api/summary', () => {
 	const PROJECT_S = 'wt_sum';
 	const MIN = 60_000;
+
+	beforeEach(async () => {
+		// Register the summary test project under usr_demo so the session-gated
+		// ownership check passes.
+		await env.DB.prepare(
+			"INSERT INTO projects (project_id, name, owner_id) VALUES (?, 'Summary', 'usr_demo')",
+		).bind(PROJECT_S).run();
+	});
 
 	// Insert one event of `type` for PROJECT_S at `agoMs` before now, with the
 	// given payload. received_at + payload are NOT NULL in the schema.
@@ -279,13 +316,13 @@ describe('GET /api/summary', () => {
 	}
 
 	it('missing project_id -> 400 missing_param', async () => {
-		const r = await SELF.fetch('http://x/api/summary');
+		const r = await fetchAuthed('http://x/api/summary');
 		expect(r.status).toBe(400);
 		expect(await r.json()).toEqual({ error: 'missing_param', param: 'project_id' });
 	});
 
 	it('window=1h -> 200 with 60 one-minute buckets', async () => {
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=1h`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}&window=1h`);
 		expect(r.status).toBe(200);
 		const b = await r.json();
 		expect(b.window).toBe('1h');
@@ -296,7 +333,7 @@ describe('GET /api/summary', () => {
 	});
 
 	it('timezone param is accepted but ignored: 200, buckets stay UTC, no tz/warnings fields', async () => {
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&timezone=America/New_York`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}&timezone=America/New_York`);
 		expect(r.status).toBe(200);
 		const b = await r.json();
 		// Not yet honored — buckets remain the UTC-aligned 24h grid, and the
@@ -308,16 +345,22 @@ describe('GET /api/summary', () => {
 	});
 
 	it('window=5d -> 400 invalid_param=window', async () => {
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=5d`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}&window=5d`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('window');
 	});
 
-	it('unknown project -> zeroed 200 with full shape (auth deferred, mirrors /api/events)', async () => {
-		const r = await SELF.fetch('http://x/api/summary?project_id=wt_nobody');
+	it('unknown project -> 404 unknown_project (ADR-0005 enforcement)', async () => {
+		const r = await fetchAuthed('http://x/api/summary?project_id=wt_nobody');
+		expect(r.status).toBe(404);
+		expect((await r.json()).error).toBe('unknown_project');
+	});
+
+	it('empty project -> zeroed 200 with full shape', async () => {
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		expect(r.status).toBe(200);
 		const b = await r.json();
-		expect(b.project_id).toBe('wt_nobody');
+		expect(b.project_id).toBe(PROJECT_S);
 		expect(b.window).toBe('24h');
 		expect(typeof b.generated_at).toBe('string');
 		expect(b.totals.errors).toBe(0);
@@ -338,7 +381,7 @@ describe('GET /api/summary', () => {
 		await seedEvent('error', 5 * 60 * MIN, { message: 'c', name: 'Error', handled: false });
 		await seedEvent('error', 25 * 60 * MIN, { message: 'old', name: 'Error', handled: false }); // outside 24h
 
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		const b = await r.json();
 
 		expect(b.totals.errors).toBe(3); // the 25h-old one is excluded
@@ -357,7 +400,7 @@ describe('GET /api/summary', () => {
 		await seedEvent('performance', 10 * MIN, { metric_name: 'LCP', metric_value: 1000, metric_rating: 'good' });
 		await seedEvent('feedback', 10 * MIN, { feedback_rating: 5 });
 
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		const b = await r.json();
 		expect(b.totals.errors).toBe(1);
 	});
@@ -367,7 +410,7 @@ describe('GET /api/summary', () => {
 		await seedEvent('feedback', 20 * MIN, { feedback_rating: 4 });
 		await seedEvent('feedback', 30 * MIN, { feedback_rating: 5 });
 
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		const b = await r.json();
 		expect(b.totals.feedback_count).toBe(3);
 		expect(b.totals.feedback_avg).toBe(4.3); // 13/3 = 4.333 -> 4.3
@@ -385,7 +428,7 @@ describe('GET /api/summary', () => {
 		}
 		await seedEvent('performance', 10 * MIN, { metric_name: 'INP', metric_value: 50, metric_rating: 'good' });
 
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		const p75 = (await r.json()).totals.performance_p75;
 		expect(p75.LCP).toBe(300); // ceil(0.75*4)=3 -> 3rd smallest
 		expect(p75.CLS).toBe(0.3); // precision preserved
@@ -396,13 +439,13 @@ describe('GET /api/summary', () => {
 
 	it('site_status: issues when an error is within the last 15 min, else ok', async () => {
 		await seedEvent('error', 5 * MIN, { message: 'recent', name: 'Error', handled: false });
-		const r1 = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r1 = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		expect((await r1.json()).site_status).toBe('issues');
 	});
 
 	it('site_status: ok when the only error is older than 15 min', async () => {
 		await seedEvent('error', 60 * MIN, { message: 'stale', name: 'Error', handled: false });
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		const b = await r.json();
 		expect(b.totals.errors).toBe(1); // still inside the 24h window
 		expect(b.site_status).toBe('ok'); // but outside the 15-min status window
@@ -413,7 +456,7 @@ describe('GET /api/summary', () => {
 		// aggregate (errors >= windowStart AND <= now), so totals, the grid, and
 		// site_status stay consistent rather than diverging.
 		await seedEvent('error', -10 * MIN, { message: 'future', name: 'Error', handled: false });
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		const b = await r.json();
 		expect(b.totals.errors).toBe(0);
 		expect(b.timeseries.errors.reduce((acc, p) => acc + p.count, 0)).toBe(0);
@@ -430,12 +473,12 @@ describe('GET /api/summary', () => {
 			received_at: new Date(Date.now() - 10 * MIN).toISOString(),
 			payload: JSON.stringify({ message: 'x', name: 'Error', handled: false }),
 		});
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}`);
 		expect((await r.json()).totals.errors).toBe(0);
 	});
 
 	it('window=7d -> 168 hourly buckets', async () => {
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=7d`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}&window=7d`);
 		const b = await r.json();
 		expect(b.window).toBe('7d');
 		expect(b.timeseries.bucket_size).toBe('1h');
@@ -443,7 +486,7 @@ describe('GET /api/summary', () => {
 	});
 
 	it('window=30d -> 30 daily buckets', async () => {
-		const r = await SELF.fetch(`http://x/api/summary?project_id=${PROJECT_S}&window=30d`);
+		const r = await fetchAuthed(`http://x/api/summary?project_id=${PROJECT_S}&window=30d`);
 		const b = await r.json();
 		expect(b.window).toBe('30d');
 		expect(b.timeseries.bucket_size).toBe('1d');
