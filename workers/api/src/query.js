@@ -5,6 +5,14 @@
  * Row shape: docs/backend/api/event-schema-draft.md.
  */
 
+/**
+ * Error for a rejected query param. Carries machine-readable `code` and `param`
+ * so the handler can map it to a structured 400 response.
+ *
+ * @param {string} code - The failure kind, e.g. `'missing_param'` or
+ *   `'invalid_param'`.
+ * @param {string} param - The offending query-string parameter name.
+ */
 export class ValidationError extends Error {
 	constructor(code, param) {
 		super(`${code}: ${param}`);
@@ -36,6 +44,19 @@ function parseInstant(value) {
 	return d.toISOString();
 }
 
+/**
+ * Parse and validate the GET /api/events query string. `since`/`until` accept
+ * either a relative shorthand (`<n>h`/`<n>d`) or an ISO-8601 instant; a reused
+ * cursor outside the [since, until] window is rejected (see inline note).
+ *
+ * @param {URL} url - The request URL whose `searchParams` carry `project_id`,
+ *   and the optional `type`, `since`, `until`, `limit`, and `cursor`.
+ * @returns {{ projectId: string, type: string, since: string, until: string,
+ *   cursor: ({ t: string, id: string } | null), limit: number }} The validated
+ *   query, with `since`/`until` normalized to ISO-8601 and `limit` in [1, 200].
+ * @throws {ValidationError} `missing_param` when `project_id` is absent, or
+ *   `invalid_param` for a bad `type`, `since`, `until`, `limit`, or `cursor`.
+ */
 export function parseQuery(url) {
 	const sp = url.searchParams;
 
@@ -82,6 +103,12 @@ export function parseQuery(url) {
 // pair, but every query is still scoped by project_id/type/since/until, so the
 // worst case is they paginate weirdly through their own data — no cross-tenant
 // leak. Revisit (HMAC) if cursors ever encode anything more sensitive.
+/**
+ * Encode a pagination cursor as an unsigned base64url string.
+ *
+ * @param {{ t: string, id: string }} cursor - The last row's timestamp and id.
+ * @returns {string} The base64url-encoded cursor (no padding, URL-safe alphabet).
+ */
 export function encodeCursor({ t, id }) {
 	return btoa(JSON.stringify({ t, id }))
 		.replace(/=+$/, '')
@@ -89,6 +116,14 @@ export function encodeCursor({ t, id }) {
 		.replace(/\//g, '_');
 }
 
+/**
+ * Decode a base64url cursor back into its `{ t, id }` pair. Tolerant of missing
+ * padding; returns null on any malformed input rather than throwing.
+ *
+ * @param {string} s - The base64url cursor string from the `cursor` param.
+ * @returns {({ t: string, id: string } | null)} The decoded cursor, or null if
+ *   it is malformed or missing the required string fields.
+ */
 export function decodeCursor(s) {
 	try {
 		let b64 = s.replace(/-/g, '+').replace(/_/g, '/');
@@ -108,6 +143,15 @@ export function decodeCursor(s) {
 // type, deploys included — the CI runner still has an inbound country.
 const ENVELOPE = ['event_id', 'event_type', 'timestamp', 'environment', 'deploy_id', 'received_at', 'country'];
 
+/**
+ * Shape a raw DB row into an API event object. Spreads the JSON `payload`
+ * first, then overlays the authoritative envelope columns (which win on key
+ * collisions); null/undefined values are dropped from both.
+ *
+ * @param {object} row - A DB row with envelope columns and a JSON `payload`
+ *   string (type-specific fields).
+ * @returns {object} The merged event: payload fields plus envelope columns.
+ */
 export function shapeEvent(row) {
 	const out = {};
 	// Spread the payload first; the authoritative envelope columns below win on
