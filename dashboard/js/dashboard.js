@@ -1,5 +1,10 @@
 /* global getEvents */
 
+
+/** 
+ * Thresholds from Google Web Vitals standards
+ * good = fast/stable, warn = needs improvement, poor = slow/unstable based on web
+ */
 const THRESHOLDS = {
   lcp: { warn: 2500, poor: 4000 },
   fcp: { warn: 1800, poor: 3000 },
