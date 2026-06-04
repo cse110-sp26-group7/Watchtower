@@ -13,19 +13,19 @@ DevOps team: Jack (Lead), Ethan
 - Each member claims one of the active tasks below based on strength or interest.
 - After claiming, create a GitHub Issue and self-assign. (Label and tracking conventions are still TBD.)
 - Research deliverables target end of week (~Thursday) to align with the team-wide planning-phase deadline.
-- ADRs use MADR format and live under `docs/devops/adr/` (DevOps-area decisions) or `docs/adr/` (architecture-wide decisions, owned with the Tech Lead).
+- ADRs use MADR format live under `docs\adr`
 - If you get stuck, post in Slack `#devops` or DM Jack.
 
 ---
 
 ## Task summary (this sprint)
 
-| #   | Task                                              | Owner | Depends on |
-| --- | ------------------------------------------------- | ----- | ---------- |
-| 1   | CI/CD platform research + decision ADR            | Jack  |            |
-| 2   | Hosting + deploy tooling setup (Cloudflare/wrangler) | Ethan |            |
-| 3   | ESLint baseline config (#52)                      | Jack  |            |
-| 4   | Branching + PR review conventions                 | Ethan |            |
+| #   | Task                                              | Owner | Status                | Depends on |
+| --- | ------------------------------------------------- | ----- | --------------------- | ---------- |
+| 1   | CI/CD platform research + decision ADR            | Jack  | Done — see [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md) |  |
+| 2   | CloudFlare Setup | Ethan | Account + wrangler ready |  |
+| 3   | ESLint baseline config (#52)                      | Jack  | Carried to Sprint 2 — landed alongside CI workflow |  |
+| 4   | Branching + PR review conventions                 | Jack | Conventions adopted in practice; formal doc deferred |  |
 
 ---
 
@@ -34,90 +34,69 @@ DevOps team: Jack (Lead), Ethan
 ### 1. CI/CD platform research + decision ADR
 
 Owner: Jack
+Status: Done — decision recorded in [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md).
 
 Deliverables:
-- `docs/devops/adr/0001-ci-cd-platform.md` (MADR format)
-- Comparison of CI/CD options against project constraints: GitHub Actions, CircleCI, GitLab CI (used by some classmates' teams), self-hosted runners.
-- Tentative decision with rationale (free tier ceilings, GitHub-native integration, public-repo minutes, secrets handling).
+- Decide the whole pipeline we need: Branch protection, Linter Check, Auto Testing, Build Check, Auto deploy Workers/Pages, D1 Migration, Secret Handling.
 
-Scope:
-- Decision only. No `.github/workflows/*.yml` files this sprint — implementation is Sprint 2 Task 1.
-- Cover: lint/test/build job patterns, deploy-on-merge model, secrets storage, runner OS choice (Ubuntu vs Windows — we have Windows devs), public-repo minutes.
-
-Why an ADR: locking in a CI/CD platform shapes every downstream automation. Project doc requires ADRs for all major technical decisions.
-
-Output feeds: Sprint 2 Task 1 (CI workflow), Sprint 2 Task 4 (deploy workflow).
-
+What actually shipped:
+- Created GitHub Issues in GitHub Projects to track each piece of work.
+- GitHub Actions chosen as the CI/CD platform; rationale and trade-offs captured in [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md).
 ---
 
 ### 2. Hosting + deploy tooling setup (Cloudflare/wrangler)
 
 Owner: Ethan
+Status: Done
 
-Deliverables:
+Deliverables (as originally planned):
 - Cloudflare account ready (one account hosts production; documented owner + access plan).
-- `wrangler` CLI installed locally; `wrangler whoami` succeeds.
-- One end-to-end smoke test: deploy a throwaway Hello World worker, verify it appears in dashboard, hit the URL, then delete it.
-- `docs/devops/cloudflare-onboarding.md`: how to install wrangler, what the team needs from Cloudflare (D1, Workers, Pages free tiers), account-access plan (who owns the production account, recovery procedure if owner is unreachable).
 
-Scope:
-- Single account this sprint. Team-account / multi-developer access is a separate decision; flag it in the onboarding doc as an open question.
-- No persistent worker deployed yet — the prototype is teardown-after-verify. Real ingest worker scaffold is Sprint 2 (Backend Task 1).
-- D1 creation is not part of this task — defer until ingest worker exists to bind to.
-
-Why first-week: every other devops task assumes Cloudflare + wrangler work. If billing or account access has a gotcha, we want to discover it now, not the day before a sprint demo.
-
-Output feeds: Sprint 2 deploy of the ingest worker, Sprint 2 Task 3 (`workers/api/` scaffold), Sprint 2 Task 4 (deploy workflow needs a working `wrangler` login).
-
+What actually shipped:
+- Cloudflare team account `cse110piedpiper7@gmail.com` created.
+- Deployed a throwaway Hello World worker, verify it appears in dashboard, hit the URL, then delete it.
 ---
 
 ### 3. ESLint baseline config (#52)
 
 Owner: Jack
 Issue: #52
+Status: Carried into Sprint 2. ESLint config and CI integration shipped together in the same PR.
 
-Deliverables (completed this sprint):
+Deliverables (as originally planned):
 - Root `eslint.config.mjs` with `js/recommended` rules, ignores `node_modules/`, `dist/`, `.wrangler/`.
 - Per-worker `workers/ingest/eslint.config.mjs` mirroring the root config.
 - `package.json` with `eslint`, `@eslint/js`, `globals` as devDependencies.
 - Lint passes against the existing codebase.
 
-Scope:
-- Baseline rules only — no project-specific rules, no Prettier integration, no plugin ecosystem (`eslint-plugin-promise`, `eslint-plugin-security`, etc.). Stricter rules can be layered on later; getting an enforceable baseline in now is the win.
-- Enforcement in CI is **not** part of this task — that lands in Sprint 2 Task 1 once `.github/workflows/ci.yml` exists.
-
-Open follow-up for Sprint 2: the root config and the worker-local config drift slightly (root has browser + node globals + ignores, worker has only browser globals and no ignores). Decide whether to merge them or keep them deliberately scoped.
+What actually shipped (in Sprint 2):
+- Both ESLint configs landed alongside `.github/workflows/ci.yml` rather than standalone in Sprint 1. The lint baseline and its CI enforcement were merged together (commits `73bfcf7`, `1f10052`).
+- Root + per-worker configs drift slightly (root has browser + node globals + ignores, worker has browser globals only). Documented as a Sprint 2 open follow-up; not resolved.
 
 ---
 
 ### 4. Branching + PR review conventions
 
-Owner: Ethan
+Owner: Jack
+Status: Done
 
-Deliverables:
-- `docs/devops/contributing.md`: branching model (feature branches → PR → main), branch naming convention (`feat/`, `fix/`, `chore/`, `docs/`, `ci/`), PR review requirements, commit message style.
-- One-page summary of conventions linked from root README.
+Deliverables (as originally planned):
+- The flow is: PR -> CI check -> At least 1 Code Reviewer -> Green -> Merge allowed
+                                                          |-> Red -> Merge block 
 
-Scope:
-- Adopt the project doc's >300 LoC review threshold as a hard floor (PRs over that need at least one reviewer outside the author's team).
-- Specify which branches require review (`main` yes, feature branches no).
-- Specify squash vs merge vs rebase on merge (recommend squash for cleaner history, but flag the trade-off).
-- Cover the existing pattern in [docs/backend/README.md](../../backend/README.md) so the conventions are repo-wide, not just DevOps-area.
-
-Why this sprint: Backend is about to land real code in Sprint 2. Without documented conventions, every PR becomes a stylistic negotiation. Lock it in before code volume scales.
-
-Output feeds: every team's PR workflow from Sprint 2 onward.
+What actually shipped:
+- Using Github rule and applied on Main branch, enabled rule below:
++ Require approvals
++ Dismiss stale pull request approvals when new commits are pushed
++ Allow specified actors to bypass required pull requests: dnhan1707, Lumen98
++ Require branches to be up to date before merging (Status checks that are required build (ingest), lint, tes(ingest))
++ Do not allow bypassing the above settings
 
 ---
 
-## Future tasks (Sprint 2)
+## Sprint 1 outcomes (filled at sprint close)
 
-Implementation tasks deferred to Sprint 2 live in [`sprint-2.md`](sprint-2.md):
-- CI workflow implementation (closes #53, #54) — depends on Task 1 ADR
-- CORS on ingest worker
-- Scaffold `workers/api/`
-- Deploy workflow + secrets management (closes #56) — depends on Task 2 setup
-- CI deploy-event hook (deploy correlation feature)
-- Environment separation (#55) and Deployment rollback (#57) — further deferred to Sprint 3
-
-Sprint 2 begins at the next sprint planning meeting (Mon May 11, 4:00 PM).
+What landed:
+- Cloudflare team account ready; wrangler authenticated locally for the lead.
+- Meeting with all Leaders for TestApp connection - [issue 23](https://github.com/cse110-sp26-group7/Watchtower/issues/23)
+- Added ESLint check - [issue 52](https://github.com/cse110-sp26-group7/Watchtower/issues/52)
