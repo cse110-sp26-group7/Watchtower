@@ -34,6 +34,17 @@ const WINDOWS = {
 	'30d': { windowMs: 30 * DAY, bucketMs: DAY, bucketSize: '1d', bucketFmt: '%Y-%m-%dT00:00:00.000Z' },
 };
 
+/**
+ * Parse and validate the GET /api/summary query string. `timezone` is accepted
+ * but read-and-ignored (buckets are always UTC); see the inline note below.
+ *
+ * @param {URL} url - The request URL whose `searchParams` carry `project_id`,
+ *   the optional `window` (defaults to `'24h'`), and the ignored `timezone`.
+ * @returns {{ projectId: string, window: string }} The validated query, where
+ *   `window` is one of the keys in `WINDOWS`.
+ * @throws {ValidationError} `missing_param` when `project_id` is absent, or
+ *   `invalid_param` when `window` is not an accepted value.
+ */
 export function parseSummaryQuery(url) {
 	const sp = url.searchParams;
 
@@ -61,6 +72,13 @@ export function parseSummaryQuery(url) {
  * Returns the SQL bucket format, the window lower-bound (windowStartISO, used
  * for `timestamp >= ?`), and gridKeys — the full ordered list of bucket-key
  * strings used to zero-fill the timeseries.
+ *
+ * @param {string} window - An accepted `window` value (a key in `WINDOWS`).
+ * @param {number} nowMs - The current time in epoch milliseconds; floored to
+ *   the current bucket boundary to anchor the trailing window.
+ * @returns {{ bucketSize: string, bucketFmt: string, windowStartISO: string,
+ *   gridKeys: string[] }} The bucket size label, the SQL strftime format, the
+ *   ISO-8601 window lower-bound, and the ordered bucket-key grid.
  */
 export function buildBucketPlan(window, nowMs) {
 	const { windowMs, bucketMs, bucketSize, bucketFmt } = WINDOWS[window];
@@ -88,6 +106,23 @@ function round1(n) {
  * zero-filled to a continuous grid so the chart can tell "zero errors" apart
  * from "no data". feedback_avg and per-metric p75 come back null when there is
  * nothing to average.
+ *
+ * @param {object} args - The aggregate result sets and bucket plan.
+ * @param {string} args.projectId - The project the summary is scoped to.
+ * @param {string} args.window - The requested window (echoed in the response).
+ * @param {{ bucketSize: string, gridKeys: string[] }} args.plan - The bucket
+ *   plan from {@link buildBucketPlan}; `gridKeys` drives the zero-filled grid.
+ * @param {string} args.generatedAt - ISO-8601 timestamp for `generated_at`.
+ * @param {Array<{ bucket: string, count: number }>} args.errorRows - Error
+ *   counts per bucket key.
+ * @param {Array<{ bucket: string, count: number, sum_rating: number }>}
+ *   args.feedbackRows - Feedback count and rating sum per bucket key.
+ * @param {Array<{ metric_name: string, p75: number }>} args.perfP75Rows - The
+ *   p75 per Web Vital metric that had samples this window.
+ * @param {number} args.recentErrorCount - Error count in the site-status
+ *   window; drives `site_status` ("issues" when > 0, else "ok").
+ * @returns {object} The GET /api/summary response: `project_id`, `window`,
+ *   `generated_at`, `totals`, `timeseries`, and `site_status`.
  */
 export function assembleSummary({
 	projectId,
