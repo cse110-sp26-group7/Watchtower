@@ -1,5 +1,11 @@
 /* global getEvents */
 
+const THRESHOLDS = {
+  lcp: { warn: 2500, poor: 4000 },
+  fcp: { warn: 1800, poor: 3000 },
+  cls: { warn: 0.1,  poor: 0.25 },
+};
+
 /**
  * Loads real error data and updates the dashboard
  */
@@ -32,6 +38,12 @@ window.loadDashboard = async function loadDashboard() {
     document.getElementById("cls-value").textContent = cls
       ? parseFloat(cls.metric_value ?? "N/A").toFixed(2)
       : "N/A";
+    
+    // apply threshold colors to performance metrics
+    if (lcp) applyMetricColor("lcp-value", lcp.metric_value, THRESHOLDS.lcp.warn, THRESHOLDS.lcp.poor);
+    if (fcp) applyMetricColor("fcp-value", fcp.metric_value, THRESHOLDS.fcp.warn, THRESHOLDS.fcp.poor);
+    if (cls) applyMetricColor("cls-value", cls.metric_value, THRESHOLDS.cls.warn, THRESHOLDS.cls.poor);
+
 
     // update total errors card
     document.getElementById("total-errors").textContent = events.length;
@@ -95,4 +107,25 @@ function updateRecentErrors(events) {
     `;
     tbody.appendChild(row);
   });
+}
+
+/**
+ * Changes color to the performance metric card text based on its value and 
+ * thresholds
+ * @param {string} elementId
+ * @param {number} value
+ * @param {number} warnThreshold
+ * @param {number} badThreshold
+ */
+function applyMetricColor(elementId, value, warnThreshold, poorThreshold) {
+  const el = document.getElementById(elementId);
+  el.classList.remove("metric-good", "metric-warn", "metric-poor");
+
+  if (value >= poorThreshold) {
+    el.classList.add("metric-poor");
+  } else if (value >= warnThreshold) {
+    el.classList.add("metric-warn");
+  } else {
+    el.classList.add("metric-good");
+  }
 }
