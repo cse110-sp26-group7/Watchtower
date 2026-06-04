@@ -9,21 +9,21 @@
 ## Goals
 
 - [X] Implement CLI deploy
-- [ ] FE dashboard connected to real BE data (no more mock data) 
-- [ ] Real errors from Test App are visible on the dashboard 
-- [ ] Log Viewer functional with real data and search by type 
-- [ ] Basic Data Visualizer charts showing real error frequency
-- [ ] QA executes test plan against the fully connected system 
-- [ ] Basic authentication — login page with username and password
-- [ ] Frontend + Backend second meeting
+- [X] FE dashboard connected to real BE data (no more mock data) 
+- [X] Real errors from Test App are visible on the dashboard 
+- [X] Log Viewer functional with real data and search by type 
+- [X] Basic Data Visualizer charts showing real error frequency
+- [ ] QA executes test plan against the fully connected system  - moved to Sprint 5
+- [ ] Basic authentication — login page with username and password - moved to Sprint 5
+- [X] Frontend + Backend second meeting
 - [X] Code review for Team 9
 - [X] Writting ADR
 
 # Move to later Sprint 4 - possibly to Sprint 5
 - [ ] Alert and notification system when new errors are detected - Move to later sprint 4, potentially move to sprint 5
 - [ ] Summary health view — "Is the site up? Is it throwing errors? Is it performing well?" - Move to later sprint 4, potentially move to sprint 5
-- [ ] Deploy signal tracking visible alongside error timeline 
-- [ ] UI polish and bug fixes from Sprint 3 retrospective
+- [X] Deploy signal tracking visible alongside error timeline 
+- [X] UI polish and bug fixes from Sprint 3 retrospective
 - [ ] QA regression testing on all Sprint 3 + Sprint 4 features
 
 ---
@@ -34,11 +34,13 @@
 
 | User Story | GitHub Issue | Priority | Status |
 |---|---|---|---|
-| [Basic Alert](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/alerts.md) | [N/A]() | High | Not Started |
-| [Track Crashes Over Time](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/crashes-over-time.md) | [N/A]() | High | Not Started |
-| [Summary View](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/summary-view.md) | [N/A]() | High | Not Started |
-| [Deploy Signal Tracking](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/log-viewer.md) | [N/A]() | Medium | Not Started |
-| [User Feedback & Ratings](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/data-collection.md) | [N/A]() | Medium | Not Started |
+| Basic Alert | N/A | High | Sprint 5 - but in low priority |
+| Track Crashes Over Time | N/A | High | Sprint 5 - but in low priority |
+| Summary View | N/A | High | In Progress |
+| [Data Collection](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/data-collection.md) | [#04](https://github.com/cse110-sp26-group7/Watchtower/issues/4) | High | In Progress |
+| [Log Viewer](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/log-viewer.md) | [#05](https://github.com/cse110-sp26-group7/Watchtower/issues/5) | High | In Progress |
+| [Data Visualizer](https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/stories/data-visualizer.md) | [#06](https://github.com/cse110-sp26-group7/Watchtower/issues/6) | High | In Progress |
+
 
 ### General Tasks
 
@@ -62,7 +64,7 @@
 | Alert triggers when a new error is detected | Tester triggers an error and confirms alert appears without manually refreshing | Not Ready |
 | Alert can be silenced after acknowledgement | Tester confirms silenced alert does not reappear for the same error | Not Ready |
 | Summary health view displays site status clearly | Tester confirms view answers: is site up, any errors, any performance issues | Not Ready |
-| Deploy events appear alongside error timeline | Tester triggers a deploy event and confirms it is visible next to error history | Not Ready |
+| Deploy events appear alongside error timeline | Tester triggers a deploy event and confirms it is visible next to error history | Done |
 | QA regression pass confirms Sprint 3 features still work | QA runs full regression and documents results | Not Ready |
 
 ---
@@ -74,7 +76,7 @@
 | Sprint 3 MVP must be stable before Sprint 4 features are layered on | All Teams | Most sprints from sprint 3 were moved to Sprint 4 |
 | Authentication must be in place before QA can test user-specific views | FE + BE → QA | BE team is in progress |
 | Alert system requires BE to support notification triggers | FE → BE | Could be moved to next speint |
-| Deploy signal tracking requires GitHub Actions to post deploy events to ingest Worker | DevOps → BE | In progress |
+| Deploy signal tracking requires GitHub Actions to post deploy events to ingest Worker | DevOps → BE | DOne |
 
 ---
 

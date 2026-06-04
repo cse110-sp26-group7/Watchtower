@@ -8,19 +8,20 @@
 
 ## Goals
 
-- [ ] Authentication shipped end-to-end (carryover from Sprint 4): login page, session cookie, dashboard restricted to authenticated users
-- [ ] Multi-project support: a single account can register and view multiple projects, with data isolation between them
-- [ ] At least 2 external test apps integrated and visibly emitting real events to the dashboard
-- [ ] Alert / notification system fires on new errors (carryover from Sprint 4)
-- [ ] Summary health view answers "is the site up, any errors, any performance issues?" at a glance (carryover from Sprint 4)
-- [ ] Deploy signal correlation visible in the dashboard — error timestamps can be matched to the deploy that introduced them (carryover from Sprint 4)
-- [ ] Test suite covers unit + integration + E2E layers; all green on `main` for the entire week
+- [ ] Authentication shipped end-to-end (carryover from Sprint 4): login page, session cookie, dashboard restricted to authenticated users.
+- [ ] Summary health view answers "is the site up, any errors, any performance issues?" at a glance (carryover from Sprint 4).
+- [ ] Deploy signal correlation visible in the dashboard — error timestamps can be matched to the deploy that introduced them (carryover from Sprint 4).
+- [ ] Test suite covers unit + integration + E2E layers; all green on `main` for the entire week.
 - [ ] CI/CD pipeline documented in `docs/devops/` — deploy flow, rollback procedure, secrets rotation, onboarding for the next maintainer
 - [ ] README and `docs/ARCHITECTURE.md` updated to reflect the system as shipped (no stale references to dropped or unimplemented features)
-- [ ] ADRs current: any decisions made in Sprints 4–5 captured as new ADRs; existing ones reviewed for accuracy
-- [ ] Final demo video recorded, linked from the README
-- [ ] Project retrospective complete and committed
+- [ ] ADRs current: any decisions made in Sprints 4–5 captured as new ADRs; existing ones reviewed for accuracy.
+- [ ] Final demo video recorded, linked from the README.
+- [ ] Project retrospective complete and committed.
 
+Low Priority:
+- [ ] Alert / notification system fires on new errors (carryover from Sprint 4)
+- [ ] Multi-project support: a single account can register and view multiple projects, with data isolation between them
+- [ ] At least 2 external test apps integrated and visibly emitting real events to the dashboard
 ---
 
 ## Sprint Backlog
@@ -89,6 +90,7 @@
 
 ## Notes & Decisions
 
+- Decided to push back: Multi test app, notifcations
 ---
 
 ## Retrospective _(fill at end of sprint)_
