@@ -1,5 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { signSession } from '../src/auth.js';
 import { decodeCursor, encodeCursor } from '../src/query.js';
 
 const PROJECT_A = 'wt_aaaa';
@@ -16,9 +17,34 @@ async function insert(row) {
 		.run();
 }
 
+// All /api/* routes are session-gated (ADR-0005). `fetchAuthed` rides a
+// usr_demo session cookie plus the CSRF header; the gate itself is covered in
+// auth-middleware.spec.js.
+let authHeaders;
+
+async function fetchAuthed(url, init = {}) {
+	return SELF.fetch(url, { ...init, headers: { ...authHeaders, ...init.headers } });
+}
+
 let seed;
 
 beforeEach(async () => {
+	// usr_demo is seeded by the migrations; the test projects must exist and be
+	// owned by it to pass the ownership gate.
+	for (const [id, name] of [[PROJECT_A, 'Project A'], [PROJECT_B, 'Project B']]) {
+		await env.DB.prepare(
+			"INSERT INTO projects (project_id, name, owner_id) VALUES (?, ?, 'usr_demo')",
+		).bind(id, name).run();
+	}
+
+	const sessionId = crypto.randomUUID();
+	await env.DB.prepare(
+		"INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, 'usr_demo', ?)",
+	).bind(sessionId, new Date(Date.now() + HOUR).toISOString()).run();
+	authHeaders = {
+		'Cookie': `wt_session=${await signSession(sessionId, env.SESSION_SECRET)}`,
+		'X-Watchtower-Auth': '1',
+	};
 	const now = Date.now();
 	const t = (ms) => new Date(now - ms).toISOString();
 
@@ -42,61 +68,64 @@ beforeEach(async () => {
 });
 
 describe('watchtower-api: scaffold routing', () => {
-	it('OPTIONS preflight returns 204 with CORS', async () => {
-		const r = await SELF.fetch('http://x/api/events', { method: 'OPTIONS' });
+	it('OPTIONS preflight returns 204 with CORS for the dashboard origin', async () => {
+		const origin = 'https://watchtower-page.pages.dev';
+		const r = await fetchAuthed('http://x/api/events', {
+			method: 'OPTIONS',
+			headers: { Origin: origin },
+		});
 		expect(r.status).toBe(204);
-		expect(r.headers.get('Access-Control-Allow-Origin')).toBe('*');
+		expect(r.headers.get('Access-Control-Allow-Origin')).toBe(origin);
 		expect(r.headers.get('Access-Control-Allow-Methods')).toContain('GET');
 	});
 
 	it('unknown routes return 404', async () => {
-		const r = await SELF.fetch('http://x/api/unknown');
+		const r = await fetchAuthed('http://x/api/unknown');
 		expect(r.status).toBe(404);
 	});
 });
 
 describe('GET /api/events: validation', () => {
 	it('missing project_id -> 400 missing_param', async () => {
-		const r = await SELF.fetch('http://x/api/events');
+		const r = await fetchAuthed('http://x/api/events');
 		expect(r.status).toBe(400);
 		expect(await r.json()).toEqual({ error: 'missing_param', param: 'project_id' });
 	});
 
-	it('unknown project_id -> 200 with empty events', async () => {
-		// sprint-4 (ADR-0005): once session auth lands, unknown/unowned
-		// project_id must return 404 per endpoints-draft.md. Flip this
-		// expectation then; the placeholder behavior is temporary.
-		const r = await SELF.fetch('http://x/api/events?project_id=wt_nope');
-		expect(r.status).toBe(200);
-		expect(await r.json()).toEqual({ events: [], next_cursor: null, has_more: false });
+	it('unknown project_id -> 404 unknown_project', async () => {
+		// ADR-0005 enforcement: unknown project_id is 404 per endpoints-draft.md
+		// (was a 200-empty placeholder before the session gate landed).
+		const r = await fetchAuthed('http://x/api/events?project_id=wt_nope');
+		expect(r.status).toBe(404);
+		expect((await r.json()).error).toBe('unknown_project');
 	});
 
 	it('type=garbage -> 400 invalid_param', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=garbage`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=garbage`);
 		expect(r.status).toBe(400);
 		expect(await r.json()).toEqual({ error: 'invalid_param', param: 'type' });
 	});
 
 	it('limit=0 -> 400 (strict, not clamped)', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=0`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=0`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('limit');
 	});
 
 	it('limit=201 -> 400 (strict, not clamped)', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=201`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=201`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('limit');
 	});
 
 	it('since=not-a-date -> 400', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&since=zzz`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&since=zzz`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('since');
 	});
 
 	it('malformed cursor -> 400', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&cursor=%21%21%21%21`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&cursor=%21%21%21%21`);
 		expect(r.status).toBe(400);
 		expect((await r.json()).param).toBe('cursor');
 	});
@@ -104,7 +133,7 @@ describe('GET /api/events: validation', () => {
 	it('since > until -> 400 invalid_param=until', async () => {
 		const future = new Date(Date.now() + HOUR).toISOString();
 		const past = new Date(Date.now() - HOUR).toISOString();
-		const r = await SELF.fetch(
+		const r = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&since=${future}&until=${past}`,
 		);
 		expect(r.status).toBe(400);
@@ -113,7 +142,7 @@ describe('GET /api/events: validation', () => {
 
 	it('cursor.t before since -> 400 invalid_param=cursor', async () => {
 		const stale = encodeCursor({ t: '2020-01-01T00:00:00.000Z', id: 'x' });
-		const r = await SELF.fetch(
+		const r = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&since=1h&cursor=${encodeURIComponent(stale)}`,
 		);
 		expect(r.status).toBe(400);
@@ -122,7 +151,7 @@ describe('GET /api/events: validation', () => {
 
 	it('cursor.t after until -> 400 invalid_param=cursor', async () => {
 		const future = encodeCursor({ t: '2099-01-01T00:00:00.000Z', id: 'x' });
-		const r = await SELF.fetch(
+		const r = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&cursor=${encodeURIComponent(future)}`,
 		);
 		expect(r.status).toBe(400);
@@ -133,12 +162,12 @@ describe('GET /api/events: validation', () => {
 describe('GET /api/events: SQL-injection safety', () => {
 	it('project_id with SQL meta-chars is bound, not interpolated', async () => {
 		// Belt-and-braces: parameter binding makes this a literal string match
-		// against project_id, so the response should be empty rather than
-		// returning every row in the table.
+		// against project_id, so the ownership lookup finds no such project
+		// (404) rather than matching every row in the table.
 		const evil = encodeURIComponent("' OR 1=1 --");
-		const r = await SELF.fetch(`http://x/api/events?project_id=${evil}`);
-		expect(r.status).toBe(200);
-		expect((await r.json()).events).toEqual([]);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${evil}`);
+		expect(r.status).toBe(404);
+		expect((await r.json()).error).toBe('unknown_project');
 	});
 });
 
@@ -160,7 +189,7 @@ describe('cursor codec', () => {
 
 describe('GET /api/events: filtering and shaping', () => {
 	it('default type=error returns only errors, DESC by timestamp', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		expect(r.status).toBe(200);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toEqual(['e3', 'e2', 'e1']);
@@ -168,7 +197,7 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it('type=performance filters to performance events', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=performance`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=performance`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toEqual(['p1']);
 		expect(body.events[0].metric_name).toBe('LCP');
@@ -176,7 +205,7 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it('type=pageview returns pageviews with referrer + browser context + country', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=pageview`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=pageview`);
 		expect(r.status).toBe(200);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toEqual(['pv1']);
@@ -189,25 +218,25 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it("does not leak other projects' events", async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).not.toContain('eB');
 	});
 
 	it('default since=24h excludes 10-day-old event', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).not.toContain('eOld');
 	});
 
 	it('since=30d includes 10-day-old event', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&since=30d`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&since=30d`);
 		const body = await r.json();
 		expect(body.events.map((e) => e.event_id)).toContain('eOld');
 	});
 
 	it('error row shape: boolean handled, no metric_*/feedback_* keys, server-enriched fields surface', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}`);
 		const body = await r.json();
 		const e2 = body.events.find((e) => e.event_id === 'e2');
 		expect(e2.handled).toBe(true);
@@ -221,7 +250,7 @@ describe('GET /api/events: filtering and shaping', () => {
 	});
 
 	it('deploy row shape: version + received_at + country present, no browser-context triplet', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&type=deploy`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&type=deploy`);
 		const body = await r.json();
 		expect(body.events).toHaveLength(1);
 		const d = body.events[0];
@@ -238,7 +267,7 @@ describe('GET /api/events: filtering and shaping', () => {
 
 describe('GET /api/events: pagination', () => {
 	it('limit=2 returns 2 errors + non-null next_cursor + has_more=true', async () => {
-		const r = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
+		const r = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
 		const body = await r.json();
 		expect(body.events).toHaveLength(2);
 		expect(body.has_more).toBe(true);
@@ -247,9 +276,9 @@ describe('GET /api/events: pagination', () => {
 	});
 
 	it('follow next_cursor returns remaining error, has_more=false', async () => {
-		const r1 = await SELF.fetch(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
+		const r1 = await fetchAuthed(`http://x/api/events?project_id=${PROJECT_A}&limit=2`);
 		const b1 = await r1.json();
-		const r2 = await SELF.fetch(
+		const r2 = await fetchAuthed(
 			`http://x/api/events?project_id=${PROJECT_A}&limit=2&cursor=${encodeURIComponent(b1.next_cursor)}`,
 		);
 		const b2 = await r2.json();

@@ -56,6 +56,46 @@ export async function verifySession(signed, secret) {
   return expected === signed ? sessionId : null;
 }
 
+/**
+ * Resolve the session user from a request's `wt_session` cookie.
+ * Verifies the HMAC signature, looks up the `sessions` row, and checks expiry.
+ * @param {Request} request
+ * @param {{ DB: D1Database, SESSION_SECRET: string }} env
+ * @returns {Promise<{ sessionId: string, userId: string } | null>} null if unauthenticated
+ */
+export async function requireSession(request, env) {
+  const cookies = parseCookies(request.headers.get('Cookie'));
+  const signed = cookies.wt_session;
+  if (!signed) return null;
+
+  const sessionId = await verifySession(signed, env.SESSION_SECRET);
+  if (!sessionId) return null;
+
+  const row = await env.DB.prepare(
+    'SELECT user_id, expires_at FROM sessions WHERE session_id = ?'
+  ).bind(sessionId).first();
+  if (!row) return null;
+  if (new Date(row.expires_at).getTime() <= Date.now()) return null;
+
+  return { sessionId, userId: row.user_id };
+}
+
+/**
+ * Parse a Cookie header into a name -> value map.
+ * @param {string|null} header
+ * @returns {Record<string, string>}
+ */
+export function parseCookies(header) {
+  const out = {};
+  if (!header) return out;
+  for (const part of header.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq === -1) continue;
+    out[part.slice(0, eq).trim()] = part.slice(eq + 1).trim();
+  }
+  return out;
+}
+
 function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
