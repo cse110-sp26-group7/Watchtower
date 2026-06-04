@@ -266,7 +266,8 @@
   border-radius: 50%;
   border: 2px solid var(--text);
   font-family: var(--sans);
-  margin: 0;
+  margin-top: 0;
+  margin-left: 5px;
  
   display: inline-flex;
   align-items: center;
