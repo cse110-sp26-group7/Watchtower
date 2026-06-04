@@ -8,6 +8,8 @@
   --border: #e8cfc0;
   --text: #3d2c1e;
   --dim: #7a5c48;
+  --tipBackground: #31201c;
+  --tipText:#fff9f3;
   --sans: "Nunito", sans-serif;
   --mono: "Fira Code", monospace;
 }
@@ -205,6 +207,8 @@ body.dark {
   --border: #3d2c1e;
   --text: #f5e6d8;
   --dim: #99816a;
+  --tipBackground: #f5e6d8;
+  --tipText: #3d2c1e;
 }
 
 .page {
