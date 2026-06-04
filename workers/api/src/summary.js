@@ -14,7 +14,7 @@ const DAY = 24 * HOUR;
 
 // "no error events in the last 15 minutes" → site_status "ok" (per
 // endpoints-draft.md). Independent of the `window` param.
-export const SITE_STATUS_WINDOW_MS = 15 * 60_000;
+export const SITE_STATUS_WINDOW_MS = 15 * MINUTE;
 
 // Web Vitals reported under totals.performance_p75. Fixed order so the response
 // shape is stable; a metric with no samples this window comes back as null.
