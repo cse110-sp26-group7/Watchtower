@@ -31,8 +31,12 @@
 
 /* search bar */
 #search {
+  font-family: var(--sans);
   font-size: 16px;
+  color: var(--text);
 
+  background: var(--card);
+  
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -41,14 +45,30 @@
 }
 
 /* filter setting */
-#filter {
+.filter {
+  font-family: var(--sans);
   font-size: 16px;
+  color: var(--text);
+
+  background: var(--card);
 
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
 
+  width: fit-content;
   margin-left: auto;
+}
+
+/* error level colors */
+.full-error-level-dot.error {
+  background: var(--red);
+}
+.full-error-level-dot.warn {
+  background: var(--amber);
+}
+.full-error-level-dot.info {
+  background: var(--green);
 }
 
 /* full errors table */
@@ -62,11 +82,26 @@
   border-collapse: separate;
   border-spacing: 0 20px; 
 
-  th:nth-child(1), td:nth-child(1) {width: 10%;};
-  th:nth-child(2), td:nth-child(2) {width: 10%;};
-  th:nth-child(3), td:nth-child(3) {width: 40%;};
-  th:nth-child(4), td:nth-child(4) {width: 30%;};
-  th:nth-child(5), td:nth-child(5) {width: 10%;};
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 10%;
+  };
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 10%;
+  };
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 40%;
+  };
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 30%;
+  };
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 10%;
+  };
 }
 
 .full-errors-table th {
@@ -89,9 +124,3 @@
   height: 16px;
   border-radius: 999px;
 }
-
-#full-level-dot-1 { background: var(--red); }
-#full-level-dot-2 { background: var(--amber); }
-#full-level-dot-3 { background: var(--amber); }
-#full-level-dot-4 { background: var(--green); }
-#full-level-dot-5 { background: var(--amber); }

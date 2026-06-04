@@ -215,8 +215,17 @@
           <!-- search bar -->
           <input type="search" id="search" placeholder="Search logs..." />
 
-          <!-- filter -->
-          <select id="filter">
+          <!-- filters -->
+          <!-- filter by date range -->
+          <select class="filter" id="date-filter">
+            <option value="all">All Time</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+
+          <!-- filter by error level -->
+          <select class="filter" id="level-filter">
             <option value="all">All Levels</option>
             <option value="error">Errors</option>
             <option value="warning">Warnings</option>
