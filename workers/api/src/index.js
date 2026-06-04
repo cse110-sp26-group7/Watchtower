@@ -17,6 +17,9 @@ const CSRF_HEADER = 'X-Watchtower-Auth';
 /**
  * Credentialed CORS (ADR-0005): echo the request Origin only if it is in the
  * comma-separated `ALLOWED_ORIGINS` var. `*` is incompatible with cookies.
+ * @param {Request} request - The incoming HTTP request.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Object} Headers object with appropriate CORS fields set.
  */
 function corsHeaders(request, env) {
 	const headers = {
@@ -36,6 +39,13 @@ function corsHeaders(request, env) {
 	return headers;
 }
 
+/**
+ * Serialize `body` as JSON and return a Response with the given status code.
+ *
+ * @param {Object} body - The response payload to serialize.
+ * @param {number} status - HTTP status code.
+ * @returns {Response}
+ */
 function jsonResponse(body, status) {
 	return new Response(JSON.stringify(body), {
 		status,
@@ -44,6 +54,13 @@ function jsonResponse(body, status) {
 }
 
 export default {
+	/**
+	 * Worker entry point. Delegates to `route()` then attaches CORS headers.
+	 *
+	 * @param {Request} request - The incoming HTTP request.
+	 * @param {Object} env - Worker environment bindings (DB, SESSION_SECRET, ALLOWED_ORIGINS).
+	 * @returns {Promise<Response>}
+	 */
 	async fetch(request, env) {
 		const response = await route(request, env);
 		// CORS is per-request (origin echo), so it is applied here rather than
@@ -55,6 +72,17 @@ export default {
 	},
 };
 
+/**
+ * Route an incoming request to the appropriate handler.
+ *
+ * Enforces the CSRF header on every request and requires a valid session for
+ * all routes except `POST /api/login`. Falls through to a 404 if no route
+ * matches.
+ *
+ * @param {Request} request - The incoming HTTP request.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>}
+ */
 async function route(request, env) {
 	const url = new URL(request.url);
 
@@ -84,6 +112,22 @@ async function route(request, env) {
 		return handleGetEvents(url, env, session);
 	}
 
+	if (request.method === 'POST' && url.pathname === '/api/projects') {
+		return handlePostProject(request, env);
+	}
+
+	if (request.method === 'GET' && url.pathname.startsWith('/api/projects/')) {
+		return handleGetProject(request, env);
+	}
+
+	if (request.method === 'PUT' && url.pathname === '/api/projects') {
+		return handlePutProject(request, env);
+	}
+
+	if (request.method === 'DELETE' && url.pathname.startsWith('/api/projects/')) {
+		return handleDeleteProject(request, env);
+	}
+
 	return jsonResponse({ error: 'not_found' }, 404);
 }
 
@@ -91,6 +135,10 @@ async function route(request, env) {
  * Ownership gate: 404 when `project_id` does not exist, 403 when it is not
  * owned by the session user (per endpoints-draft.md). Returns null when access
  * is allowed.
+ * @param {string} projectId - The project ID to check.
+ * @param {Object} session - The current session object containing `userId`.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response|null>} An error Response, or null if access is allowed.
  */
 async function checkProjectAccess(projectId, session, env) {
 	const row = await env.DB.prepare('SELECT owner_id FROM projects WHERE project_id = ?')
@@ -112,6 +160,11 @@ async function checkProjectAccess(projectId, session, env) {
  * docs/backend/api/event-schema-draft.md.
  *
  * On validation failure returns 400 with `{ error, param }`.
+ * 
+ * @param {URL} url - The parsed request URL.
+ * @param {Object} env - Worker environment bindings.
+ * @param {Object} session - The current session object.
+ * @returns {Promise<Response>}
  */
 async function handleGetEvents(url, env, session) {
 	let params;
@@ -168,6 +221,10 @@ async function handleGetEvents(url, env, session) {
 /**
  * Handle `POST /api/login`.
  * Verifies email + password, creates a session row, sets signed cookie.
+ * 
+ * @param {Request} request - The incoming HTTP request containing `email` and `password` in the JSON body.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 200 with user and projects on success, 400 on bad input, 401 on invalid credentials.
  */
 async function handleLogin(request, env) {
   let body;
@@ -220,6 +277,9 @@ async function handleLogin(request, env) {
  * Handle `POST /api/logout`.
  * Deletes the session row (server-side revocation per ADR-0005) and clears
  * the cookie.
+ * @param {Object} session - The current session object containing `sessionId`.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 200 with `{ ok: true }` on success.
  */
 async function handleLogout(session, env) {
 	await env.DB.prepare('DELETE FROM sessions WHERE session_id = ?').bind(session.sessionId).run();
@@ -231,3 +291,114 @@ async function handleLogout(session, env) {
 		},
 	});
 }
+
+/**
+ * Handle 'POST /api/projects'.
+ * Creates a new project in the projects table
+ * 
+ * @param {Object} request - 
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 200 on success, 400 on error
+ */
+async function handlePostProject(request, env) {
+	let body;
+
+	try {
+		body = await request.json();
+	}
+	catch(error) {
+		return jsonResponse({error: 'bad_json'}, 400);
+	}
+
+	const { project_id, name } = body ?? {};
+    if (typeof project_id !== 'string' || typeof name !== 'string') {
+        return jsonResponse({ error: 'missing_fields' }, 400);
+    }
+
+    try {
+        await env.DB.prepare(
+            'INSERT INTO projects (project_id, name) VALUES (?, ?)'
+        ).bind(project_id, name).run();
+    } catch (err) {
+        if (err.message.includes('UNIQUE') || err.message.includes('PRIMARY KEY')) {
+            return jsonResponse({ error: 'project_already_exists' }, 409);
+        }
+        throw err;
+    }
+
+    return jsonResponse({ project: { project_id, name } }, 201);
+}
+
+/**
+ * Handle 'GET /api/projects'.
+ * Read a poject from the projects table
+ * 
+ * @param {Object} request - 
+ * @param {Object} env -
+ * @return {JSON} row with project data from row in table
+ */
+async function handleGetProject(request, env) {
+	const project_id = new URL(request.url).pathname.split('/').pop();
+
+	const row = await env.DB.prepare(
+		'SELECT project_id, name, created_at FROM projects WHERE project_id = ?'
+	).bind(project_id).first();
+
+	if (!row) {
+		return jsonResponse({error: 'row_not_found'}, 404)
+	}
+    return jsonResponse({ project: row }, 200)
+}
+
+/**
+ * Handle a 'PUT /api/projects'
+ * @param {Objeect} request -
+ * @param {Object} env -
+ * @return {}
+ */
+async function handlePutProject(request, env) {
+	let body;
+
+	try {
+		body = await request.json();
+	}
+	catch(error) {
+		return jsonResponse({error: 'bad_json'}, 400);
+	}
+
+	const { project_id, name} = body ?? {};
+	if (typeof project_id !== 'string' || typeof name !== 'string') {
+        return jsonResponse({ error: 'missing_fields' }, 400);
+    }
+
+	const result = await env.DB.prepare(
+		'UPDATE projects SET name = ? WHERE project_id = ?'
+	).bind(name, project_id).run();
+
+	if (result.meta.changes === 0) {
+		return jsonResponse({ error: 'project_not_found' }, 404);
+	}
+
+	return jsonResponse({ project: { project_id, name } }, 200);
+} 
+
+/**
+ * Handle a 'DELETE /api/projects'
+ * @param {Objeect} request -
+ * @param {Object} env -
+ * @return {}
+ */
+async function handleDeleteProject(request, env) {
+	const project_id = new URL(request.url).pathname.split('/').pop();
+
+	const result = await env.DB.prepare(
+		'DELETE FROM projects WHERE project_id = ?'
+	).bind(project_id).run();
+
+	if (result.meta.changes === 0) {
+		return jsonResponse({ error: 'project_not_found' }, 404);
+	}
+
+	return jsonResponse({ project: { project_id } }, 200);
+} 
+
