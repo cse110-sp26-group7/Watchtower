@@ -1,6 +1,17 @@
 /* global loadDashboard, loadErrorLog, refreshProjectCards */
 
 window.navigate = function navigate(route) {
+  // if not logged in, redirect to login page
+  if (route !== "login" && !sessionStorage.getItem("loggedIn")) {
+    route = "login";
+  }
+
+  if (route === "login") {
+    document.body.classList.add("login-page");
+  } else {
+    document.body.classList.remove("login-page");
+  }
+
   // hide all pages
   document.querySelectorAll(".page").forEach((p) => {
     p.classList.remove("active");
@@ -40,5 +51,5 @@ window.navigate = function navigate(route) {
 // on page load, read hash and navigate
 window.addEventListener("load", () => {
   const hash = window.location.hash.replace("#/", "");
-  window.navigate(hash || "projects");
+  window.navigate(hash || "login");
 });
