@@ -81,7 +81,7 @@ Query params:
 
 Response (`200`): `totals` (`errors`, `feedback_count`, `feedback_avg`, `performance_p75` per Web Vital), `timeseries.errors` / `timeseries.feedback` (each a continuous, zero-filled array of `{ t, count[, avg] }`), and `site_status` (`"issues"` if any error in the last 15 min, else `"ok"`). `feedback_avg` and per-metric `performance_p75` are `null` when there is nothing to average. `performance_p75` uses nearest-rank (an actual observed value, no interpolation).
 
-Like `/api/events`, an unknown `project_id` currently returns a zeroed `200` (auth is deferred to Sprint 4 per ADR-0005; a `TODO(sprint-4)` marks where this becomes `403`/`404`). `400` responses carry `{ "error", "param" }`.
+Like `/api/events`, requests are gated by the session cookie (ADR-0005): an unknown `project_id` returns `404 { "error": "unknown_project" }`, and a `project_id` not owned by the session user returns `403 { "error": "forbidden" }`. `400` responses carry `{ "error", "param" }`.
 
 ## End-to-end smoke test
 
