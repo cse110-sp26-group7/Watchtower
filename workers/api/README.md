@@ -2,7 +2,7 @@
 
 Cloudflare Worker that serves dashboard read traffic. See `docs/ARCHITECTURE.md` §3.4 and `docs/backend/api/endpoints-draft.md` for the endpoint contract.
 
-Implemented: `GET /api/events` (filter + cursor-paginated listing) and `GET /api/summary` (aggregated counts + timeseries for the overview). Auth (signed session cookie per ADR-0005) and the remaining reporting routes are sprint-4 work.
+Implemented: `GET /api/events` (filter + cursor-paginated listing) and `GET /api/summary` (aggregated counts + timeseries for the overview). Auth (signed session cookie per ADR-0005) is enforced on `/api/*`; the remaining reporting routes are sprint-4 work.
 
 ## Prerequisites
 
