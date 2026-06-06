@@ -25,6 +25,11 @@ npx playwright test --headed
 npx playwright test e2e/dashboard.spec.js
 ```
 
+**Run workflow tests only:**
+```bash
+npx playwright test e2e/workflows.spec.js
+```
+
 **Run single test:**
 ```bash
 npx playwright test -g "JavaScript initializes"
@@ -46,6 +51,14 @@ npx playwright test --watch
 5. **errors page can be navigated to** — Tests navigation to error log page and verifies search input exists
 6. **projects page loads as default** — Verifies projects page and sidebar button exist in DOM on initial load
 7. **can navigate between all pages** — Tests navigation between dashboard, errors, and projects pages using navigate() function
+
+### `workflows.spec.js` — E2E User Journey Tests (5 tests)
+
+1. **Error Discovery Journey** — User navigates from dashboard to error log via "View All Errors" link, verifies search and filter controls
+2. **Project Switching Workflow** — User switches between dashboard, errors, and projects pages, verifies data persists across navigation
+3. **SDK to Dashboard Pipeline** — Verifies errors from SDK appear in dashboard and are reflected in error log with consistent counts
+4. **Filter and Time Range Workflow** — User filters errors by level and searches, verifies filter state updates appropriately
+5. **Theme Persistence** — User toggles dark mode and navigates through all pages, verifies theme preference persists
 
 ## Test Structure
 
@@ -92,8 +105,9 @@ Tests run in GitHub Actions on every PR (after unit tests pass):
 
 ## Notes
 
+- Two test suites: `dashboard.spec.js` (7 critical tests) and `workflows.spec.js` (5 user journey tests)
 - Tests use the actual dashboard HTML/JS with live API calls to watchtower-api.cse110piedpiper7.workers.dev
 - HTTP server automatically starts on port 8000 when running tests
 - Playwright automatically waits for elements/network requests
-- Tests run in parallel by default
+- Tests run in parallel by default (12 tests total, ~6 seconds to complete)
 - Retries automatically on CI (not locally)
