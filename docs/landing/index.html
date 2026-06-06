@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WatchTower — Observability for early-stage teams</title>
+  <meta name="description" content="Lightweight observability for early-stage teams. Errors, performance, and user feedback in one place — correlated with the deploy that started the fire." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="WatchTower — Observability for early-stage teams" />
+  <meta property="og:description" content="Errors, performance, and user feedback in one place — correlated with the deploy that started the fire." />
+  <meta property="og:type" content="website" />
+
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #161a22;
+      --border: #232834;
+      --text: #e8edf2;
+      --muted: #98a2b3;
+      --accent: #f6821f;       /* Cloudflare orange */
+      --accent-dim: #c46a19;
+      --good: #4caf80;
+      --warn: #f0c34a;
+      --bad:  #e26d6d;
+      --code-bg: #0b0d12;
+      --max: 980px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+    body {
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      color: #c9d1d9;
+    }
+    code { color: #ffd9b3; }
+    pre code { color: inherit; }
+
+    .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav {
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,17,21,0.85);
+      backdrop-filter: blur(6px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    nav .container {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 14px; padding-bottom: 14px;
+    }
+    nav .brand { font-weight: 700; letter-spacing: 0.2px; }
+    nav .brand .dot { color: var(--accent); }
+    nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; }
+    nav a { color: var(--muted); }
+    nav a:hover { color: var(--text); text-decoration: none; }
+
+    /* Hero */
+    header.hero { padding: 72px 0 56px; border-bottom: 1px solid var(--border); }
+    .badge {
+      display: inline-block; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid var(--accent-dim); padding: 4px 10px; border-radius: 999px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-size: 44px; line-height: 1.1; margin: 0 0 16px;
+      letter-spacing: -0.02em;
+    }
+    h1 .accent { color: var(--accent); }
+    .lede { font-size: 19px; color: var(--muted); max-width: 720px; margin: 0 0 28px; }
+    .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-block; padding: 12px 18px; border-radius: 8px; font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .btn-primary { background: var(--accent); color: #1a1108; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-dim); color: #1a1108; text-decoration: none; }
+    .btn-secondary { color: var(--text); }
+    .btn-secondary:hover { border-color: var(--text); text-decoration: none; }
+
+    /* Sections */
+    section { padding: 64px 0; border-bottom: 1px solid var(--border); }
+    section h2 { font-size: 28px; margin: 0 0 12px; letter-spacing: -0.01em; }
+    section h2 .num { color: var(--muted); font-weight: 400; margin-right: 8px; }
+    section p.section-lede { color: var(--muted); margin: 0 0 28px; max-width: 720px; }
+
+    /* Three-up signal cards */
+    .signals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .signal {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 20px;
+    }
+    .signal .icon {
+      width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
+      font-weight: 800; font-size: 18px; margin-bottom: 12px;
+    }
+    .signal.err  .icon { background: rgba(226,109,109,0.15); color: var(--bad); }
+    .signal.perf .icon { background: rgba(240,195,74,0.15); color: var(--warn); }
+    .signal.fb   .icon { background: rgba(76,175,128,0.15); color: var(--good); }
+    .signal h3 { margin: 0 0 6px; font-size: 17px; }
+    .signal p { color: var(--muted); margin: 0; font-size: 14.5px; }
+
+    /* Audience list */
+    .audience { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .who { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+    .who h3 { margin: 0 0 8px; font-size: 17px; }
+    .who p { color: var(--muted); margin: 0; font-size: 14.5px; }
+
+    /* Quickstart */
+    .steps { counter-reset: step; }
+    .step { padding: 14px 0; border-bottom: 1px dashed var(--border); }
+    .step:last-child { border-bottom: 0; }
+    .step h3 { margin: 0 0 8px; font-size: 16px; }
+    .step h3::before {
+      counter-increment: step;
+      content: counter(step) ".";
+      color: var(--accent); font-weight: 700; margin-right: 8px;
+    }
+    .step p { margin: 0 0 8px; color: var(--muted); font-size: 14.5px; }
+
+    /* Why / trade-offs */
+    .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .why-grid h3 { margin: 0 0 8px; font-size: 16px; }
+    .why-grid ul { margin: 0; padding-left: 18px; color: var(--muted); }
+    .why-grid li { margin-bottom: 6px; font-size: 14.5px; }
+
+    /* Footer */
+    footer { padding: 36px 0 56px; color: var(--muted); font-size: 14px; }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+    footer .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+    /* Responsive */
+    @media (max-width: 720px) {
+      h1 { font-size: 34px; }
+      nav ul { gap: 14px; }
+      .signals, .audience, .why-grid { grid-template-columns: 1fr; }
+      header.hero { padding: 52px 0 40px; }
+      section { padding: 48px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="brand">Watch<span class="dot">·</span>Tower</div>
+    <ul>
+      <li><a href="#what">What</a></li>
+      <li><a href="#who">Who it's for</a></li>
+      <li><a href="#start">Quickstart</a></li>
+      <li><a href="https://github.com/cse110-sp26-group7/Watchtower">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <span class="badge">CSE 110 · Spring 2026</span>
+    <h1>Which deployment started the <span class="accent">fire</span>?</h1>
+    <p class="lede">
+      WatchTower is a lightweight observability dashboard for early-stage teams. It captures
+      runtime errors, Core Web Vitals, and user feedback from any instrumented web app — then
+      correlates them with the deploy events from your CI so you know exactly when the regression landed.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#start">Get started</a>
+      <a class="btn btn-secondary" href="https://github.com/cse110-sp26-group7/Watchtower">View on GitHub →</a>
+    </div>
+  </div>
+</header>
+
+<section id="what">
+  <div class="container">
+    <h2><span class="num">01</span>One place for three signals</h2>
+    <p class="section-lede">
+      PostHog and Sentry are great when you've scaled. WatchTower is tightened down to what you
+      actually need when your software first ships — and nothing more.
+    </p>
+
+    <div class="signals">
+      <div class="signal err">
+        <div class="icon">!</div>
+        <h3>Errors</h3>
+        <p>Uncaught exceptions and unhandled rejections with full stack traces, captured by a tiny SDK that hooks <code>window.onerror</code>.</p>
+      </div>
+      <div class="signal perf">
+        <div class="icon">∿</div>
+        <h3>Performance</h3>
+        <p>Core Web Vitals (LCP, INP, CLS) and page-load timing, sampled via <code>PerformanceObserver</code>. No extra config.</p>
+      </div>
+      <div class="signal fb">
+        <div class="icon">★</div>
+        <h3>Feedback</h3>
+        <p>Drop-in rating + comment widget. Real signal from real users, alongside the technical data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="who">
+  <div class="container">
+    <h2><span class="num">02</span>Who it's for</h2>
+    <p class="section-lede">
+      WatchTower is built for the moment when "my software is in production now and I have no idea what it's doing."
+    </p>
+
+    <div class="audience">
+      <div class="who">
+        <h3>The on-call dev at 2am</h3>
+        <p>Open the dashboard. See errors spiking after a 1:47am deploy. Click into the trace, find the line, ship a fix. Go back to bed.</p>
+      </div>
+      <div class="who">
+        <h3>The solo founder</h3>
+        <p>Ship from your laptop. WatchTower lives on Cloudflare Workers' free tier; one SDK include on your site is the whole integration.</p>
+      </div>
+      <div class="who">
+        <h3>The student team</h3>
+        <p>Built by 13 CSE 110 students in five sprints. Vanilla JS, zero framework lock-in, every decision captured as an ADR you can read on your way in.</p>
+      </div>
+      <div class="who">
+        <h3>The future maintainer</h3>
+        <p>22 ADRs, an architecture doc, a changelog, sprint retros, and a wiki — written so the next team can pick this up without a handoff meeting.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="container">
+    <h2><span class="num">03</span>Quickstart</h2>
+    <p class="section-lede">Three steps. About five minutes total.</p>
+
+    <div class="steps">
+      <div class="step">
+        <h3>Register your project</h3>
+        <p>Create an account on the dashboard. You'll get a <code>projectId</code> to identify your app.</p>
+      </div>
+
+      <div class="step">
+        <h3>Drop in the SDK</h3>
+        <p>One <code>&lt;script&gt;</code> tag. No build step, no bundler, no npm install. Served from jsDelivr.</p>
+<pre><code>&lt;script
+  src="https://cdn.jsdelivr.net/gh/cse110-sp26-group7/Watchtower@main/client/watchtower.min.js"
+  defer&gt;&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>Initialize</h3>
+        <p>Configure with your <code>projectId</code> and tell WatchTower which environment this is.</p>
+<pre><code>const wt = new Watchtower({
+  projectId: "your_project_id",
+  endpoint: "https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest",
+  environment: "prod",
+});
+wt.init();</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>Trigger a test error</h3>
+        <p>Drop this button into your page to confirm the round-trip ends up in the dashboard.</p>
+<pre><code>&lt;button id="trigger-error"&gt;Trigger Test Error&lt;/button&gt;
+&lt;script&gt;
+  document.getElementById("trigger-error").addEventListener("click", () =&gt; {
+    throw new Error("Manual test error triggered");
+  });
+&lt;/script&gt;</code></pre>
+      </div>
+    </div>
+
+    <p style="margin-top: 22px;">
+      Full setup instructions are in the <a href="https://github.com/cse110-sp26-group7/Watchtower/blob/main/README.md">repo README</a>.
+    </p>
+  </div>
+</section>
+
+<section id="why">
+  <div class="container">
+    <h2><span class="num">04</span>How it's built</h2>
+    <p class="section-lede">
+      WatchTower is a five-layer pipeline: SDK → Ingest Worker → D1 → API Worker → Dashboard SPA.
+      Every layer is one file or one folder you can read in an afternoon.
+    </p>
+
+    <div class="why-grid">
+      <div>
+        <h3>What's inside</h3>
+        <ul>
+          <li>Single-file vanilla-JS SDK, served from a CDN.</li>
+          <li>Two Cloudflare Workers (ingest, API) with isolated blast radius.</li>
+          <li>Cloudflare D1 (SQLite) with one polymorphic <code>events</code> table.</li>
+          <li>Vanilla-JS dashboard on Cloudflare Pages — no framework, no bundler.</li>
+          <li>Tag-triggered CI/CD via GitHub Actions; the same tag fires a deploy event back into WatchTower.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>What's deliberately not</h3>
+        <ul>
+          <li>No queueing layer in front of D1. Bursts above the rate limit drop and we say so.</li>
+          <li>No staging environment — tag-gated production deploys instead.</li>
+          <li>No third-party auth (OAuth). Signed-cookie sessions.</li>
+          <li>No long-term retention beyond 30 days. The data window matches the use case.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="margin-top: 24px;">
+      See the <a href="https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/ARCHITECTURE.md">architecture doc</a>
+      and the <a href="https://github.com/cse110-sp26-group7/Watchtower/tree/main/docs/adr">22 architectural decision records</a> for the reasoning.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="container row">
+    <div>
+      <strong>WatchTower</strong> — CSE 110 Spring 2026, Team 7.
+    </div>
+    <div>
+      <a href="https://github.com/cse110-sp26-group7/Watchtower">GitHub</a> ·
+      <a href="https://github.com/cse110-sp26-group7/Watchtower/wiki">Wiki</a> ·
+      <a href="https://github.com/cse110-sp26-group7/Watchtower/blob/main/CHANGELOG.md">Changelog</a> ·
+      <a href="https://github.com/cse110-sp26-group7/Watchtower/blob/main/docs/ARCHITECTURE.md">Architecture</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
