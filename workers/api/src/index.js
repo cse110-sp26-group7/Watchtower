@@ -89,7 +89,8 @@ async function route(request, env) {
 		return handleGetSummary(url, env, session);
 	}
 
-	const eventDetailMatch = url.pathname.match(/^\/api\/events\/([^\/]+)$/);
+	const parts = url.pathname.split('/');
+	const eventDetailMatch = parts.length === 4 && parts[1] === 'api' && parts[2] === 'events' && parts[3] ? [null, parts[3]] : null;
 	if (request.method === 'GET' && eventDetailMatch) {
 		return handleGetEventDetail(eventDetailMatch[1], url, env, session);
 	}
