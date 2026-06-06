@@ -89,6 +89,11 @@ async function route(request, env) {
 		return handleGetSummary(url, env, session);
 	}
 
+	const eventDetailMatch = url.pathname.match(/^\/api\/events\/([^\/]+)$/);
+	if (request.method === 'GET' && eventDetailMatch) {
+		return handleGetEventDetail(eventDetailMatch[1], url, env, session);
+	}
+
 	return jsonResponse({ error: 'not_found' }, 404);
 }
 
@@ -326,4 +331,41 @@ async function handleLogout(session, env) {
 			'Set-Cookie': 'wt_session=; HttpOnly; Secure; SameSite=None; Max-Age=0',
 		},
 	});
+}
+
+/**
+ * Handle `GET /api/events/:event_id`.
+ *
+ * Returns the full shaped event plus the nearest deploy event at-or-before
+ * the event's timestamp in the same project (deploy correlation).
+ * 404 on unknown event_id; 403 if the project is not owned by the session user.
+ */
+async function handleGetEventDetail(eventId, url, env, session) {
+	const projectId = url.searchParams.get('project_id');
+	if (!projectId) return jsonResponse({ error: 'missing_param', param: 'project_id' }, 400);
+
+	const denied = await checkProjectAccess(projectId, session, env);
+	if (denied) return denied;
+
+	// Fetch the event
+	const row = await env.DB.prepare(
+		'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+		'FROM events WHERE event_id = ? AND project_id = ?'
+	).bind(eventId, projectId).first();
+
+	if (!row) return jsonResponse({ error: 'not_found' }, 404);
+
+	const event = shapeEvent(row);
+
+	// Deploy correlation: nearest deploy at-or-before this event's timestamp
+	const deployRow = await env.DB.prepare(
+		'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+		'FROM events ' +
+		'WHERE project_id = ? AND event_type = ? AND timestamp <= ? ' +
+		'ORDER BY timestamp DESC, event_id DESC LIMIT 1'
+	).bind(projectId, 'deploy', event.timestamp).first();
+
+	const correlatedDeploy = deployRow ? shapeEvent(deployRow) : null;
+
+	return jsonResponse({ event, correlated_deploy: correlatedDeploy }, 200);
 }
