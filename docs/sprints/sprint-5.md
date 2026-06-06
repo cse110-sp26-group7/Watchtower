@@ -93,13 +93,28 @@ Low Priority:
 - Decided to push back: Multi test app, notifcations
 ---
 
-## Retrospective _(fill at end of sprint)_
+## Retrospective _(2026-06-07, end of Sprint 5 / end of project)_
 
 **What went well:**
--
+- Auth shipped end-to-end: login → signed session cookie → `/api/*` gated → logout (tagged `v0.0.6-updateAuth`).
+- ADR discipline finally caught up: empty ADRs 0001 / 0003 / 0004 backfilled; four new ADRs added (Chart.js, retention, rate limiting, no-staging) capturing decisions that were previously implicit.
+- CHANGELOG populated from tags; process artifacts (`docs/meetings/`) consolidated.
+- `docs/devops/` describes deploy flow, rollback, and secrets rotation — useful for any future maintainer.
+- CI stayed green on `main` through the freeze window.
+- Demo video recorded; one external test app (Ethan's club site) live.
 
 **What didn't go well:**
--
+- E2E test framework (Playwright) discussed since Sprint 2 but never landed — only unit + integration tests shipped.
+- A few Sprint 4 carryovers (alerting/notifications, multi-project support beyond one demo project) were deferred to "post-MVP."
+- Finals-week timing compressed the last 36 hours; some doc cleanup happened later than ideal.
+- We relied on Cloudflare Pages preview deploys instead of a true staging environment — documented in ADR-0022, but a real staging would have caught a couple of cross-origin issues earlier.
 
-**What to improve next sprint:**
--
+**Lessons for future course projects:**
+- Write ADRs in the same PR as the decision, not "later." Empty placeholders become invisible debt.
+- Bake CHANGELOG updates into the release-tag workflow so it never lags releases.
+- Capture standups and TA meetings as you go — backfilling at the end is fine, but doing it weekly is cheaper.
+- Pick one e2e tool early and land a single happy-path test in Sprint 2, even before you have features to cover. Adding the framework when you "need" it never quite happens.
+- Vanilla JS + Cloudflare was the right stack for the constraint and the scale; we never wished for a framework.
+
+**Closing notes:**
+- This is the final sprint of the project; the next "sprint" for future maintainers begins with the open items in ADR-0020 (retention cron implementation), ADR-0021 (rate limiter implementation), and the e2e suite that never landed.
