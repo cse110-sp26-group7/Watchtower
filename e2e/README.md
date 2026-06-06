@@ -27,7 +27,7 @@ npx playwright test e2e/dashboard.spec.js
 
 **Run single test:**
 ```bash
-npx playwright test -g "user can log in"
+npx playwright test -g "JavaScript initializes"
 ```
 
 **Watch mode:**
@@ -39,13 +39,13 @@ npx playwright test --watch
 
 ### `dashboard.spec.js` — Critical Dashboard Tests (7 tests)
 
-1. **User can log in** — Verifies login functionality works end-to-end
-2. **Dashboard loads with data** — Confirms dashboard renders and fetches data from API
-3. **Errors appear in dashboard** — Tests full SDK → Backend → Dashboard pipeline
-4. **Time range filter works** — Verifies filtering re-fetches correct data
-5. **Error detail view works** — Tests error detail modal/panel
-6. **Deployment timeline shows** — Verifies deployments appear alongside errors
-7. **Empty states render correctly** — Tests UI handles no data gracefully
+1. **dashboard HTML file loads and renders basic structure** — Verifies page title, navbar, sidebar, and main content area are present
+2. **dashboard page structure elements are present** — Checks that page divs (#page-projects, #page-dashboard, #page-errors) exist in DOM
+3. **JavaScript initializes and window functions are available** — Verifies navigate() and getEvents() functions are available after scripts load
+4. **dashboard page displays performance metrics** — Tests navigation to dashboard and verifies LCP, FCP, CLS metric elements are present
+5. **errors page can be navigated to** — Tests navigation to error log page and verifies search input exists
+6. **projects page loads as default** — Verifies projects page and sidebar button exist in DOM on initial load
+7. **can navigate between all pages** — Tests navigation between dashboard, errors, and projects pages using navigate() function
 
 ## Test Structure
 
@@ -87,12 +87,13 @@ Tests run in GitHub Actions on every PR (after unit tests pass):
 ## Requirements
 
 - Node.js 18+
-- Backend running locally or accessible at `http://localhost:8787`
-- Demo user account: `demo@watchtower.dev` / `demo`
+- Python 3 (for HTTP server on port 8000)
+- Playwright browsers installed: `npx playwright install chromium`
 
 ## Notes
 
-- Tests use demo project with pre-populated data
+- Tests use the actual dashboard HTML/JS with live API calls to watchtower-api.cse110piedpiper7.workers.dev
+- HTTP server automatically starts on port 8000 when running tests
 - Playwright automatically waits for elements/network requests
 - Tests run in parallel by default
 - Retries automatically on CI (not locally)
