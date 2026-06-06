@@ -26,7 +26,7 @@ Options considered:
 Implementation notes:
 
 - The cron handler lives in `workers/ingest/` (closest to the data; ingest already owns writes). It runs in batches of at most 10 000 rows per statement to stay well inside Worker CPU limits and D1's per-query bounds.
-- The handler logs a structured row to a `retention_runs` table (`run_id`, `started_at`, `finished_at`, `rows_deleted`, `error`) so we can see whether yesterday's run worked without watching it live.
+- The handler logs a structured row to a `retention_runs` table (`run_id`, `started_at`, `finished_at`, `rows_deleted`, `error`) so we can see whether yesterday's run worked without watching it live. Schema TBD when the cron handler is implemented; no migration ships with this ADR.
 - The 30-day window applies uniformly to all `event_type` values. Deploy markers do age out, which we accept: deploy correlation is a near-real-time use case, not a long-term audit log.
 - The schedule is documented in `wrangler.jsonc` and surfaced in `docs/devops/`.
 

@@ -93,7 +93,7 @@ Low Priority:
 - Decided to push back: Multi test app, notifcations
 ---
 
-## Retrospective _(2026-06-07, end of Sprint 5 / end of project)_
+## Retrospective _(planned end of Sprint 5 / end of project, 2026-06-07)_
 
 **What went well:**
 - Auth shipped end-to-end: login → signed session cookie → `/api/*` gated → logout (tagged `v0.0.6-updateAuth`).
