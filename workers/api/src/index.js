@@ -361,8 +361,8 @@ async function handleGetEventDetail(eventId, url, env, session) {
 	if (row.deploy_id) {
 		deployRow = await env.DB.prepare(
 			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
-			'FROM events WHERE event_id = ?'
-		).bind(row.deploy_id).first();
+			"FROM events WHERE project_id = ? AND event_type = 'deploy' AND deploy_id = ? ORDER BY timestamp DESC LIMIT 1"
+		).bind(row.project_id, row.deploy_id).first();
 	}
 	if (!deployRow) {
 		deployRow = await env.DB.prepare(
