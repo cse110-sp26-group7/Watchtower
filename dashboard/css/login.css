@@ -8,13 +8,18 @@
   display: none;
 }
 
+.login-page {
+  overflow: hidden;
+  height: 100vh;
+}
+
 .login-page .main {
   margin-left: 0;
-  padding: 0;
+  padding-top: 7rem;
 }
 
 #welcome-title {
-  padding-top: 2rem;
+  padding: 1.5rem 0;
   margin: 0 auto;
 }
 
@@ -24,6 +29,7 @@
   border-radius: 20px;
   padding: 1.5rem;
   width: 640px;
+  max-width: 90%;
   margin-top: 2rem;
   justify-self: center;
 
@@ -55,7 +61,7 @@
 
 #login-button {
   width: 100%;
-  margin-top: 2rem;
+  margin-top: 4rem;
   padding: 0.75rem 1.5rem;
   font-size: 16px;
   font-weight: 600;
