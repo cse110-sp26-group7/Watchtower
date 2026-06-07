@@ -216,6 +216,7 @@ body {
 /* DARK MODE */
 body.dark {
   --amber: #af5c19;
+  --green: #5aab6e;
   --bg: #000000;
   --grey: #3a2820;
   --card: #31201c;
@@ -225,6 +226,10 @@ body.dark {
   --dim: #99816a;
   --tipBackground: #f5e6d8;
   --tipText: #3d2c1e;
+}
+
+.login-page .page-header {
+  justify-content: center;
 }
 
 .page {
