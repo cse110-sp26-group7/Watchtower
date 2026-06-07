@@ -11,6 +11,20 @@ const THRESHOLDS = {
 };
 
 /**
+ * Escapes HTML special characters to prevent XSS attacks.
+ * Use this on any untrusted data before injecting into innerHTML.
+ * @param {string} str - raw string from untrusted source
+ * @returns {string} escaped string safe for innerHTML
+ */
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;") // & must be first
+    .replace(/</g, "&lt;") // prevents tag injection
+    .replace(/>/g, "&gt;") // closes open tags
+    .replace(/"/g, "&quot;"); // prevents attribute injection
+}
+
+/**
  * Loads real error data and updates the dashboard
  */
 window.loadDashboard = async function loadDashboard() {
@@ -120,10 +134,14 @@ function updateRecentErrors(events) {
     const row = document.createElement("tr");
     row.classList.add("errors-table-row");
     row.innerHTML = `
-      <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
+      <td>
+          ${new Date(event.timestamp).toLocaleDateString()} 
+          <br>
+          ${new Date(event.timestamp).toLocaleTimeString()}
+      </td>
       <td><span class="recent-error-level-dot error"></span></td>
-      <td>${event.message ?? "No message"}</td>
-      <td>${event.url ?? "Unknown"}</td>
+      <td>${escapeHtml(event.message) || "No message"}</td>
+      <td>${escapeHtml(event.url) || "Unknown"}</td>
       <td>1</td>
     `;
     tbody.appendChild(row);
