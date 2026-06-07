@@ -7,6 +7,13 @@ import { test, expect } from '@playwright/test'
  * Tests use the live API and work with the actual HTML/JS setup.
  */
 
+// The dashboard router (dashboard/js/router.js) redirects to the login page
+// unless sessionStorage.loggedIn is set. Seed that flag before each page load
+// so tests can reach the authenticated routes without a real login.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('loggedIn', 'true'))
+})
+
 // Test 1: Dashboard HTML file loads successfully
 test('dashboard HTML file loads and renders basic structure', async ({ page }) => {
   await page.goto('dashboard/index.html')
@@ -15,6 +22,9 @@ test('dashboard HTML file loads and renders basic structure', async ({ page }) =
   // Verify page title
   const pageTitle = await page.title()
   expect(pageTitle).toBe('Watch Tower')
+
+  // Leave the login page so the app chrome (navbar/sidebar/main) is visible
+  await page.evaluate(() => window.navigate('projects'))
 
   // Verify navbar exists
   const navbar = page.locator('.navbar')

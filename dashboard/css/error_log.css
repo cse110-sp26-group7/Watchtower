@@ -7,7 +7,7 @@
   border-radius: 20px;
   padding: 24px;
 
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 
   transition:
     background-color 0.25s ease,
@@ -24,7 +24,7 @@
 
 .error-log-controls {
   display: flex;
-  
+
   gap: 16px;
   margin-bottom: 1rem;
 }
@@ -36,12 +36,13 @@
   color: var(--text);
 
   background: var(--card);
-  
+
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
 
-  width: stretch;
+  width: 100%;
+  flex: 1;
 }
 
 /* filter setting */
@@ -75,33 +76,34 @@
 .full-errors-table {
   width: 100%;
   color: var(--text);
-  
+
   border-top: 2px solid var(--border);
   padding-top: 10px;
+  margin: 0 -24px;
 
   border-collapse: separate;
-  border-spacing: 0 20px; 
+  border-spacing: 0;
 
   th:nth-child(1),
   td:nth-child(1) {
     width: 10%;
-  };
+  }
   th:nth-child(2),
   td:nth-child(2) {
     width: 10%;
-  };
+  }
   th:nth-child(3),
   td:nth-child(3) {
     width: 40%;
-  };
+  }
   th:nth-child(4),
   td:nth-child(4) {
     width: 30%;
-  };
+  }
   th:nth-child(5),
   td:nth-child(5) {
     width: 10%;
-  };
+  }
 }
 
 .full-errors-table th {
@@ -111,6 +113,7 @@
 .full-errors-table td {
   font-weight: bold;
   text-align: center;
+  padding: 0.5rem 0.5rem;
 }
 
 .full-level-status {
@@ -123,4 +126,142 @@
   width: 16px;
   height: 16px;
   border-radius: 999px;
+}
+
+/* clickable rows */
+.full-errors-table-row {
+  cursor: pointer;
+}
+
+/* detail row hidden by default */
+.detail-row {
+  display: none;
+  text-align: left;
+}
+
+/* detail row visible when open */
+.detail-row-open {
+  display: table-row;
+}
+
+/* expandable detail content */
+.error-detail {
+  padding: 1rem;
+  background: var(--card);
+  border-radius: 8px;
+  margin: 1.25rem;
+}
+
+.error-detail-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.detail-label {
+  font-weight: 900;
+  color: var(--text);
+  font-size: 0.875rem;
+  text-align: left;
+  margin-top: 1rem;
+  margin-left: 1rem;
+}
+
+.detail-value {
+  color: var(--text);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  text-align: left;
+}
+
+.error-stack {
+  background: var(--card);
+  padding: 0.5rem;
+  margin-left: 1.75rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  overflow-x: auto;
+  margin: 0.25rem 0 0;
+  text-align: left;
+}
+
+/* stack trace frames */
+.stack-frame {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 4px 0;
+  margin-left: 1rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+/* remove border from last frame */
+.stack-frame:last-child {
+  border-bottom: none;
+}
+
+/* function name text color*/
+.stack-function {
+  color: var(--dim);
+  font-weight: 900;
+}
+
+/* highlight function name in dark mode for better visibility */
+body.dark .stack-function {
+  color: var(--amber);
+}
+
+/* file location — muted, right aligned */
+.stack-location {
+  color: var(--dim);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+/* unparsed stack line fallback */
+.stack-raw {
+  color: var(--dim);
+}
+
+/* highlight the currently open row */
+.full-errors-table-row.row-open td {
+  background: var(--border);
+}
+
+/* add orange border around the expandable card */
+.full-errors-table-row.row-open td:first-child {
+  border-left: 2px solid var(--orange);
+  border-top: 2px solid var(--orange);
+}
+
+.full-errors-table-row.row-open td:last-child {
+  border-right: 2px solid var(--orange);
+  border-top: 2px solid var(--orange);
+}
+
+.full-errors-table-row.row-open td:not(:first-child):not(:last-child) {
+  border-top: 2px solid var(--orange);
+}
+
+.detail-row-open td {
+  background: var(--border) !important;
+  border-left: 2px solid var(--orange);
+  border-right: 2px solid var(--orange);
+  border-bottom: 2px solid var(--orange);
+}
+
+/* alternate row colors in error table */
+.full-errors-table-row:nth-child(4n + 1),
+.full-errors-table-row:nth-child(4n + 2) {
+  background: var(--card);
+}
+
+.full-errors-table-row:nth-child(4n + 3),
+.full-errors-table-row:nth-child(4n + 4) {
+  background: var(--grey);
 }
