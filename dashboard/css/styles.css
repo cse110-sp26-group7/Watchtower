@@ -7,6 +7,7 @@
   --card: #ffffff;
   --border: #e8cfc0;
   --text: #3d2c1e;
+  --loginText: #799931;
   --dim: #7a5c48;
   --tipBackground: #31201c;
   --tipText: #fff9f3;
@@ -48,6 +49,15 @@ body {
   font-weight: 800;
   color: white;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.navbar-logo-login {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--loginText);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -206,6 +216,7 @@ body.dark {
   --card: #31201c;
   --border: #3d2c1e;
   --text: #f5e6d8;
+  --loginText: #a5f2b8;
   --dim: #99816a;
   --tipBackground: #f5e6d8;
   --tipText: #3d2c1e;
