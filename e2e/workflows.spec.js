@@ -7,6 +7,13 @@ import { test, expect } from '@playwright/test'
  * Each test exercises multiple pages and features together.
  */
 
+// The dashboard router (dashboard/js/router.js) redirects to the login page
+// unless sessionStorage.loggedIn is set. Seed that flag before each page load
+// so tests can reach the authenticated routes without a real login.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('loggedIn', 'true'))
+})
+
 // Workflow 1: Error Discovery Journey
 test('user can discover and view error details', async ({ page }) => {
   await page.goto('dashboard/index.html')
@@ -34,7 +41,7 @@ test('user can discover and view error details', async ({ page }) => {
   const searchInput = page.locator('#search')
   await expect(searchInput).toBeVisible()
 
-  const filterSelect = page.locator('#filter')
+  const filterSelect = page.locator('#level-filter')
   await expect(filterSelect).toBeVisible()
 })
 
@@ -43,7 +50,10 @@ test('user can switch between projects and dashboard loads correct data', async 
   await page.goto('dashboard/index.html')
   await page.waitForLoadState('networkidle')
 
-  // Start on projects page
+  // Start on projects page (default landing is the login page, so navigate explicitly)
+  await page.evaluate(() => window.navigate('projects'))
+  await page.waitForTimeout(500)
+
   const projectsPage = page.locator('#page-projects')
   const isProjectsActive = await projectsPage.evaluate((el) =>
     el.classList.contains('active')
@@ -116,7 +126,7 @@ test('user can filter errors and data updates appropriately', async ({ page }) =
   await page.waitForTimeout(1000)
 
   // Get initial filter state
-  const filterSelect = page.locator('#filter')
+  const filterSelect = page.locator('#level-filter')
   await expect(filterSelect).toBeVisible()
 
   // Change filter to "Errors" only
@@ -151,6 +161,10 @@ test('user can filter errors and data updates appropriately', async ({ page }) =
 test('dark mode preference persists while navigating pages', async ({ page }) => {
   await page.goto('dashboard/index.html')
   await page.waitForLoadState('networkidle')
+
+  // Leave the login page so the navbar (and its theme button) is visible
+  await page.evaluate(() => window.navigate('projects'))
+  await page.waitForTimeout(300)
 
   // Get initial theme state
   const initialIsDark = await page.evaluate(() =>
