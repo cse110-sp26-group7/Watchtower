@@ -1,7 +1,7 @@
 :root {
   --orange: #f89c63;
   --red: #e05252;
-  --green: #165839;
+  --green: #267726;
   --amber: #e8a030;
   --bg: #fdf0e8;
   --card: #ffffff;
@@ -221,7 +221,7 @@ body.dark {
   --card: #31201c;
   --border: #583f2b;
   --text: #f5e6d8;
-  --loginText: #89ce8f;
+  --loginText: #84b067;
   --dim: #99816a;
   --tipBackground: #f5e6d8;
   --tipText: #3d2c1e;
