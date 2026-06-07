@@ -1,7 +1,7 @@
 # ADR-0005: Signed-Cookie Authentication for the Dashboard API
 
 ## Status
-Proposed
+Accepted (2026-06-07). Implemented in PR #152 (API session gate) and PR #158 (login page + FE client); live in prod since `v0.0.6-updateAuth`.
 
 ## Date
 2026-05-27
@@ -50,3 +50,12 @@ Signed session cookie, with this design:
 - Self-service signup and roles.
 - A custom domain, which would let us use `SameSite=Lax` and drop the custom-header CSRF defense; deferred in Sprint 3.
 - Session sliding-renewal; revisit if weekly re-login proves annoying.
+
+## Implementation Review (2026-06-07)
+
+Checked `workers/api/src/auth.js` and `index.js` as merged against the decision above; everything shipped as specified. Two notes:
+
+- The ownership check distinguishes unknown `project_id` (404 `unknown_project`) from unowned (403 `forbidden`), per `endpoints-draft.md`; this ADR only called for the 403.
+- Expired `sessions` rows are rejected at read time but never pruned. Fine at our scale; ADR-0020 makes the same call for events.
+
+Covered by `workers/api/test/auth-middleware.spec.js` and `workers/api/src/auth.spec.js`.
