@@ -127,6 +127,8 @@ async function route(request, env) {
 
 	if (request.method === 'DELETE' && url.pathname.startsWith('/api/projects/')) {
 		return handleDeleteProject(request, env);
+	}
+	
 	if (request.method === 'GET' && url.pathname === '/api/summary') {
 		return handleGetSummary(url, env, session);
 	}
