@@ -120,7 +120,11 @@ function updateRecentErrors(events) {
     const row = document.createElement("tr");
     row.classList.add("errors-table-row");
     row.innerHTML = `
-      <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
+      <td>
+          ${new Date(event.timestamp).toLocaleDateString()} 
+          <br>
+          ${new Date(event.timestamp).toLocaleTimeString()}
+      </td>
       <td><span class="recent-error-level-dot error"></span></td>
       <td>${event.message ?? "No message"}</td>
       <td>${event.url ?? "Unknown"}</td>
