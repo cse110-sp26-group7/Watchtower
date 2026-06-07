@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/performance_summary.css" />
     <link rel="stylesheet" href="css/error_log.css" />
     <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/feedback_widget.css" />
   </head>
   <body>
     <!--NavBar-->
@@ -322,6 +323,45 @@
       </div>
     </main>
 
+    <!-- feedback widget -->
+    <div class="feedback-widget" id="feedback-widget">
+      <!-- popup — hidden by default -->
+      <div class="feedback-popup" id="feedback-popup">
+        <span class="feedback-label">How happy are you with our app?</span>
+        <div class="stars">
+          <span class="star" data-value="1"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="2"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="3"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="4"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="5"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+        </div>
+        <button class="feedback-submit" id="feedback-submit">Submit</button>
+      </div>
+      <!-- trigger icon -->
+      <div class="feedback-trigger" id="feedback-trigger">
+        <img src="img/star.png" alt="rate us" />
+      </div>
+    </div>
+
+    <!-- thank you overlay -->
+    <div class="thankyou-overlay" id="thankyou-overlay">
+      <div class="thankyou-card">
+        <p>
+          Thank you for your feedback! <img src="img/cat.png" alt="cat icon" />
+        </p>
+      </div>
+    </div>
+
     <!--Add scripts here-->
     <script src="js/api-client.js"></script>
     <script src="js/login.js"></script>
@@ -330,5 +370,6 @@
     <script src="js/projects_selection.js"></script>
     <script src="js/router.js"></script>
     <script src="js/darkmode.js" defer></script>
+    <script src="js/feedback.js" defer></script>
   </body>
 </html>
