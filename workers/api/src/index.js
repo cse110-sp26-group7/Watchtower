@@ -114,11 +114,11 @@ async function route(request, env) {
 	}
 
 	if (request.method === 'POST' && url.pathname === '/api/projects') {
-		return handlePostProject(request, env);
+		return handlePostProject(request, env, session);
 	}
 
-	if (request.method === 'GET' && url.pathname.startsWith('/api/projects/')) {
-		return handleGetProject(request, env);
+	if (request.method === 'GET' && url.pathname === '/api/projects') {
+		return handleGetProjects(request, env);
 	}
 
 	if (request.method === 'PUT' && url.pathname === '/api/projects') {
@@ -128,7 +128,7 @@ async function route(request, env) {
 	if (request.method === 'DELETE' && url.pathname.startsWith('/api/projects/')) {
 		return handleDeleteProject(request, env);
 	}
-	
+
 	if (request.method === 'GET' && url.pathname === '/api/summary') {
 		return handleGetSummary(url, env, session);
 	}
@@ -402,7 +402,7 @@ async function handleLogout(session, env) {
  * @param {Object} env - Worker environment bindings.
  * @returns {Promise<Response>} 200 on success, 400 on error
  */
-async function handlePostProject(request, env) {
+async function handlePostProject(request, env, session) {
 	let body;
 
 	try {
@@ -412,15 +412,15 @@ async function handlePostProject(request, env) {
 		return jsonResponse({error: 'bad_json'}, 400);
 	}
 
-	const { project_id, name } = body ?? {};
-    if (typeof project_id !== 'string' || typeof name !== 'string') {
+	const { project_id, name} = body ?? {};
+    if (typeof project_id !== 'string' || typeof name !== 'string' ) {
         return jsonResponse({ error: 'missing_fields' }, 400);
     }
 
     try {
         await env.DB.prepare(
-            'INSERT INTO projects (project_id, name) VALUES (?, ?)'
-        ).bind(project_id, name).run();
+            'INSERT INTO projects (project_id, name, owner_id) VALUES (?, ?, ?)'
+        ).bind(project_id, name, session.userId).run();
     } catch (err) {
         if (err.message.includes('UNIQUE') || err.message.includes('PRIMARY KEY')) {
             return jsonResponse({ error: 'project_already_exists' }, 409);
@@ -433,30 +433,26 @@ async function handlePostProject(request, env) {
 
 /**
  * Handle 'GET /api/projects'.
- * Read a poject from the projects table
- * 
- * @param {Object} request - 
- * @param {Object} env -
- * @return {JSON} row with project data from row in table
+ * List all projects owned by the session user.
+ *
+ * @param {Object} request
+ * @param {Object} env
+ * @param {Object} session
+ * @returns {Response}
  */
-async function handleGetProject(request, env) {
-	const project_id = new URL(request.url).pathname.split('/').pop();
+async function handleGetProjects(request, env, session) {
+    const { results } = await env.DB.prepare(
+        'SELECT project_id, name, created_at FROM projects WHERE owner_id = ?'
+    ).bind(session.userId).all();
 
-	const row = await env.DB.prepare(
-		'SELECT project_id, name, created_at FROM projects WHERE project_id = ?'
-	).bind(project_id).first();
-
-	if (!row) {
-		return jsonResponse({error: 'row_not_found'}, 404)
-	}
-    return jsonResponse({ project: row }, 200)
+    return jsonResponse({ projects: results }, 200);
 }
 
 /**
  * Handle a 'PUT /api/projects'
  * @param {Objeect} request -
  * @param {Object} env -
- * @return {}
+ * @return {Response}
  */
 async function handlePutProject(request, env) {
 	let body;
