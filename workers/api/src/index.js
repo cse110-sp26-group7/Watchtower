@@ -118,15 +118,15 @@ async function route(request, env) {
 	}
 
 	if (request.method === 'GET' && url.pathname === '/api/projects') {
-		return handleGetProjects(request, env);
+		return handleGetProjects(request, env, session);
 	}
 
 	if (request.method === 'PUT' && url.pathname === '/api/projects') {
-		return handlePutProject(request, env);
+		return handlePutProject(request, env, session);
 	}
 
 	if (request.method === 'DELETE' && url.pathname.startsWith('/api/projects/')) {
-		return handleDeleteProject(request, env);
+		return handleDeleteProject(request, env, session);
 	}
 
 	if (request.method === 'GET' && url.pathname === '/api/summary') {
@@ -454,7 +454,7 @@ async function handleGetProjects(request, env, session) {
  * @param {Object} env -
  * @return {Response}
  */
-async function handlePutProject(request, env) {
+async function handlePutProject(request, env, session) {
 	let body;
 
 	try {
@@ -468,6 +468,8 @@ async function handlePutProject(request, env) {
 	if (typeof project_id !== 'string' || typeof name !== 'string') {
         return jsonResponse({ error: 'missing_fields' }, 400);
     }
+
+	checkProjectAccess(project_id, session, env);
 
 	const result = await env.DB.prepare(
 		'UPDATE projects SET name = ? WHERE project_id = ?'
@@ -486,8 +488,10 @@ async function handlePutProject(request, env) {
  * @param {Object} env -
  * @return {}
  */
-async function handleDeleteProject(request, env) {
+async function handleDeleteProject(request, env, session) {
 	const project_id = new URL(request.url).pathname.split('/').pop();
+
+	checkProjectAccess(project_id, session, env);
 
 	const result = await env.DB.prepare(
 		'DELETE FROM projects WHERE project_id = ?'
