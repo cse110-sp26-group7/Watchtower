@@ -20,21 +20,24 @@
     <link rel="stylesheet" href="css/error_log.css" />
     <link rel="stylesheet" href="css/login.css" />
     <link rel="stylesheet" href="css/feedback_widget.css" />
+
+    <!-- favicon here -->
+    <link rel="icon" type="image/png" href="/dashboard/img/watchtower.png">
   </head>
   <body>
     <!--NavBar-->
     <nav class="navbar">
+      <a class="navbar-watchtower">
+        <img
+          class="navbar-watchtower"
+          src="img/watchtower.png"
+          alt="WatchTower icon"
+        />
+      </a>
       <a class="navbar-logo" onclick="navigate('projects')">WatchTower</a>
       <div class="navbar-divider"></div>
       <div class="navbar-project">App-Name▾</div>
       <div class="navbar-right">
-        <a class="navbar-icon" title="Notifications">
-          <img
-            class="navbar-icon"
-            src="img/notification.png"
-            alt="notification icon"
-          />
-        </a>
         <button
           class="navbar-icon"
           id="themeBtn"
@@ -73,12 +76,17 @@
       <!--LOGIN-->
       <div class="page" id="page-login">
         <div class="page-header">
-          <div class="page-title">Login</div>
+          <div class="page-title" id="welcome-title">Welcome to WatchTower!</div>
         </div>
-        <input type="email" id="login-email" placeholder="Email" />
-        <input type="password" id="login-password" placeholder="Password" />
-        <button onclick="handleLogin()">Login</button>
-        <p id="login-error"></p>
+        <div class="login-card">
+          <div class="page-title">Login</div>
+          <div class="login-form">Email:</div>
+          <input type="email" class="login-input" id="login-email" placeholder="Email" />
+          <div class="login-form">Password:</div>
+          <input type="password" class="login-input" id="login-password" placeholder="Password" />
+          <button onclick="handleLogin()" id="login-button">Login</button>
+          <p id="login-error"></p>
+        </div>
       </div>
       <!-- PROJECT SELECTION -->
       <div class="page" id="page-projects">
