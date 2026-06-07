@@ -1,0 +1,30 @@
+/* dropdown menu — hidden by default */
+.avatar-dropdown {
+  display: none;
+  position: absolute;
+  top: 3.25rem;
+  right: 1.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.25rem;
+  z-index: 200;
+  min-width: 100px;
+}
+
+/* dropdown button */
+.avatar-dropdown button {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.avatar-dropdown button:hover {
+  background: var(--bg);
+}
