@@ -1,5 +1,7 @@
 # WatchTower
 
+**[→ Visit the project site](https://cse110-sp26-group7.github.io/Watchtower/landing/)**
+
 Lightweight observability dashboard. Errors, performance, and user
 feedback in one place.
 

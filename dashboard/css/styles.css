@@ -7,9 +7,10 @@
   --card: #ffffff;
   --border: #e8cfc0;
   --text: #3d2c1e;
+  --grey: #f0f2f3;
   --dim: #7a5c48;
   --tipBackground: #31201c;
-  --tipText:#fff9f3;
+  --tipText: #fff9f3;
   --sans: "Nunito", sans-serif;
   --mono: "Fira Code", monospace;
 }
@@ -203,8 +204,9 @@ body {
 /* DARK MODE */
 body.dark {
   --bg: #000000;
+  --grey: #3a2820;
   --card: #31201c;
-  --border: #3d2c1e;
+  --border: #583f2b;
   --text: #f5e6d8;
   --dim: #99816a;
   --tipBackground: #f5e6d8;
