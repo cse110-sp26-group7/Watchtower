@@ -87,13 +87,25 @@
 
 ---
 
-## Retrospective _(fill at end of sprint)_
+## Retrospective _(2026-05-25, end of Sprint 3)_
 
 **What went well:**
--
+- Live end-to-end pipeline (SDK → ingest → D1 → `/api/events` → dashboard) shipped before the demo-video deadline.
+- CI/CD pipeline draft up with lint + unit tests on every PR; matrix job added for the API worker.
+- Status video recorded on time for prof checkpoint.
+- ADR-0007 (jsDelivr CDN for SDK) written same week the decision was made — caught the pattern of writing ADRs while the context is fresh.
 
 **What didn't go well:**
--
+- Three of the foundational ADRs (0001 platform, 0003 vanilla JS, 0004 single events table) were still placeholders. Team 9's later peer review caught it; we should have caught it ourselves.
+- FE was briefly blocked waiting on `GET /api/events`; the API contract conversation could have happened earlier in the sprint.
+- Sprint 3 sprint-board table was left unfilled in `sprint-3.md` — backlog was managed in GitHub Issues / Projects but not mirrored here.
 
 **What to improve next sprint:**
--
+- ADR discipline: write the ADR in the same PR that introduces the decision, not a sprint later.
+- BE/FE contract conversation moved to the start of the sprint, not the middle.
+- Mirror the GitHub Project board into the sprint markdown as a snapshot.
+
+**Incorporation in Sprint 4:**
+- Michael batched ADRs 0006–0018 in a single PR (#118), covering nearly every decision made in Sprints 2–3.
+- Sprint 4 kickoff included a BE/FE contract sync (`docs/meetings/standups/sprint-4.md` 2026-05-25 entry).
+- Sprint 4 backlog and board were filled in advance for the sprint planning meeting.

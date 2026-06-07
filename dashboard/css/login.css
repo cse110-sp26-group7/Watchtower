@@ -1,0 +1,14 @@
+#login-error {
+  color: red;
+}
+
+/*Hide navbar and sidebar on login page, and make main content full width*/
+.login-page .navbar,
+.login-page .sidebar {
+  display: none;
+}
+
+.login-page .main {
+  margin-left: 0;
+  padding: 0;
+}

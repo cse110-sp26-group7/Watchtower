@@ -70,14 +70,18 @@
 
 ---
 
-## Retrospective _(5/11/2026)_
+## Retrospective _(2026-05-18, end of Sprint 2)_
 
 **What went well:**
-- Good Communiation
-- Clear Tasks
+- Good communication on Slack `#watchtower-standups`.
+- Clear tasks per sub-team — FE shell, BE ingest scaffold, SDK draft, CI baseline.
 
 **What didn't go well:**
-- Hard to schedule team meeting
+- Hard to schedule a full-team meeting; with 13 people there's almost never a clean common slot.
 
 **What to improve next sprint:**
-- More active communication between team lead to choose their match time since finding 2 person's common schedule is easier than many people. 
+- Lead-to-lead pairing: team leads coordinate, then schedule short pair sessions inside their sub-teams instead of trying to assemble everyone at once.
+
+**Incorporation in Sprint 3:**
+- TA meetings deliberately attended by 2–3 people (Kareem + lead per area), not the full team. Documented in `docs/meetings/ta/week-3.md` onward.
+- Standups stayed on Slack-async + 25-min Zoom for those who could make it, not full-team blocking meetings (`docs/meetings/standups/sprint-3.md`).

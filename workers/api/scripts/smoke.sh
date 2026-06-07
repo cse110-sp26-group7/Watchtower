@@ -60,6 +60,14 @@ curl -fsS "$API_BASE/api/events?project_id=$PROJECT&since=1h" \
 	-b "$COOKIE_JAR" | python3 -m json.tool
 echo
 
+echo "GET $API_BASE/api/summary?project_id=$PROJECT&window=24h (with session cookie)"
+# The just-ingested error should show in totals.errors, the latest 1h bucket of
+# timeseries.errors, and flip site_status to "issues" (error within 15 min).
+curl -fsS "$API_BASE/api/summary?project_id=$PROJECT&window=24h" \
+	-H 'X-Watchtower-Auth: 1' \
+	-b "$COOKIE_JAR" | python3 -m json.tool
+echo
+
 echo "GET without cookie is rejected (expect 401)"
 STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
 	-H 'X-Watchtower-Auth: 1' \

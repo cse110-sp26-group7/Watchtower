@@ -6,6 +6,7 @@
  */
 
 import { encodeCursor, parseQuery, shapeEvent, ValidationError } from './query.js';
+import { assembleSummary, buildBucketPlan, parseSummaryQuery, SITE_STATUS_WINDOW_MS } from './summary.js';
 import { requireSession, signSession, verifyPassword } from './auth.js';
 
 // CSRF defense per ADR-0005: every /api/* request (login included) must carry
@@ -126,6 +127,14 @@ async function route(request, env) {
 
 	if (request.method === 'DELETE' && url.pathname.startsWith('/api/projects/')) {
 		return handleDeleteProject(request, env);
+	if (request.method === 'GET' && url.pathname === '/api/summary') {
+		return handleGetSummary(url, env, session);
+	}
+
+	const parts = url.pathname.split('/');
+	const eventDetailMatch = parts.length === 4 && parts[1] === 'api' && parts[2] === 'events' && parts[3] ? [null, parts[3]] : null;
+	if (request.method === 'GET' && eventDetailMatch) {
+		return handleGetEventDetail(eventDetailMatch[1], url, env, session);
 	}
 
 	return jsonResponse({ error: 'not_found' }, 404);
@@ -216,6 +225,97 @@ async function handleGetEvents(url, env, session) {
 		},
 		200,
 	);
+}
+
+/**
+ * Handle `GET /api/summary`.
+ *
+ * Aggregated counts + zero-filled hourly/daily timeseries for the dashboard
+ * overview. Runs four read-only aggregates in one D1 batch (errors series,
+ * feedback series, performance samples, recent-error existence for
+ * site_status), then `assembleSummary` shapes the JSON. Contract:
+ * docs/backend/api/endpoints-draft.md §GET /api/summary.
+ *
+ * On validation failure returns 400 with `{ error, param }`.
+ */
+async function handleGetSummary(url, env, session) {
+	let params;
+	try {
+		params = parseSummaryQuery(url);
+	} catch (err) {
+		if (err instanceof ValidationError) {
+			return jsonResponse({ error: err.code, param: err.param }, 400);
+		}
+		throw err;
+	}
+
+	const { projectId, window } = params;
+
+	const denied = await checkProjectAccess(projectId, session, env);
+	if (denied) return denied;
+	const now = Date.now();
+	const plan = buildBucketPlan(window, now);
+	const nowISO = new Date(now).toISOString();
+	const recentSince = new Date(now - SITE_STATUS_WINDOW_MS).toISOString();
+
+	// Every aggregate is bounded `timestamp >= windowStart AND timestamp <= now`
+	// (matching /api/events, which bounds both sides). The upper bound keeps the
+	// observed interval identical across all four queries and the now-floored
+	// bucket grid, so a future-dated row (clock skew) can't count toward
+	// site_status without also showing in totals, or vice versa.
+	//
+	// bucketFmt is a closed internal whitelist (see summary.js WINDOWS), never
+	// user input, so it is safe to inline; all runtime values are bound.
+	const errorStmt = env.DB.prepare(
+		`SELECT strftime('${plan.bucketFmt}', timestamp) AS bucket, COUNT(*) AS count ` +
+			'FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ? GROUP BY bucket',
+	).bind(projectId, 'error', plan.windowStartISO, nowISO);
+
+	const feedbackStmt = env.DB.prepare(
+		`SELECT strftime('${plan.bucketFmt}', timestamp) AS bucket, COUNT(*) AS count, ` +
+			"SUM(CAST(json_extract(payload, '$.feedback_rating') AS REAL)) AS sum_rating " +
+			'FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ? GROUP BY bucket',
+	).bind(projectId, 'feedback', plan.windowStartISO, nowISO);
+
+	// p75 per Web Vital, computed in SQL so we never load raw samples into the
+	// worker. Nearest-rank: rank the values per metric, pick the row at
+	// ceil(0.75 * n) == (3*n + 3)/4 (1-based) — an actual observed value, no
+	// interpolation, so LCP stays integral and CLS keeps its precision. A metric
+	// with no samples yields no row and surfaces as null in assembleSummary.
+	const perfStmt = env.DB.prepare(
+		'SELECT metric_name, value AS p75 FROM (' +
+			"SELECT json_extract(payload, '$.metric_name') AS metric_name, " +
+			"CAST(json_extract(payload, '$.metric_value') AS REAL) AS value, " +
+			"ROW_NUMBER() OVER (PARTITION BY json_extract(payload, '$.metric_name') " +
+			"ORDER BY CAST(json_extract(payload, '$.metric_value') AS REAL)) AS rn, " +
+			"COUNT(*) OVER (PARTITION BY json_extract(payload, '$.metric_name')) AS cnt " +
+			'FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ?' +
+			') WHERE rn = (3 * cnt + 3) / 4',
+	).bind(projectId, 'performance', plan.windowStartISO, nowISO);
+
+	const recentErrorStmt = env.DB.prepare(
+		'SELECT COUNT(*) AS count FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ?',
+	).bind(projectId, 'error', recentSince, nowISO);
+
+	const [errorRes, feedbackRes, perfRes, recentRes] = await env.DB.batch([
+		errorStmt,
+		feedbackStmt,
+		perfStmt,
+		recentErrorStmt,
+	]);
+
+	const summary = assembleSummary({
+		projectId,
+		window,
+		plan,
+		generatedAt: nowISO,
+		errorRows: errorRes.results,
+		feedbackRows: feedbackRes.results,
+		perfP75Rows: perfRes.results,
+		recentErrorCount: recentRes.results[0].count,
+	});
+
+	return jsonResponse(summary, 200);
 }
 
 /**
@@ -402,3 +502,45 @@ async function handleDeleteProject(request, env) {
 	return jsonResponse({ project: { project_id } }, 200);
 } 
 
+ * Handle `GET /api/events/:event_id`.
+ *
+ * Returns the full shaped event plus the nearest deploy event at-or-before
+ * the event's timestamp in the same project (deploy correlation).
+ * 404 on unknown event_id; 403 if the project is not owned by the session user.
+ */
+async function handleGetEventDetail(eventId, url, env, session) {
+	// Fetch event by PK first — project_id param not needed (FE does not send it).
+	const row = await env.DB.prepare(
+		'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload, project_id ' +
+		'FROM events WHERE event_id = ?'
+	).bind(eventId).first();
+
+	if (!row) return jsonResponse({ error: 'not_found' }, 404);
+
+	const denied = await checkProjectAccess(row.project_id, session, env);
+	if (denied) return denied;
+
+	const event = shapeEvent(row);
+
+	// Deploy correlation: use deploy_id from the event when present (exact);
+	// fall back to nearest deploy at-or-before the event timestamp otherwise.
+	let deployRow = null;
+	if (row.deploy_id) {
+		deployRow = await env.DB.prepare(
+			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+			"FROM events WHERE project_id = ? AND event_type = 'deploy' AND deploy_id = ? ORDER BY timestamp DESC LIMIT 1"
+		).bind(row.project_id, row.deploy_id).first();
+	}
+	if (!deployRow) {
+		deployRow = await env.DB.prepare(
+			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+			'FROM events ' +
+			'WHERE project_id = ? AND event_type = ? AND timestamp <= ? ' +
+			'ORDER BY timestamp DESC, event_id DESC LIMIT 1'
+		).bind(row.project_id, 'deploy', event.timestamp).first();
+	}
+
+	const correlatedDeploy = deployRow ? shapeEvent(deployRow) : null;
+
+	return jsonResponse({ event, correlated_deploy: correlatedDeploy }, 200);
+}
