@@ -98,15 +98,19 @@
 
 ---
 
-## Retrospective _(fill at end of sprint)_
+## Retrospective _(2026-06-01, end of Sprint 4)_
 
 **What went well:**
-- We had a lot of features implemented
-- Discussed our progress during each meeting
-- Active in pull reviews
+- We had a lot of features implemented (real-API wiring, deploy hook, project selection, CLI deploy).
+- Discussed our progress during each meeting; standups felt productive.
+- Active in pull reviews; PR turnaround was fast.
 
 **What didn't go well:**
-- Communication across the teams; teams got a little bit out of sync
+- Communication across the teams; teams got a little bit out of sync, especially on auth/CORS expectations between FE and BE.
 
 **What to improve next sprint:**
-- Add jsdocs to files
+- Add JSDoc comments to files — JSDoc coverage is uneven across the worker code; the rubric explicitly calls it out.
+
+**Incorporation in Sprint 5:**
+- JSDoc backfill commits land in Sprint 5: `docs(api): add @param/@returns JSDoc to query.js exports`, `docs(api): add @param/@returns JSDoc to summary.js exports`, plus JSDoc on auth helpers.
+- Cross-team auth/CORS sync explicitly scheduled in Sprint 5 standup `2026-06-03` after the session-cookie middleware PR (#152); credentialed CORS pinned to dashboard origin to close the FE↔BE gap.
