@@ -502,7 +502,7 @@ async function handleDeleteProject(request, env) {
 	return jsonResponse({ project: { project_id } }, 200);
 } 
 
- * Handle `GET /api/events/:event_id`.
+/** Handle `GET /api/events/:event_id`.
  *
  * Returns the full shaped event plus the nearest deploy event at-or-before
  * the event's timestamp in the same project (deploy correlation).
