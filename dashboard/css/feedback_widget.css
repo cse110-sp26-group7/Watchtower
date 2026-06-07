@@ -1,0 +1,106 @@
+/* feedback widget */
+.feedback-widget {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* trigger star icon */
+.feedback-trigger {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+}
+
+.feedback-trigger img {
+  width: 100%;
+  height: 100%;
+}
+
+/* popup feedback, hidden by default */
+.feedback-popup {
+  display: none;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.feedback-label {
+  font-size: 1rem;
+  color: var(--dim);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/*Feedback button*/
+.feedback-submit {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: var(--amber);
+  color: var(--tipBackground);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.feedback-submit:hover {
+  opacity: 0.9;
+}
+
+/*Stars*/
+.stars {
+  display: flex;
+  gap: 4px;
+}
+
+.star {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.star img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Thank you overlay */
+.thankyou-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+
+.thankyou-overlay.visible {
+  display: flex;
+}
+
+.thankyou-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+.thankyou-card img {
+  width: 45px;
+  height: 45px;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+  margin-bottom: 0.5rem;
+}

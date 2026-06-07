@@ -2,7 +2,7 @@
 
 Cloudflare Worker that serves dashboard read traffic. See `docs/ARCHITECTURE.md` §3.4 and `docs/backend/api/endpoints-draft.md` for the endpoint contract.
 
-Implemented: `GET /api/events` (filter + cursor-paginated listing) and `GET /api/summary` (aggregated counts + timeseries for the overview). Auth (signed session cookie per ADR-0005) is enforced on `/api/*`; the remaining reporting routes are sprint-4 work.
+Implemented: `POST /api/login` / `POST /api/logout`, `GET /api/events` (filter + cursor-paginated listing), `GET /api/events/:event_id` (detail + deploy correlation), and `GET /api/summary` (aggregated counts + timeseries for the overview). Auth (signed session cookie per ADR-0005) is enforced on `/api/*`.
 
 ## Prerequisites
 
@@ -24,11 +24,16 @@ npm install
 npm run dev
 ```
 
-Starts `wrangler dev` on `http://localhost:8787`. Try the endpoint:
+Starts `wrangler dev` on `http://localhost:8787`. Every `/api/*` request needs the CSRF header, and everything except login needs a session cookie, so log in first (the demo user is seeded by the migrations):
 
 ```sh
-curl -i 'http://localhost:8787/api/events?project_id=wt_test'
-# → 200 { "events": [], "next_cursor": null, "has_more": false }
+curl -i -c /tmp/wt.jar -X POST 'http://localhost:8787/api/login' \
+  -H 'X-Watchtower-Auth: 1' -H 'Content-Type: application/json' \
+  -d '{"email":"demo@watchtower.dev","password":"demo1234"}'
+
+curl -i -b /tmp/wt.jar 'http://localhost:8787/api/events?project_id=wt_demo' \
+  -H 'X-Watchtower-Auth: 1'
+# → 200 { "events": [...], "next_cursor": null, "has_more": false }
 ```
 
 If `workers/ingest/` is already running on port 8787, start this one on a different port:
@@ -38,6 +43,12 @@ npm run dev -- --port 8788
 ```
 
 ## Endpoints
+
+The curl examples below omit the auth flags; add `-b /tmp/wt.jar -H 'X-Watchtower-Auth: 1'` from the login step above.
+
+### POST /api/login, POST /api/logout
+
+`POST /api/login` (`{ email, password }`) verifies seeded credentials, sets the signed `wt_session` cookie, and returns `{ user, projects }`. `POST /api/logout` revokes the session row and clears the cookie. Contract: ADR-0005.
 
 ### GET /api/events
 
@@ -64,6 +75,16 @@ curl 'http://localhost:8787/api/events?project_id=wt_a1b2c3d4&cursor=<next_curso
 ```
 
 `400` responses carry `{ "error": "missing_param" | "invalid_param", "param": "<name>" }`.
+
+### GET /api/events/:event_id
+
+Full shaped event plus deploy correlation:
+
+```sh
+curl 'http://localhost:8787/api/events/<event_id>'
+```
+
+Returns `{ event, correlated_deploy }`. `correlated_deploy` is the deploy event matching the event's own `deploy_id` when the SDK supplied one, otherwise the nearest deploy at-or-before the event's timestamp in the same project; `null` if there is none. `404 { "error": "not_found" }` on unknown `event_id`; ownership is gated through the event's project (403 on someone else's).
 
 ### GET /api/summary
 
@@ -114,7 +135,7 @@ Flat-config ESLint over `src/`. Config lives in `eslint.config.mjs`.
 npm run deploy
 ```
 
-Requires a Cloudflare account and a one-time `npx wrangler login`. CI handles deploys on merge to `main` (see `.github/workflows/`); manual deploys should be rare.
+Requires a Cloudflare account and a one-time `npx wrangler login`. CI handles deploys on every `v*` tag (ADR-0010; see `.github/workflows/deploy.yml`); manual deploys should be rare. Announce tags in `#backend` before pushing them.
 
 ## Configuration
 
@@ -127,14 +148,16 @@ Requires a Cloudflare account and a one-time `npx wrangler login`. CI handles de
 ```
 workers/api/
 ├── src/
-│   ├── index.js              # Worker entry (router + GET /api/events, /api/summary handlers)
+│   ├── index.js              # Worker entry (router + handlers: login/logout, events, event detail, summary)
+│   ├── auth.js               # Session signing/verification, PBKDF2 password check (+ auth.spec.js)
 │   ├── query.js              # GET /api/events: query parsing, cursor codec, row shaping
 │   └── summary.js            # GET /api/summary: param parsing, bucket grid, p75, response assembly
 ├── test/
-│   ├── index.spec.js         # vitest specs (router + GET /api/events)
+│   ├── index.spec.js         # vitest specs (router, events, event detail, summary)
+│   ├── auth-middleware.spec.js # session gate, CSRF header, ownership, CORS
 │   └── apply-migrations.js   # Applies db/migrations/ to the in-memory D1 once per session
-├── scripts/smoke.sh          # End-to-end ingest→read smoke test (manual)
-├── wrangler.jsonc            # Worker config (D1 binding: DB)
+├── scripts/smoke.sh          # End-to-end ingest→login→read smoke test (manual)
+├── wrangler.jsonc            # Worker config (D1 binding: DB, ALLOWED_ORIGINS var)
 ├── eslint.config.mjs
 ├── vitest.config.js
 └── package.json

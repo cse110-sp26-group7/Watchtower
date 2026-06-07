@@ -90,12 +90,37 @@ Tests automatically take screenshots when they fail (see `test-results/` folder)
 
 ## CI/CD Integration
 
-Tests run in GitHub Actions on every PR (after unit tests pass):
+E2E tests run automatically in GitHub Actions on every pull request to `main`,
+as the `e2e` job in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+(alongside the `lint`, `build`, and `test` jobs).
 
-```yaml
-- name: Run E2E tests
-  run: npx playwright test
+The job:
+
+1. Installs root dependencies with `npm ci` (`@playwright/test` is pinned in the
+   root `package.json` / `package-lock.json`).
+2. Installs the Chromium browser via `npx playwright install --with-deps chromium`,
+   caching it between runs keyed on the Playwright version.
+3. Runs the suite with `npx playwright test`. Playwright's `webServer` config
+   starts `python3 -m http.server 8000` automatically (Python 3 is preinstalled
+   on the `ubuntu-latest` runner).
+4. Uploads the HTML report as a `playwright-report` artifact (kept 7 days) so
+   failures are debuggable from the Actions run.
+
+On CI the run uses `retries: 2` and `workers: 1` (see
+[`playwright.config.js`](../playwright.config.js)).
+
+To reproduce locally:
+
+```bash
+npm ci
+npx playwright install chromium
+npm run test:e2e
 ```
+
+> **Note:** These tests currently hit the live production API
+> (`watchtower-api.cse110piedpiper7.workers.dev`). Retries absorb most transient
+> failures, but making the suite hermetic (Playwright route mocking / fixtures)
+> is a recommended follow-up to remove the external dependency.
 
 ## Requirements
 

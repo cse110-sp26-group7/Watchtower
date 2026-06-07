@@ -203,6 +203,7 @@ body {
 
 /* DARK MODE */
 body.dark {
+  --amber: #af5c19;
   --bg: #000000;
   --grey: #3a2820;
   --card: #31201c;
