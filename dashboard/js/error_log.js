@@ -1,5 +1,18 @@
 /* global getEvents */
 
+/**
+ * Escapes HTML special characters to prevent XSS
+ * @param {string} str - raw string from untrusted data
+ * @returns {string} escaped string safe for innerHTML
+ */
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // Search bar functionality for error log page
 document.getElementById("search").addEventListener("input", function () {
   const query = this.value.toLowerCase();
@@ -119,8 +132,8 @@ window.loadErrorLog = async function loadErrorLog() {
           <span class="full-error-level-dot error"></span>
           ERROR
         </td>
-        <td>${event.message ?? "No message"}</td>
-        <td>${event.url ?? "Unknown"}</td>
+        <td>${escapeHtml(event.message)}</td>
+        <td>${escapeHtml(event.url)}</td>
         <td>1</td>
       `;
       tbody.appendChild(row);
