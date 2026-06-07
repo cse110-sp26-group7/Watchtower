@@ -14,7 +14,7 @@
 }
 
 #welcome-title {
-  padding-top: 32px;
+  padding-top: 2rem;
   margin: 0 auto;
 }
 
@@ -22,9 +22,9 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 24px;
+  padding: 1.5rem;
   width: 640px;
-  margin-top: 32px;
+  margin-top: 2rem;
   justify-self: center;
 
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -36,7 +36,7 @@
 }
 
 .login-form {
-  margin-top: 16px;
+  margin-top: 1rem;
   color: var(--loginText);
   font-size: 26px;
 }
@@ -55,8 +55,8 @@
 
 #login-button {
   width: 100%;
-  margin-top: 32px;
-  padding: 12px 24px;
+  margin-top: 2rem;
+  padding: 0.75rem 1.5rem;
   font-size: 16px;
   font-weight: 600;
   color: var(--card);
@@ -67,6 +67,6 @@
 }
 
 #login-error {
-  margin-top: 16px;
+  margin-top: 1rem;
   color: red;
 }
