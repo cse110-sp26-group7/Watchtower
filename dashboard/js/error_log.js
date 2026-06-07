@@ -27,7 +27,7 @@ document.getElementById("search").addEventListener("input", function () {
 
     const detailRow = row.nextElementSibling;
     if (detailRow?.classList.contains("detail-row")) {
-      detailRow.style.display = "none";
+      detailRow.classList.remove("detail-row-open");
     }
   });
 });
@@ -61,7 +61,7 @@ document.getElementById("date-filter").addEventListener("change", function () {
 
     const detailRow = row.nextElementSibling;
     if (detailRow?.classList.contains("detail-row")) {
-      detailRow.style.display = "none";
+      detailRow.classList.remove("detail-row-open");
     }
   });
 });
@@ -73,7 +73,7 @@ document.getElementById("level-filter").addEventListener("change", function () {
   const rows = document.querySelectorAll(".full-errors-table tbody tr");
 
   rows.forEach((row) => {
-    const level = row.textContent.toLowerCase() || "";
+    const level = row.dataset.level ?? "";
     let show = false;
 
     if (filter === "all") {
@@ -90,7 +90,7 @@ document.getElementById("level-filter").addEventListener("change", function () {
 
     const detailRow = row.nextElementSibling;
     if (detailRow?.classList.contains("detail-row")) {
-      detailRow.style.display = "none";
+      detailRow.classList.remove("detail-row-open");
     }
   });
 });
@@ -122,6 +122,9 @@ window.loadErrorLog = async function loadErrorLog() {
     events.forEach((event) => {
       const row = document.createElement("tr");
       row.classList.add("full-errors-table-row");
+      row.dataset.timestamp = event.timestamp;
+      row.dataset.level = event.event_type;
+
       row.innerHTML = `
         <td>
           ${new Date(event.timestamp).toLocaleDateString()} 
@@ -136,7 +139,42 @@ window.loadErrorLog = async function loadErrorLog() {
         <td>${escapeHtml(event.url)}</td>
         <td>1</td>
       `;
+
+      // detail row — hidden by default
+      const detailRow = document.createElement("tr");
+      detailRow.classList.add("detail-row");
+
+      detailRow.innerHTML = `
+        <td colspan="5">
+          <div class="error-detail">
+            <div class="error-detail-grid">
+              <span class="detail-label">Name</span>
+              <span class="detail-value">${escapeHtml(event.name)}</span>
+              <span class="detail-label">Environment</span>
+              <span class="detail-value">${escapeHtml(event.environment)}</span>
+              <span class="detail-label">Handled</span>
+              <span class="detail-value">${event.handled ? "Yes" : "No"}</span>
+              <span class="detail-label">File</span>
+              <span class="detail-value">${escapeHtml(event.filename)}</span>
+              <span class="detail-label">User Agent</span>
+              <span class="detail-value">${escapeHtml(event.user_agent)}</span>
+              <span class="detail-label">Country</span>
+              <span class="detail-value">${escapeHtml(event.country)}</span>
+            </div>
+            <div class="detail-label">Stack Trace</div>
+            <pre class="error-stack">${escapeHtml(event.stack)}</pre>
+          </div>
+        </td>
+      `;
+
+      // toggle detail row on click
+      row.addEventListener("click", () => {
+        detailRow.classList.toggle("detail-row-open");
+        row.classList.toggle("row-open");
+      });
+
       tbody.appendChild(row);
+      tbody.appendChild(detailRow);
     });
   } catch (err) {
     console.error("Error log failed to load:", err);
