@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/projects_selection.css" />
     <link rel="stylesheet" href="css/performance_summary.css" />
     <link rel="stylesheet" href="css/error_log.css" />
+    <link rel="stylesheet" href="css/login.css" />
   </head>
   <body>
     <!--NavBar-->
@@ -68,6 +69,16 @@
 
     <!-- MAIN CONTENT -->
     <main class="main">
+      <!--LOGIN-->
+      <div class="page" id="page-login">
+        <div class="page-header">
+          <div class="page-title">Login</div>
+        </div>
+        <input type="email" id="login-email" placeholder="Email" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button onclick="handleLogin()">Login</button>
+        <p id="login-error"></p>
+      </div>
       <!-- PROJECT SELECTION -->
       <div class="page" id="page-projects">
         <div class="page-header">
@@ -127,14 +138,13 @@
               <div class="metric-header">
                 <h3>Total Errors</h3>
                 <div class="help-tooltip">
-                    <span class="help-icon">?</span>
+                  <span class="help-icon">?</span>
 
-
-                    <span class="tooltip-text">
-                      Total number of captured error events within the last thirty
-                      days.
-                    </span>
-                  </div>
+                  <span class="tooltip-text">
+                    Total number of captured error events within the last thirty
+                    days.
+                  </span>
+                </div>
               </div>
               <p class="metric-number error-number" id="total-errors">0</p>
 
@@ -146,15 +156,14 @@
               <div class="metric-header">
                 <h3>LCP</h3>
                 <div class="help-tooltip">
-                    <span class="help-icon">?</span>
+                  <span class="help-icon">?</span>
 
-
-                    <span class="tooltip-text">
-                      Largest Contentful Paint measures how long it takes the 
-                      largest visible content to load. Lower values mean a 
-                      faster experience.
-                    </span>
-                  </div>
+                  <span class="tooltip-text">
+                    Largest Contentful Paint measures how long it takes the
+                    largest visible content to load. Lower values mean a faster
+                    experience.
+                  </span>
+                </div>
               </div>
 
               <p class="metric-number" id="lcp-value">0ms</p>
@@ -167,15 +176,14 @@
               <div class="metric-header">
                 <h3>FCP</h3>
                 <div class="help-tooltip">
-                    <span class="help-icon">?</span>
+                  <span class="help-icon">?</span>
 
-
-                    <span class="tooltip-text">
-                      First Contentful Paint measures when the browser first 
-                      displays visible content on the page. Lower values mean 
-                      the page feels more responsive to users sooner.
-                    </span>
-                  </div>
+                  <span class="tooltip-text">
+                    First Contentful Paint measures when the browser first
+                    displays visible content on the page. Lower values mean the
+                    page feels more responsive to users sooner.
+                  </span>
+                </div>
               </div>
 
               <p class="metric-number" id="fcp-value">0ms</p>
@@ -188,14 +196,13 @@
               <div class="metric-header">
                 <h3>CLS</h3>
                 <div class="help-tooltip">
-                    <span class="help-icon">?</span>
+                  <span class="help-icon">?</span>
 
-
-                    <span class="tooltip-text">
-                      Cumulative Layout Shift measures visual stability.
-                      Lower scores indicate fewer unexpected page movements.
-                    </span>
-                  </div>
+                  <span class="tooltip-text">
+                    Cumulative Layout Shift measures visual stability. Lower
+                    scores indicate fewer unexpected page movements.
+                  </span>
+                </div>
               </div>
 
               <p class="metric-number metric-cls" id="cls-value">0</p>
@@ -261,8 +268,17 @@
           <!-- search bar -->
           <input type="search" id="search" placeholder="Search logs..." />
 
-          <!-- filter -->
-          <select id="filter">
+          <!-- filters -->
+          <!-- filter by date range -->
+          <select class="filter" id="date-filter">
+            <option value="all">All Time</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+
+          <!-- filter by error level -->
+          <select class="filter" id="level-filter">
             <option value="all">All Levels</option>
             <option value="error">Errors</option>
             <option value="warning">Warnings</option>
@@ -308,6 +324,7 @@
 
     <!--Add scripts here-->
     <script src="js/api-client.js"></script>
+    <script src="js/login.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/error_log.js"></script>
     <script src="js/projects_selection.js"></script>

@@ -1,14 +1,13 @@
 /* global getEvents */
 
-
-/** 
+/**
  * Thresholds from Google Web Vitals standards
  * good = fast/stable, warn = needs improvement, poor = slow/unstable based on web
  */
 const THRESHOLDS = {
   lcp: { warn: 2500, poor: 4000 },
   fcp: { warn: 1800, poor: 3000 },
-  cls: { warn: 0.1,  poor: 0.25 },
+  cls: { warn: 0.1, poor: 0.25 },
 };
 
 /**
@@ -43,12 +42,29 @@ window.loadDashboard = async function loadDashboard() {
     document.getElementById("cls-value").textContent = cls
       ? parseFloat(cls.metric_value ?? "N/A").toFixed(2)
       : "N/A";
-    
-    // apply threshold colors to performance metrics
-    if (lcp) applyMetricColor("lcp-value", lcp.metric_value, THRESHOLDS.lcp.warn, THRESHOLDS.lcp.poor);
-    if (fcp) applyMetricColor("fcp-value", fcp.metric_value, THRESHOLDS.fcp.warn, THRESHOLDS.fcp.poor);
-    if (cls) applyMetricColor("cls-value", cls.metric_value, THRESHOLDS.cls.warn, THRESHOLDS.cls.poor);
 
+    // apply threshold colors to performance metrics
+    if (lcp)
+      applyMetricColor(
+        "lcp-value",
+        lcp.metric_value,
+        THRESHOLDS.lcp.warn,
+        THRESHOLDS.lcp.poor,
+      );
+    if (fcp)
+      applyMetricColor(
+        "fcp-value",
+        fcp.metric_value,
+        THRESHOLDS.fcp.warn,
+        THRESHOLDS.fcp.poor,
+      );
+    if (cls)
+      applyMetricColor(
+        "cls-value",
+        cls.metric_value,
+        THRESHOLDS.cls.warn,
+        THRESHOLDS.cls.poor,
+      );
 
     // update total errors card
     document.getElementById("total-errors").textContent = events.length;
@@ -104,7 +120,11 @@ function updateRecentErrors(events) {
     const row = document.createElement("tr");
     row.classList.add("errors-table-row");
     row.innerHTML = `
-      <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
+      <td>
+          ${new Date(event.timestamp).toLocaleDateString()} 
+          <br>
+          ${new Date(event.timestamp).toLocaleTimeString()}
+      </td>
       <td><span class="recent-error-level-dot error"></span></td>
       <td>${event.message ?? "No message"}</td>
       <td>${event.url ?? "Unknown"}</td>
@@ -115,7 +135,7 @@ function updateRecentErrors(events) {
 }
 
 /**
- * Changes color to the performance metric card text based on its value and 
+ * Changes color to the performance metric card text based on its value and
  * thresholds
  * @param {string} elementId
  * @param {number} value

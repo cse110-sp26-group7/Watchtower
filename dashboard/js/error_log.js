@@ -20,7 +20,41 @@ document.getElementById("search").addEventListener("input", function () {
 });
 
 // Filter functionality for error log page
-document.getElementById("filter").addEventListener("change", function () {
+// Filter by date range (last 24 hours, last 7 days, last 30 days)
+document.getElementById("date-filter").addEventListener("change", function () {
+  const filter = this.value;
+  const now = new Date();
+
+  const rows = document.querySelectorAll(".full-errors-table tbody tr");
+
+  rows.forEach((row) => {
+    const timestampText = row.querySelector("td").textContent.trim();
+    const [datePart, timePart] = timestampText.split("\n").map((s) => s.trim());
+    const timestamp = new Date(`${datePart} ${timePart}`);
+
+    let show = false;
+
+    if (filter === "all") {
+      show = true;
+    } else if (filter === "24h") {
+      show = now - timestamp <= 24 * 60 * 60 * 1000;
+    } else if (filter === "7d") {
+      show = now - timestamp <= 7 * 24 * 60 * 60 * 1000;
+    } else if (filter === "30d") {
+      show = now - timestamp <= 30 * 24 * 60 * 60 * 1000;
+    }
+
+    row.style.display = show ? "" : "none";
+
+    const detailRow = row.nextElementSibling;
+    if (detailRow?.classList.contains("detail-row")) {
+      detailRow.style.display = "none";
+    }
+  });
+});
+
+// Filter by error level (error, warning, minimal)
+document.getElementById("level-filter").addEventListener("change", function () {
   const filter = this.value;
 
   const rows = document.querySelectorAll(".full-errors-table tbody tr");
@@ -76,7 +110,11 @@ window.loadErrorLog = async function loadErrorLog() {
       const row = document.createElement("tr");
       row.classList.add("full-errors-table-row");
       row.innerHTML = `
-        <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
+        <td>
+          ${new Date(event.timestamp).toLocaleDateString()} 
+          <br>
+          ${new Date(event.timestamp).toLocaleTimeString()}
+        </td>
         <td class="full-level-status">
           <span class="full-error-level-dot error"></span>
           ERROR

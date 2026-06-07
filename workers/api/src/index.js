@@ -89,6 +89,12 @@ async function route(request, env) {
 		return handleGetSummary(url, env, session);
 	}
 
+	const parts = url.pathname.split('/');
+	const eventDetailMatch = parts.length === 4 && parts[1] === 'api' && parts[2] === 'events' && parts[3] ? [null, parts[3]] : null;
+	if (request.method === 'GET' && eventDetailMatch) {
+		return handleGetEventDetail(eventDetailMatch[1], url, env, session);
+	}
+
 	return jsonResponse({ error: 'not_found' }, 404);
 }
 
@@ -326,4 +332,48 @@ async function handleLogout(session, env) {
 			'Set-Cookie': 'wt_session=; HttpOnly; Secure; SameSite=None; Max-Age=0',
 		},
 	});
+}
+
+/**
+ * Handle `GET /api/events/:event_id`.
+ *
+ * Returns the full shaped event plus the nearest deploy event at-or-before
+ * the event's timestamp in the same project (deploy correlation).
+ * 404 on unknown event_id; 403 if the project is not owned by the session user.
+ */
+async function handleGetEventDetail(eventId, url, env, session) {
+	// Fetch event by PK first — project_id param not needed (FE does not send it).
+	const row = await env.DB.prepare(
+		'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload, project_id ' +
+		'FROM events WHERE event_id = ?'
+	).bind(eventId).first();
+
+	if (!row) return jsonResponse({ error: 'not_found' }, 404);
+
+	const denied = await checkProjectAccess(row.project_id, session, env);
+	if (denied) return denied;
+
+	const event = shapeEvent(row);
+
+	// Deploy correlation: use deploy_id from the event when present (exact);
+	// fall back to nearest deploy at-or-before the event timestamp otherwise.
+	let deployRow = null;
+	if (row.deploy_id) {
+		deployRow = await env.DB.prepare(
+			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+			"FROM events WHERE project_id = ? AND event_type = 'deploy' AND deploy_id = ? ORDER BY timestamp DESC LIMIT 1"
+		).bind(row.project_id, row.deploy_id).first();
+	}
+	if (!deployRow) {
+		deployRow = await env.DB.prepare(
+			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+			'FROM events ' +
+			'WHERE project_id = ? AND event_type = ? AND timestamp <= ? ' +
+			'ORDER BY timestamp DESC, event_id DESC LIMIT 1'
+		).bind(row.project_id, 'deploy', event.timestamp).first();
+	}
+
+	const correlatedDeploy = deployRow ? shapeEvent(deployRow) : null;
+
+	return jsonResponse({ event, correlated_deploy: correlatedDeploy }, 200);
 }
