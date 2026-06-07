@@ -20,10 +20,10 @@ This document describes the architecture chosen to deliver a working MVP in **th
 ```mermaid
 flowchart TD
   A["Client browser (target app)<br/>watchtower.js — errors, vitals, feedback"]
-  B["GitHub Actions (CI/CD)<br/>posts deploy events"]
+  B["GitHub Actions (CI/CD)<br/>posts deploy events on v* tags"]
   C["Cloudflare Worker — /ingest<br/>validate · enrich · insert"]
-  D[("Cloudflare D1 (SQLite)<br/>events · deploys · projects · users")]
-  E["Cloudflare Worker — /api/*<br/>auth · errors · perf · feedback · deploys"]
+  D[("Cloudflare D1 (SQLite)<br/>events · projects · users · sessions")]
+  E["Cloudflare Worker — /api/*<br/>session auth · events · summary · event detail"]
   F["Dashboard SPA (Cloudflare Pages)<br/>vanilla JS + Chart.js"]
 
   A -->|"POST /ingest (sendBeacon · fetch)"| C
@@ -51,36 +51,36 @@ A single, dependency-free JavaScript file (~5 KB minified) included by any app t
 
 A single Worker route that accepts JSON payloads from both the client SDK and CI. Three steps, fail-fast, stateless:
 
-1. **Validate** — checks the project API key, payload schema, and event-type enum.
-2. **Enrich** — adds server-side timestamp, parses User-Agent, derives country from the `cf-ipcountry` header.
-3. **Insert** — writes to D1 in a single prepared statement.
+1. **Validate** — checks the envelope shape (`{ project_id, events[] }`), caps the batch size, and rejects unknown `project_id` with 401.
+2. **Enrich** — adds a server-side `received_at` timestamp, the `User-Agent` header on browser events, and country from the `cf-ipcountry` header.
+3. **Insert** — writes the batch to D1 in one all-or-nothing `batch()` of prepared statements.
 
 Returns 204 on success so clients don't waste bandwidth on response bodies.
 
 ### 3.3 Storage — Cloudflare D1
 
-D1 is Cloudflare's managed SQLite. The free tier comfortably covers a class project. Five tables:
+D1 is Cloudflare's managed SQLite. The free tier comfortably covers a class project. Four tables:
 
 | Table | Purpose |
 |---|---|
-| `projects` | One row per monitored app. Holds the project API key. |
-| `events` | Polymorphic table for errors, performance samples, and feedback. A `type` column discriminates; payload-specific fields live in a JSON column. |
-| `deploys` | Deployment events from CI. Commit SHA, environment, timestamp. |
-| `users` | Dashboard accounts (email, hashed password). |
-| `sessions` | Issued auth tokens. |
+| `projects` | One row per monitored app. `project_id` is the public key clients send; `owner_id` gates dashboard access. |
+| `events` | Polymorphic table for errors, performance samples, feedback, pageviews, and deploy markers. An `event_type` column discriminates; payload-specific fields live in a JSON column. |
+| `users` | Dashboard accounts (email, hashed password). Seeded; no self-serve signup. |
+| `sessions` | Server-side session rows backing the signed auth cookie. |
 
-Collapsing errors/perf/feedback into one `events` table is a deliberate scope reduction. It removes triplicate CRUD code at the cost of slightly larger rows.
+Collapsing all event types (deploys included) into one `events` table is a deliberate scope reduction (ADR-0004). It removes triplicate CRUD code at the cost of slightly larger rows.
 
 ### 3.4 Reporting API — Cloudflare Worker at `/api/*`
 
-A second route group, on the same Worker deployment, that serves the dashboard.
+A second Worker, deployed separately from ingest (ADR-0009), that serves the dashboard.
 
-- `POST /api/login` — issues a signed session cookie.
-- `GET /api/events?type=error&since=...` — filtered event listing with pagination.
-- `GET /api/summary` — pre-aggregated counts for the overview screen.
-- `GET /api/deploys` — recent deploy events for correlation.
+- `POST /api/login` — verifies seeded credentials, issues a signed session cookie, returns the user and their projects.
+- `POST /api/logout` — revokes the session row and clears the cookie.
+- `GET /api/events?type=error&since=...` — filtered event listing with pagination. Deploys are listed via `?type=deploy`; there is no separate deploys endpoint.
+- `GET /api/events/:event_id` — full event detail plus `correlated_deploy`, the nearest deploy at-or-before the event in the same project.
+- `GET /api/summary` — pre-aggregated totals, timeseries, and site status for the overview screen.
 
-All authenticated endpoints check a signed session cookie. No OAuth, no external auth provider.
+Every `/api/*` request requires the signed session cookie plus the `X-Watchtower-Auth` header (CSRF defense), and CORS is pinned to the dashboard origin (ADR-0005). Project access is ownership-gated: unknown `project_id` returns 404, someone else's returns 403. No OAuth, no external auth provider.
 
 ### 3.5 Dashboard — Cloudflare Pages
 
@@ -94,8 +94,8 @@ A static single-page app:
 ### 3.6 CI/CD — GitHub Actions
 
 - **On every PR**: ESLint, unit tests, e2e tests (Playwright headless), build check.
-- **On merge to `main`**: deploy Workers via `wrangler deploy`, deploy dashboard via Cloudflare Pages.
-- **Post-deploy**: `curl` `/ingest` with a deploy event so WatchTower observes its own deploys (free dogfooding for demos).
+- **On every `v*` tag**: deploy Workers via `wrangler deploy` (ADR-0010); the dashboard deploys via Cloudflare Pages on push to `main`.
+- **Post-deploy**: the tag workflow POSTs a deploy event to `/ingest` (commit SHA as `deploy_id`) so WatchTower observes its own deploys (free dogfooding for demos).
 
 ## 4. End-to-End Data Flow
 
@@ -103,10 +103,10 @@ A typical flow on the error path:
 
 1. A user clicks something in a monitored app and the JS throws.
 2. `watchtower.js`'s error handler captures the stack trace, batches it, and within ~5 s fires `navigator.sendBeacon('/ingest', payload)`.
-3. The Ingest Worker validates the API key, enriches the payload with country and timestamp, and `INSERT`s into the `events` table.
-4. A team member opens the dashboard. The SPA calls `GET /api/events?type=error&since=24h`.
-5. The Reporting Worker queries D1 and returns JSON.
-6. The dashboard renders the error in a sortable table. Clicking it opens a detail view that joins the error timestamp to the most recent `deploys` row, surfacing the likely culprit commit.
+3. The Ingest Worker validates the `project_id`, enriches the payload with country and timestamp, and `INSERT`s into the `events` table.
+4. A team member logs into the dashboard. The SPA calls `GET /api/events?type=error&since=24h` with the session cookie.
+5. The Reporting Worker checks the session and project ownership, queries D1, and returns JSON.
+6. The dashboard renders the error in a sortable table. Clicking it calls `GET /api/events/:event_id`, whose `correlated_deploy` field carries the nearest deploy at-or-before the error, surfacing the likely culprit.
 
 ## 5. Why This Stack
 
@@ -130,13 +130,7 @@ A typical flow on the error path:
 
 ## 7. Architectural Decision Records
 
-Each major decision above is captured as a separate MADR file under `docs/adr/`:
-
-- `0001-cloudflare-over-node-php.md`
-- `0002-d1-over-kv-or-external-postgres.md`
-- `0003-vanilla-js-dashboard.md`
-- `0004-single-events-table.md`
-- `0005-signed-cookie-auth.md`
+Each major decision above is captured as a separate MADR file under `docs/adr/`. The ones most relevant here: ADR-0002 (D1), ADR-0004 (single events table), ADR-0005 (signed-cookie auth), ADR-0009 (two-worker split), ADR-0010 (tag-based deploys).
 
 ## 8. Out of Scope for the MVP
 
