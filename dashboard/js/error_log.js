@@ -13,6 +13,30 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Parses a stack trace string into structured frames
+ * @param {string} stack - raw stack trace string
+ * @returns {Array} array of frame objects
+ */
+function parseStack(stack) {
+  if (!stack) return [];
+  return stack
+    .split("\n")
+    .filter((line) => line.trim().startsWith("at "))
+    .map((line) => {
+      const match = line.trim().match(/at (.+?) \((.+):(\d+):(\d+)\)/);
+      if (match) {
+        return {
+          fn: match[1],
+          file: match[2],
+          line: match[3],
+          col: match[4],
+        };
+      }
+      return { raw: line.trim() };
+    });
+}
+
 // Search bar functionality for error log page
 document.getElementById("search").addEventListener("input", function () {
   const query = this.value.toLowerCase();
@@ -119,6 +143,7 @@ window.loadErrorLog = async function loadErrorLog() {
       return;
     }
 
+    // populate table with error events
     events.forEach((event) => {
       const row = document.createElement("tr");
       row.classList.add("full-errors-table-row");
@@ -141,6 +166,7 @@ window.loadErrorLog = async function loadErrorLog() {
       `;
 
       // detail row — hidden by default
+      /*If the stack trace is in a recognizable format, parse it into frames*/
       const detailRow = document.createElement("tr");
       detailRow.classList.add("detail-row");
 
@@ -162,7 +188,19 @@ window.loadErrorLog = async function loadErrorLog() {
               <span class="detail-value">${escapeHtml(event.country)}</span>
             </div>
             <div class="detail-label">Stack Trace</div>
-            <pre class="error-stack">${escapeHtml(event.stack)}</pre>
+
+            <div class="error-stack">
+              ${parseStack(event.stack)
+                .map((f) =>
+                  f.raw
+                    ? `<div class="stack-frame"><span class="stack-raw">${escapeHtml(f.raw)}</span></div>`
+                    : `<div class="stack-frame">
+                    <span class="stack-function">${escapeHtml(f.fn)}</span>
+                    <span class="stack-location">${escapeHtml(f.file)}:${f.line}:${f.col}</span>
+                  </div>`,
+                )
+                .join("")}
+            </div>
           </div>
         </td>
       `;

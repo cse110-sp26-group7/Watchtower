@@ -156,31 +156,76 @@
   display: grid;
   grid-template-columns: 120px 1fr;
   gap: 0.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.5px solid var(--border);
 }
 
 .detail-label {
-  font-weight: 700;
+  font-weight: 900;
   color: var(--text);
   font-size: 0.875rem;
   text-align: left;
+  margin-top: 1rem;
+  margin-left: 1rem;
 }
 
 .detail-value {
   color: var(--text);
   font-size: 0.875rem;
   overflow-wrap: anywhere;
+  margin-top: 1rem;
+  margin-left: 1rem;
   text-align: left;
 }
 
 .error-stack {
   background: var(--card);
-  padding: 1rem;
-  font-family: var(--sans);
+  padding: 0.5rem;
+  margin-left: 1.75rem;
   font-size: 0.875rem;
   color: var(--text);
   overflow-x: auto;
   margin: 0.25rem 0 0;
   text-align: left;
+}
+
+/* stack trace frames */
+.stack-frame {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 4px 0;
+  margin-left: 1rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+/* remove border from last frame */
+.stack-frame:last-child {
+  border-bottom: none;
+}
+
+/* function name text color*/
+.stack-function {
+  color: var(--dim);
+  font-weight: 900;
+}
+
+/* highlight function name in dark mode for better visibility */
+body.dark .stack-function {
+  color: var(--amber);
+}
+
+/* file location — muted, right aligned */
+.stack-location {
+  color: var(--dim);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+/* unparsed stack line fallback */
+.stack-raw {
+  color: var(--dim);
 }
 
 /* highlight the currently open row */
