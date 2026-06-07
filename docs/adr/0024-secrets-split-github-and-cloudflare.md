@@ -1,4 +1,4 @@
-# ADR-0020: Secrets Split Between GitHub Secrets and Cloudflare Worker Secrets
+# ADR-0024: Secrets Split Between GitHub Secrets and Cloudflare Worker Secrets
 
 ## Status
 Accepted
@@ -10,7 +10,7 @@ Accepted
 
 Two distinct kinds of secret-bearing values exist in WatchTower:
 
-1. **CI-time secrets** — values that CI (ADR-0019) needs to talk to external systems. Example: `CLOUDFLARE_API_TOKEN` (stored as GitHub Secret `TOKEN_CICD_V1`), used by `.github/workflows/deploy.yml` to authenticate wrangler against Cloudflare.
+1. **CI-time secrets** — values that CI (ADR-0023) needs to talk to external systems. Example: `CLOUDFLARE_API_TOKEN` (stored as GitHub Secret `TOKEN_CICD_V1`), used by `.github/workflows/deploy.yml` to authenticate wrangler against Cloudflare.
 2. **Runtime secrets** — values the workers themselves need at request time. Example: `SESSION_SECRET`, used by `watchtower-api` to sign and verify session cookies (ADR-0005).
 
 Each kind has different reach requirements:

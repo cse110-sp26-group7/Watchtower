@@ -1,4 +1,4 @@
-# ADR-0019: GitHub Actions as the CI/CD Platform
+# ADR-0023: GitHub Actions as the CI/CD Platform
 
 ## Status
 Accepted

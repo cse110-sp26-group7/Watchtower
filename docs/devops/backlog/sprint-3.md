@@ -41,9 +41,9 @@ Deliverables (as originally planned):
 - `notify-deploy` placeholder added; payload implemented in Sprint 4.
 
 What actually shipped:
-- Cloudflare API token (Edit Cloudflare Workers + D1:Edit) generated on the team account and stored as GitHub Secret `TOKEN_CICD_V1` (rationale for storing CI-time secrets in GitHub rather than Cloudflare is in [ADR-0020](../../adr/0020-secrets-split-github-and-cloudflare.md)).
+- Cloudflare API token (Edit Cloudflare Workers + D1:Edit) generated on the team account and stored as GitHub Secret `TOKEN_CICD_V1` (rationale for storing CI-time secrets in GitHub rather than Cloudflare is in [ADR-0024](../../adr/0024-secrets-split-github-and-cloudflare.md)).
 - `deploy.yml` shipped with the three-job structure (commit `3425593`); triggered on `push: tags: ['v*']` per [ADR-0010](../../adr/0010-tag-based-deploys-with-d1-migrations.md); matrix over `[ingest, api]` per [ADR-0018](../../adr/0018-matrix-ci-per-worker.md).
-- First deploy failed with auth error — the secret was exposed as `TOKEN_CICD_V1` instead of `CLOUDFLARE_API_TOKEN` (the env var wrangler reads). Fixed by mapping `CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_CICD_V1 }}` in both `env:` blocks (commit `985b373`). This secret-name vs env-var-name distinction is documented in Sprint 4's [`secrets.md`](../secrets.md) and [ADR-0020](../../adr/0020-secrets-split-github-and-cloudflare.md).
+- First deploy failed with auth error — the secret was exposed as `TOKEN_CICD_V1` instead of `CLOUDFLARE_API_TOKEN` (the env var wrangler reads). Fixed by mapping `CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_CICD_V1 }}` in both `env:` blocks (commit `985b373`). This secret-name vs env-var-name distinction is documented in Sprint 4's [`secrets.md`](../secrets.md) and [ADR-0024](../../adr/0024-secrets-split-github-and-cloudflare.md).
 - `concurrency` group added so back-to-back tag pushes queue instead of racing through migrations.
 - `notify-deploy` job stubbed; real payload landed in Sprint 4.
 

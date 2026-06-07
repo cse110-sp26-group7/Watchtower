@@ -39,7 +39,7 @@ Status: Done — `.github/workflows/ci.yml` merged and required on `main`.
 
 Deliverables (as originally planned):
 - One `ci.yml` running on every PR with three jobs: `lint`, `build`, `test`.
-- Hosted on GitHub Actions (per [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md)).
+- Hosted on GitHub Actions (per [ADR-0023](../../adr/0023-github-actions-as-ci-platform.md)).
 - `lint` runs `npx eslint .` from repo root (per [ADR-0013](../../adr/0013-eslint-flat-config.md)).
 - `build` and `test` use a matrix over the workers (per [ADR-0018](../../adr/0018-matrix-ci-per-worker.md)).
 - Branch protection on `main` requires all three jobs green before merge.

@@ -22,7 +22,7 @@ DevOps team: Jack (Lead), Ethan
 
 | #   | Task                                              | Owner | Status                | Depends on |
 | --- | ------------------------------------------------- | ----- | --------------------- | ---------- |
-| 1   | CI/CD platform research + decision ADR            | Jack  | Done — see [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md) |  |
+| 1   | CI/CD platform research + decision ADR            | Jack  | Done — see [ADR-0023](../../adr/0023-github-actions-as-ci-platform.md) |  |
 | 2   | CloudFlare Setup | Ethan | Account + wrangler ready |  |
 | 3   | ESLint baseline config (#52)                      | Jack  | Carried to Sprint 2 — landed alongside CI workflow |  |
 | 4   | Branching + PR review conventions                 | Jack | Conventions adopted in practice; formal doc deferred |  |
@@ -34,14 +34,14 @@ DevOps team: Jack (Lead), Ethan
 ### 1. CI/CD platform research + decision ADR
 
 Owner: Jack
-Status: Done — decision recorded in [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md).
+Status: Done — decision recorded in [ADR-0023](../../adr/0023-github-actions-as-ci-platform.md).
 
 Deliverables:
 - Decide the whole pipeline we need: Branch protection, Linter Check, Auto Testing, Build Check, Auto deploy Workers/Pages, D1 Migration, Secret Handling.
 
 What actually shipped:
 - Created GitHub Issues in GitHub Projects to track each piece of work.
-- GitHub Actions chosen as the CI/CD platform; rationale and trade-offs captured in [ADR-0019](../../adr/0019-github-actions-as-ci-platform.md).
+- GitHub Actions chosen as the CI/CD platform; rationale and trade-offs captured in [ADR-0023](../../adr/0023-github-actions-as-ci-platform.md).
 ---
 
 ### 2. Hosting + deploy tooling setup (Cloudflare/wrangler)
