@@ -54,7 +54,7 @@ body {
   gap: 8px;
   text-decoration: none;
 }
-.navbar-logo-login {
+#navbar-logo-login {
   font-size: 18px;
   font-weight: 800;
   color: var(--loginText);
