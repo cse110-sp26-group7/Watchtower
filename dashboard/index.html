@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/performance_summary.css" />
     <link rel="stylesheet" href="css/error_log.css" />
     <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/logout.css" />
     <link rel="stylesheet" href="css/feedback_widget.css" />
   </head>
   <body>
@@ -29,11 +30,7 @@
       <div class="navbar-project">App-Name▾</div>
       <div class="navbar-right">
         <a class="navbar-icon" title="Notifications">
-          <img
-            class="navbar-icon"
-            src="img/notification.png"
-            alt="notification icon"
-          />
+          <img src="img/notification.png" alt="notification icon" />
         </a>
         <button
           class="navbar-icon"
@@ -41,13 +38,16 @@
           onclick="toggleTheme()"
           title="Toggle dark mode"
         >
-          <img
-            class="navbar-icon"
-            src="img/lightMode.png"
-            alt="light mode icon"
-          />
+          <img src="img/lightMode.png" alt="light mode icon" />
         </button>
-        <div class="avatar">User</div>
+
+        <!-- avatar with dropdown -->
+        <button class="navbar-icon" id="avatar-btn" title="User menu">
+          <img src="img/user.png" alt="user avatar" />
+        </button>
+        <div class="avatar-dropdown" id="avatar-dropdown">
+          <button onclick="handleLogout()">Logout</button>
+        </div>
       </div>
     </nav>
     <!-- SIDEBAR -->
@@ -365,6 +365,7 @@
     <!--Add scripts here-->
     <script src="js/api-client.js"></script>
     <script src="js/login.js"></script>
+    <script src="js/logout.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/error_log.js"></script>
     <script src="js/projects_selection.js"></script>

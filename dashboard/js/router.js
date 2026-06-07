@@ -6,6 +6,7 @@ window.navigate = function navigate(route) {
     route = "login";
   }
 
+  //log in
   if (route === "login") {
     document.body.classList.add("login-page");
   } else {
