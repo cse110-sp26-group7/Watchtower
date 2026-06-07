@@ -55,15 +55,6 @@ body {
   gap: 8px;
   text-decoration: none;
 }
-#navbar-logo-login {
-  font-size: 18px;
-  font-weight: 800;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-}
 .navbar-divider {
   width: 1px;
   height: 18px;

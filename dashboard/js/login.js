@@ -13,7 +13,6 @@ window.handleLogin = async function handleLogin() {
     await login(email, password);
     sessionStorage.setItem("loggedIn", "true");
     navigate("projects");
-    document.getElementById("navbar-logo-login").style.display = "none";
   } catch (err) {
     document.getElementById("login-error").textContent =
       "Login failed: " + err.message;
