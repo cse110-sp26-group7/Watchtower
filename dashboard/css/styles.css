@@ -10,7 +10,7 @@
   --loginText: #267726;
   --grey: #f0f2f3;
   --dim: #7a5c48;
-  --navbarhover: rgba(255, 255, 255, 0.15);
+  --navbarHover: rgba(255, 255, 255, 0.15);
   --tipBackground: #31201c;
   --tipText: #fff9f3;
   --sans: "Nunito", sans-serif;
@@ -99,7 +99,7 @@ body {
   text-decoration: none;
 }
 .navbar-icon:hover {
-  background: var(--navbarhover);
+  background: var(--navbarHover);
 }
 
 .navbar-icon img {
@@ -116,7 +116,7 @@ body {
   top: 52px;
   left: 0;
   bottom: 0;
-  width: 52px;
+  width: 3.75rem;
   background: var(--card);
   border-right: 1px solid var(--border);
   display: flex;
@@ -174,9 +174,12 @@ body {
 
 /* LAYOUT */
 .main {
-  margin-top: 3.5em;
-  margin-left: 4em;
-  padding: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 3rem;
+  margin-left: 7rem;
+  margin-right: 3rem;
+  padding: 2rem;
 }
 .page-header {
   display: flex;
