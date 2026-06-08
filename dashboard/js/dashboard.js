@@ -84,24 +84,46 @@ window.loadDashboard = async function loadDashboard() {
   }
 };
 
-/**
- * Updates error rate bar chart grouped by day
- * @param {Array} timeseries
- */
+//getting color values from CSS variables to use in charts for consistent theming
+let errorChart = null;
+const orange = getComputedStyle(document.documentElement)
+  .getPropertyValue("--orange")
+  .trim();
+const dim = getComputedStyle(document.documentElement)
+  .getPropertyValue("--dim")
+  .trim();
+
+// updates the error rate bar chart with new timeseries data
 function updateErrorChart(timeseries) {
-  const values = timeseries.map((e) => e.count);
-  const max = Math.max(...values);
-  const chartHeight = 180;
+  const labels = timeseries.map((b) => b.t.split("T")[0].slice(5));
+  const values = timeseries.map((b) => b.count);
 
-  const chart = document.getElementById("error-rate-chart");
-  chart.innerHTML = "";
+  if (errorChart) errorChart.destroy();
 
-  values.forEach((value, index) => {
-    const bar = document.createElement("div");
-    bar.classList.add("bar");
-    bar.style.height = value === 0 ? "0px" : `${(value / max) * chartHeight}px`;
-    bar.title = `${timeseries[index].t.split("T")[0]}: ${value} errors`;
-    chart.appendChild(bar);
+  // using Chart.js for the bar chart for better accessibility and responsiveness.
+  errorChart = new Chart(document.getElementById("error-rate-chart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: orange, borderRadius: 4 }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          title: { display: true, text: "Date", color: dim },
+          ticks: { maxTicksLimit: 8, color: dim },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Errors", color: dim },
+          ticks: { color: dim },
+        },
+      },
+    },
   });
 }
 
