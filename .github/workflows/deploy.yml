@@ -79,7 +79,7 @@ jobs:
               }]
             }"
   publish-cli:
-    needs: migrate
+    needs: deploy
     runs-on: ubuntu-latest
     permissions:
       id-token: write # Required for GitHub OIDC 
