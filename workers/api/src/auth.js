@@ -107,3 +107,27 @@ function hexToBytes(hex) {
 function bytesToHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
+/**
+ * Hash a password with PBKDF2 using a fresh random salt.
+ * @param   {string} password - plaintext password
+ * @param   {number} [iterations=100000] - PBKDF2 iteration count
+ * @returns {Promise<{ hash: string, salt: string, iterations: number }>} - hex-encoded hash and salt
+ */
+export async function hashPassword(password, iterations = 100000) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']
+  );
+  const derived = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+    keyMaterial,
+    256
+  );
+  return {
+    hash: bytesToHex(new Uint8Array(derived)),
+    salt: bytesToHex(salt),
+    iterations,
+  };
+}

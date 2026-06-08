@@ -7,7 +7,7 @@
 
 import { encodeCursor, parseQuery, shapeEvent, ValidationError } from './query.js';
 import { assembleSummary, buildBucketPlan, parseSummaryQuery, SITE_STATUS_WINDOW_MS } from './summary.js';
-import { requireSession, signSession, verifyPassword } from './auth.js';
+import { requireSession, signSession, verifyPassword, hashPassword } from './auth.js';
 
 // CSRF defense per ADR-0005: every /api/* request (login included) must carry
 // this custom header. Cross-origin JS can only attach it after a CORS
@@ -97,6 +97,10 @@ async function route(request, env) {
 
 	if (request.method === 'POST' && url.pathname === '/api/login') {
 		return handleLogin(request, env);
+	}
+
+	if (request.method === 'POST' && url.pathname === '/api/register') {
+		return handleRegister(request, env);
 	}
 
 	// Everything below requires a valid session (ADR-0005).
@@ -469,7 +473,8 @@ async function handlePutProject(request, env, session) {
         return jsonResponse({ error: 'missing_fields' }, 400);
     }
 
-	checkProjectAccess(project_id, session, env);
+	const denied = await checkProjectAccess(project_id, session, env);
+	if (denied) return denied;
 
 	const result = await env.DB.prepare(
 		'UPDATE projects SET name = ? WHERE project_id = ?'
@@ -491,7 +496,8 @@ async function handlePutProject(request, env, session) {
 async function handleDeleteProject(request, env, session) {
 	const project_id = new URL(request.url).pathname.split('/').pop();
 
-	checkProjectAccess(project_id, session, env);
+	const denied = await checkProjectAccess(project_id, session, env);
+	if (denied) return denied;
 
 	const result = await env.DB.prepare(
 		'DELETE FROM projects WHERE project_id = ?'
@@ -545,4 +551,44 @@ async function handleGetEventDetail(eventId, url, env, session) {
 	const correlatedDeploy = deployRow ? shapeEvent(deployRow) : null;
 
 	return jsonResponse({ event, correlated_deploy: correlatedDeploy }, 200);
+}
+
+/**
+ * Handle `POST /api/register`.
+ * Creates a new user, then creates a session and sets a signed cookie.
+ *
+ * @param {Request} request - The incoming HTTP request containing `email` and `password` in the JSON body.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 201 with user on success, 400 on bad input, 409 if email taken.
+ */
+async function handleRegister(request, env) {
+	let body;
+	try { body = await request.json(); }
+	catch { return jsonResponse({ error: 'bad_json' }, 400); }
+  
+	const { email, password } = body ?? {};
+	if (typeof email !== 'string' || typeof password !== 'string') {
+	  return jsonResponse({ error: 'missing_fields', message: 'email and password required' }, 400);
+	}
+  
+	// Hash the password before storing
+	const { hash, salt, iterations } = await hashPassword(password);
+  
+	// Insert the new user
+	const userId = crypto.randomUUID();
+	try {
+	  await env.DB.prepare(
+		'INSERT INTO users (id, email, password_hash, salt, iterations) VALUES (?, ?, ?, ?, ?)'
+	  ).bind(userId, email, hash, salt, iterations).run();
+	} catch (err) {
+	  if (err.message.includes('UNIQUE') || err.message.includes('PRIMARY KEY')) {
+		return jsonResponse({ error: 'email_already_exists' }, 409);
+	  }
+	  throw err;
+	}
+
+	return new Response(JSON.stringify({
+		user: { id: userId, email },
+		projects: [],
+	}), { status: 201});
 }
