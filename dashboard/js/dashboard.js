@@ -1,4 +1,4 @@
-/* global getEvents, getSummary */
+/* global getEvents, getSummary, Chart */
 
 /**
  * Thresholds from Google Web Vitals standards
