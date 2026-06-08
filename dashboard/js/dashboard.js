@@ -1,94 +1,130 @@
-/* global getEvents */
+/* global getEvents, getSummary, Chart */
+// expose lastTimeseries for darkmode.js to use
 
-
-/** 
+/**
  * Thresholds from Google Web Vitals standards
  * good = fast/stable, warn = needs improvement, poor = slow/unstable based on web
  */
 const THRESHOLDS = {
   lcp: { warn: 2500, poor: 4000 },
   fcp: { warn: 1800, poor: 3000 },
-  cls: { warn: 0.1,  poor: 0.25 },
+  cls: { warn: 0.1, poor: 0.25 },
 };
+
+/**
+ * Escapes HTML special characters to prevent XSS attacks.
+ * Use this on any untrusted data before injecting into innerHTML.
+ * @param {string} str - raw string from untrusted source
+ * @returns {string} escaped string safe for innerHTML
+ */
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;") // & must be first
+    .replace(/</g, "&lt;") // prevents tag injection
+    .replace(/>/g, "&gt;") // closes open tags
+    .replace(/"/g, "&quot;"); // prevents attribute injection
+}
 
 /**
  * Loads real error data and updates the dashboard
  */
 window.loadDashboard = async function loadDashboard() {
   try {
-    //fetch errors
+    // fetch summary from backend and update dashboard cards
+    const data = await getSummary("wt_demo", "30d");
+    document.getElementById("total-errors").textContent = data.totals.errors;
+    document.getElementById("error-change").textContent =
+      data.totals.errors === 0 ? "No errors in last 30 days" : "Last 30 days";
+
+    // update performance cards
+    const p75 = data.totals.performance_p75;
+    document.getElementById("lcp-value").textContent = p75.LCP
+      ? `${p75.LCP}ms`
+      : "N/A";
+    document.getElementById("fcp-value").textContent = p75.FCP
+      ? `${p75.FCP}ms`
+      : "N/A";
+    document.getElementById("cls-value").textContent = p75.CLS
+      ? parseFloat(p75.CLS).toFixed(2)
+      : "N/A";
+
+    // apply threshold colors
+    if (p75.LCP)
+      applyMetricColor(
+        "lcp-value",
+        p75.LCP,
+        THRESHOLDS.lcp.warn,
+        THRESHOLDS.lcp.poor,
+      );
+    if (p75.FCP)
+      applyMetricColor(
+        "fcp-value",
+        p75.FCP,
+        THRESHOLDS.fcp.warn,
+        THRESHOLDS.fcp.poor,
+      );
+    if (p75.CLS)
+      applyMetricColor(
+        "cls-value",
+        p75.CLS,
+        THRESHOLDS.cls.warn,
+        THRESHOLDS.cls.poor,
+      );
+
+    // update bar chart using timeseries
+    updateErrorChart(data.timeseries.errors);
+
+    // update recent errors table — still uses getEvents()
     const { events } = await getEvents("wt_demo", {
       type: "error",
       since: "30d",
     });
-
-    // fetch performance
-    const { events: perfEvents } = await getEvents("wt_demo", {
-      type: "performance",
-      since: "30d",
-    });
-
-    // find latest LCP, FCP, CLS values
-    const lcp = perfEvents.find((e) => e.metric_name === "LCP");
-    const fcp = perfEvents.find((e) => e.metric_name === "FCP");
-    const cls = perfEvents.find((e) => e.metric_name === "CLS");
-
-    // update cards
-    document.getElementById("lcp-value").textContent = lcp
-      ? `${lcp.metric_value}ms`
-      : "N/A";
-    document.getElementById("fcp-value").textContent = fcp
-      ? `${fcp.metric_value}ms`
-      : "N/A";
-    document.getElementById("cls-value").textContent = cls
-      ? parseFloat(cls.metric_value ?? "N/A").toFixed(2)
-      : "N/A";
-    
-    // apply threshold colors to performance metrics
-    if (lcp) applyMetricColor("lcp-value", lcp.metric_value, THRESHOLDS.lcp.warn, THRESHOLDS.lcp.poor);
-    if (fcp) applyMetricColor("fcp-value", fcp.metric_value, THRESHOLDS.fcp.warn, THRESHOLDS.fcp.poor);
-    if (cls) applyMetricColor("cls-value", cls.metric_value, THRESHOLDS.cls.warn, THRESHOLDS.cls.poor);
-
-
-    // update total errors card
-    document.getElementById("total-errors").textContent = events.length;
-    document.getElementById("error-change").textContent =
-      events.length === 0 ? "No errors in last 30 days" : "Last 30 days";
-
-    // update bar chart
-    updateErrorChart(events);
-
-    // update recent errors table (show 5 most recent)
     updateRecentErrors(events.slice(0, 5));
   } catch (err) {
     console.error("Dashboard failed to load:", err);
   }
 };
 
-/**
- * Updates error rate bar chart grouped by day
- * @param {Array} events
- */
-function updateErrorChart(events) {
-  const counts = {};
-  events.forEach((e) => {
-    // group by hour instead of day
-    const hour = e.timestamp.split(":")[0]; // "2026-05-30T12"
-    counts[hour] = (counts[hour] || 0) + 1;
-  });
+//getting color values from CSS variables to use in charts for consistent theming
+let errorChart = null;
+function updateErrorChart(timeseries) {
+  window.lastTimeseries = timeseries;
+  const orange = getComputedStyle(document.documentElement)
+    .getPropertyValue("--orange")
+    .trim();
+  const isDark = document.body.classList.contains("dark");
+  const textColor = isDark ? "#e8cfc0" : "#3a2210";
+  const gridColor = isDark ? "#aa8d76" : "#a88872";
+  const labels = timeseries.map((b) => b.t.split("T")[0].slice(5));
+  const values = timeseries.map((b) => b.count);
 
-  const values = Object.values(counts);
-  const max = Math.max(...values);
-  const chartHeight = 180;
+  if (errorChart) errorChart.destroy();
 
-  const chart = document.getElementById("error-rate-chart");
-  chart.innerHTML = "";
-
-  values.forEach((value) => {
-    const bar = document.createElement("div");
-    bar.classList.add("bar");
-    bar.style.height = `${(value / max) * chartHeight}px`;
-    chart.appendChild(bar);
+  // using Chart.js for the bar chart for better accessibility and responsiveness.
+  errorChart = new Chart(document.getElementById("error-rate-chart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: orange, borderRadius: 4 }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          title: { display: true, text: "Date", color: textColor },
+          ticks: { maxTicksLimit: 8, color: gridColor },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Errors", color: textColor },
+          ticks: { color: gridColor },
+          grid: { color: gridColor },
+        },
+      },
+    },
   });
 }
 
@@ -104,10 +140,14 @@ function updateRecentErrors(events) {
     const row = document.createElement("tr");
     row.classList.add("errors-table-row");
     row.innerHTML = `
-      <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
+      <td>
+          ${new Date(event.timestamp).toLocaleDateString()} 
+          <br>
+          ${new Date(event.timestamp).toLocaleTimeString()}
+      </td>
       <td><span class="recent-error-level-dot error"></span></td>
-      <td>${event.message ?? "No message"}</td>
-      <td>${event.url ?? "Unknown"}</td>
+      <td>${escapeHtml(event.message) || "No message"}</td>
+      <td>${escapeHtml(event.url) || "Unknown"}</td>
       <td>1</td>
     `;
     tbody.appendChild(row);
@@ -115,7 +155,7 @@ function updateRecentErrors(events) {
 }
 
 /**
- * Changes color to the performance metric card text based on its value and 
+ * Changes color to the performance metric card text based on its value and
  * thresholds
  * @param {string} elementId
  * @param {number} value
