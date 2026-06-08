@@ -6,6 +6,7 @@ import create from "../commands/create.js";
 import deploy from "../commands/deploy.js";
 import login from "../commands/login.js";
 import logout from "../commands/logout.js";
+import register from "../commands/register.js";
 
 /**
  * Main function for the Watchtower cli. Parses the arguments and dispatches to the corresponding command if provided.
@@ -50,9 +51,13 @@ async function cli() {
         console.log("Logs out of Watchtower and clears the local session.");
         console.log("Usage: npx watchtower logout");
         break;
+      case "register":
+        console.log("Creates a new Watchtower account.");
+        console.log("Usage: npx watchtower register");
+        break;
       default:
         console.log("Usage: npx watchtower <command> [options]");
-        console.log("Commands: create, deploy, login, logout");
+        console.log("Commands: create, deploy, login, logout, register");
     }
     process.exit(0);
   }
@@ -64,6 +69,7 @@ async function cli() {
     case "deploy": await deploy(); break;
     case "login": await login(); break;
     case "logout": await logout(); break;
+    case "register": await register(); break;
     default:
       console.error(`Unknown command: "${command}"`);
       console.error("Run with --help for usage.");
