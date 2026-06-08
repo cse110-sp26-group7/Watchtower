@@ -14,6 +14,14 @@ async function apiFetch(path) {
       "Content-Type": "application/json",
     },
   });
+  // Session expired or missing: the cookie is the real gate, so keep the
+  // client-side flag in sync and bounce to login (deliverable: redirect on 401).
+  if (response.status === 401) {
+    sessionStorage.removeItem("loggedIn");
+    if (typeof window.navigate === "function") window.navigate("login");
+    else window.location.hash = "/login";
+    throw new Error("Unauthorized");
+  }
   if (!response.ok) throw new Error(`API request failed: ${response.status}`);
   return response.json();
 }
@@ -36,6 +44,22 @@ window.login = async function login(email, password) {
   });
   if (!response.ok) throw new Error(`Login failed: ${response.status}`);
   return response.json();
+};
+
+/**
+ * Log out the current user: revokes the session server-side and clears the
+ * session cookie (POST /api/logout).
+ * @returns {Promise<void>}
+ */
+window.logout = async function logout() {
+  await fetch(`${API_BASE_URL}/api/logout`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Watchtower-Auth": "true",
+    },
+  });
 };
 
 /**
