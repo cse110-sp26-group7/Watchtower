@@ -469,7 +469,8 @@ async function handlePutProject(request, env, session) {
         return jsonResponse({ error: 'missing_fields' }, 400);
     }
 
-	checkProjectAccess(project_id, session, env);
+	const denied = await checkProjectAccess(project_id, session, env);
+	if (denied) return denied;
 
 	const result = await env.DB.prepare(
 		'UPDATE projects SET name = ? WHERE project_id = ?'
@@ -491,7 +492,8 @@ async function handlePutProject(request, env, session) {
 async function handleDeleteProject(request, env, session) {
 	const project_id = new URL(request.url).pathname.split('/').pop();
 
-	checkProjectAccess(project_id, session, env);
+	const denied = await checkProjectAccess(project_id, session, env);
+	if (denied) return denied;
 
 	const result = await env.DB.prepare(
 		'DELETE FROM projects WHERE project_id = ?'
