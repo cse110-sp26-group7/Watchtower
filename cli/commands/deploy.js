@@ -6,9 +6,7 @@ import { createHash } from "node:crypto";
  * Requires `WT_PROJECT_ID` to be in your .env file
  */
 export default async function deploy() {
-  const { values } = parseArgs({
-    args: process.argv.slice(3),
-    allowPositionals: true,
+  const { values } = parseArgs({ 
     options: {
       version: { type: "string", short: "V" },
       environment: { type: "string", short: "e" },
@@ -103,11 +101,6 @@ async function sendDeployEventRequest(projectId, gitSha, environment, version) {
         }]
       })
     });
-
-    if (!response.ok) {
-      console.error(`HTTP error! Status: ${response.statusText}`);
-      return -1;
-    }
 
     return response.status;
   } catch (error) {
