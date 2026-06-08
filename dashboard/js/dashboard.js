@@ -86,7 +86,7 @@ window.loadDashboard = async function loadDashboard() {
 
 //getting color values from CSS variables to use in charts for consistent theming
 let errorChart = null;
-
+let lastTimeseries = null;
 // updates the error rate bar chart with new timeseries data
 function updateErrorChart(timeseries) {
   lastTimeseries = timeseries;
@@ -94,8 +94,8 @@ function updateErrorChart(timeseries) {
     .getPropertyValue("--orange")
     .trim();
   const isDark = document.body.classList.contains("dark");
-  const textColor = isDark ? "#f5e6d8" : "#362416";
-  const gridColor = isDark ? "#997c65" : "#e8cfc0";
+  const textColor = isDark ? "#e8cfc0" : "#3a2210";
+  const gridColor = isDark ? "#aa8d76" : "#a88872";
   const labels = timeseries.map((b) => b.t.split("T")[0].slice(5));
   const values = timeseries.map((b) => b.count);
 
@@ -115,13 +115,13 @@ function updateErrorChart(timeseries) {
       scales: {
         x: {
           title: { display: true, text: "Date", color: textColor },
-          ticks: { maxTicksLimit: 8, color: textColor },
+          ticks: { maxTicksLimit: 8, color: gridColor },
           grid: { display: false },
         },
         y: {
           beginAtZero: true,
           title: { display: true, text: "Errors", color: textColor },
-          ticks: { color: textColor },
+          ticks: { color: gridColor },
           grid: { color: gridColor },
         },
       },
