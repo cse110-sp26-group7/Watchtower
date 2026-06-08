@@ -6,6 +6,7 @@
  */
 
 import { encodeCursor, parseQuery, shapeEvent, ValidationError } from './query.js';
+import { assembleSummary, buildBucketPlan, parseSummaryQuery, SITE_STATUS_WINDOW_MS } from './summary.js';
 import { requireSession, signSession, verifyPassword } from './auth.js';
 
 // CSRF defense per ADR-0005: every /api/* request (login included) must carry
@@ -17,6 +18,9 @@ const CSRF_HEADER = 'X-Watchtower-Auth';
 /**
  * Credentialed CORS (ADR-0005): echo the request Origin only if it is in the
  * comma-separated `ALLOWED_ORIGINS` var. `*` is incompatible with cookies.
+ * @param {Request} request - The incoming HTTP request.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Object} Headers object with appropriate CORS fields set.
  */
 function corsHeaders(request, env) {
 	const headers = {
@@ -36,6 +40,13 @@ function corsHeaders(request, env) {
 	return headers;
 }
 
+/**
+ * Serialize `body` as JSON and return a Response with the given status code.
+ *
+ * @param {Object} body - The response payload to serialize.
+ * @param {number} status - HTTP status code.
+ * @returns {Response}
+ */
 function jsonResponse(body, status) {
 	return new Response(JSON.stringify(body), {
 		status,
@@ -44,6 +55,13 @@ function jsonResponse(body, status) {
 }
 
 export default {
+	/**
+	 * Worker entry point. Delegates to `route()` then attaches CORS headers.
+	 *
+	 * @param {Request} request - The incoming HTTP request.
+	 * @param {Object} env - Worker environment bindings (DB, SESSION_SECRET, ALLOWED_ORIGINS).
+	 * @returns {Promise<Response>}
+	 */
 	async fetch(request, env) {
 		const response = await route(request, env);
 		// CORS is per-request (origin echo), so it is applied here rather than
@@ -55,6 +73,17 @@ export default {
 	},
 };
 
+/**
+ * Route an incoming request to the appropriate handler.
+ *
+ * Enforces the CSRF header on every request and requires a valid session for
+ * all routes except `POST /api/login`. Falls through to a 404 if no route
+ * matches.
+ *
+ * @param {Request} request - The incoming HTTP request.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>}
+ */
 async function route(request, env) {
 	const url = new URL(request.url);
 
@@ -84,6 +113,32 @@ async function route(request, env) {
 		return handleGetEvents(url, env, session);
 	}
 
+	if (request.method === 'POST' && url.pathname === '/api/projects') {
+		return handlePostProject(request, env, session);
+	}
+
+	if (request.method === 'GET' && url.pathname === '/api/projects') {
+		return handleGetProjects(request, env, session);
+	}
+
+	if (request.method === 'PUT' && url.pathname === '/api/projects') {
+		return handlePutProject(request, env, session);
+	}
+
+	if (request.method === 'DELETE' && url.pathname.startsWith('/api/projects/')) {
+		return handleDeleteProject(request, env, session);
+	}
+
+	if (request.method === 'GET' && url.pathname === '/api/summary') {
+		return handleGetSummary(url, env, session);
+	}
+
+	const parts = url.pathname.split('/');
+	const eventDetailMatch = parts.length === 4 && parts[1] === 'api' && parts[2] === 'events' && parts[3] ? [null, parts[3]] : null;
+	if (request.method === 'GET' && eventDetailMatch) {
+		return handleGetEventDetail(eventDetailMatch[1], url, env, session);
+	}
+
 	return jsonResponse({ error: 'not_found' }, 404);
 }
 
@@ -91,6 +146,10 @@ async function route(request, env) {
  * Ownership gate: 404 when `project_id` does not exist, 403 when it is not
  * owned by the session user (per endpoints-draft.md). Returns null when access
  * is allowed.
+ * @param {string} projectId - The project ID to check.
+ * @param {Object} session - The current session object containing `userId`.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response|null>} An error Response, or null if access is allowed.
  */
 async function checkProjectAccess(projectId, session, env) {
 	const row = await env.DB.prepare('SELECT owner_id FROM projects WHERE project_id = ?')
@@ -112,6 +171,11 @@ async function checkProjectAccess(projectId, session, env) {
  * docs/backend/api/event-schema-draft.md.
  *
  * On validation failure returns 400 with `{ error, param }`.
+ * 
+ * @param {URL} url - The parsed request URL.
+ * @param {Object} env - Worker environment bindings.
+ * @param {Object} session - The current session object.
+ * @returns {Promise<Response>}
  */
 async function handleGetEvents(url, env, session) {
 	let params;
@@ -166,8 +230,103 @@ async function handleGetEvents(url, env, session) {
 }
 
 /**
+ * Handle `GET /api/summary`.
+ *
+ * Aggregated counts + zero-filled hourly/daily timeseries for the dashboard
+ * overview. Runs four read-only aggregates in one D1 batch (errors series,
+ * feedback series, performance samples, recent-error existence for
+ * site_status), then `assembleSummary` shapes the JSON. Contract:
+ * docs/backend/api/endpoints-draft.md §GET /api/summary.
+ *
+ * On validation failure returns 400 with `{ error, param }`.
+ */
+async function handleGetSummary(url, env, session) {
+	let params;
+	try {
+		params = parseSummaryQuery(url);
+	} catch (err) {
+		if (err instanceof ValidationError) {
+			return jsonResponse({ error: err.code, param: err.param }, 400);
+		}
+		throw err;
+	}
+
+	const { projectId, window } = params;
+
+	const denied = await checkProjectAccess(projectId, session, env);
+	if (denied) return denied;
+	const now = Date.now();
+	const plan = buildBucketPlan(window, now);
+	const nowISO = new Date(now).toISOString();
+	const recentSince = new Date(now - SITE_STATUS_WINDOW_MS).toISOString();
+
+	// Every aggregate is bounded `timestamp >= windowStart AND timestamp <= now`
+	// (matching /api/events, which bounds both sides). The upper bound keeps the
+	// observed interval identical across all four queries and the now-floored
+	// bucket grid, so a future-dated row (clock skew) can't count toward
+	// site_status without also showing in totals, or vice versa.
+	//
+	// bucketFmt is a closed internal whitelist (see summary.js WINDOWS), never
+	// user input, so it is safe to inline; all runtime values are bound.
+	const errorStmt = env.DB.prepare(
+		`SELECT strftime('${plan.bucketFmt}', timestamp) AS bucket, COUNT(*) AS count ` +
+			'FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ? GROUP BY bucket',
+	).bind(projectId, 'error', plan.windowStartISO, nowISO);
+
+	const feedbackStmt = env.DB.prepare(
+		`SELECT strftime('${plan.bucketFmt}', timestamp) AS bucket, COUNT(*) AS count, ` +
+			"SUM(CAST(json_extract(payload, '$.feedback_rating') AS REAL)) AS sum_rating " +
+			'FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ? GROUP BY bucket',
+	).bind(projectId, 'feedback', plan.windowStartISO, nowISO);
+
+	// p75 per Web Vital, computed in SQL so we never load raw samples into the
+	// worker. Nearest-rank: rank the values per metric, pick the row at
+	// ceil(0.75 * n) == (3*n + 3)/4 (1-based) — an actual observed value, no
+	// interpolation, so LCP stays integral and CLS keeps its precision. A metric
+	// with no samples yields no row and surfaces as null in assembleSummary.
+	const perfStmt = env.DB.prepare(
+		'SELECT metric_name, value AS p75 FROM (' +
+			"SELECT json_extract(payload, '$.metric_name') AS metric_name, " +
+			"CAST(json_extract(payload, '$.metric_value') AS REAL) AS value, " +
+			"ROW_NUMBER() OVER (PARTITION BY json_extract(payload, '$.metric_name') " +
+			"ORDER BY CAST(json_extract(payload, '$.metric_value') AS REAL)) AS rn, " +
+			"COUNT(*) OVER (PARTITION BY json_extract(payload, '$.metric_name')) AS cnt " +
+			'FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ?' +
+			') WHERE rn = (3 * cnt + 3) / 4',
+	).bind(projectId, 'performance', plan.windowStartISO, nowISO);
+
+	const recentErrorStmt = env.DB.prepare(
+		'SELECT COUNT(*) AS count FROM events WHERE project_id = ? AND event_type = ? AND timestamp >= ? AND timestamp <= ?',
+	).bind(projectId, 'error', recentSince, nowISO);
+
+	const [errorRes, feedbackRes, perfRes, recentRes] = await env.DB.batch([
+		errorStmt,
+		feedbackStmt,
+		perfStmt,
+		recentErrorStmt,
+	]);
+
+	const summary = assembleSummary({
+		projectId,
+		window,
+		plan,
+		generatedAt: nowISO,
+		errorRows: errorRes.results,
+		feedbackRows: feedbackRes.results,
+		perfP75Rows: perfRes.results,
+		recentErrorCount: recentRes.results[0].count,
+	});
+
+	return jsonResponse(summary, 200);
+}
+
+/**
  * Handle `POST /api/login`.
  * Verifies email + password, creates a session row, sets signed cookie.
+ * 
+ * @param {Request} request - The incoming HTTP request containing `email` and `password` in the JSON body.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 200 with user and projects on success, 400 on bad input, 401 on invalid credentials.
  */
 async function handleLogin(request, env) {
   let body;
@@ -220,6 +379,9 @@ async function handleLogin(request, env) {
  * Handle `POST /api/logout`.
  * Deletes the session row (server-side revocation per ADR-0005) and clears
  * the cookie.
+ * @param {Object} session - The current session object containing `sessionId`.
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 200 with `{ ok: true }` on success.
  */
 async function handleLogout(session, env) {
 	await env.DB.prepare('DELETE FROM sessions WHERE session_id = ?').bind(session.sessionId).run();
@@ -230,4 +392,157 @@ async function handleLogout(session, env) {
 			'Set-Cookie': 'wt_session=; HttpOnly; Secure; SameSite=None; Max-Age=0',
 		},
 	});
+}
+
+/**
+ * Handle 'POST /api/projects'.
+ * Creates a new project in the projects table
+ * 
+ * @param {Object} request - 
+ * @param {Object} env - Worker environment bindings.
+ * @returns {Promise<Response>} 200 on success, 400 on error
+ */
+async function handlePostProject(request, env, session) {
+	let body;
+
+	try {
+		body = await request.json();
+	}
+	catch(error) {
+		return jsonResponse({error: 'bad_json'}, 400);
+	}
+
+	const { project_id, name} = body ?? {};
+    if (typeof project_id !== 'string' || typeof name !== 'string' ) {
+        return jsonResponse({ error: 'missing_fields' }, 400);
+    }
+
+    try {
+        await env.DB.prepare(
+            'INSERT INTO projects (project_id, name, owner_id) VALUES (?, ?, ?)'
+        ).bind(project_id, name, session.userId).run();
+    } catch (err) {
+        if (err.message.includes('UNIQUE') || err.message.includes('PRIMARY KEY')) {
+            return jsonResponse({ error: 'project_already_exists' }, 409);
+        }
+        throw err;
+    }
+
+    return jsonResponse({ project: { project_id, name } }, 201);
+}
+
+/**
+ * Handle 'GET /api/projects'.
+ * List all projects owned by the session user.
+ *
+ * @param {Object} request
+ * @param {Object} env
+ * @param {Object} session
+ * @returns {Response}
+ */
+async function handleGetProjects(request, env, session) {
+    const { results } = await env.DB.prepare(
+        'SELECT project_id, name, created_at FROM projects WHERE owner_id = ?'
+    ).bind(session.userId).all();
+
+    return jsonResponse({ projects: results }, 200);
+}
+
+/**
+ * Handle a 'PUT /api/projects'
+ * @param {Objeect} request -
+ * @param {Object} env -
+ * @return {Response}
+ */
+async function handlePutProject(request, env, session) {
+	let body;
+
+	try {
+		body = await request.json();
+	}
+	catch(error) {
+		return jsonResponse({error: 'bad_json'}, 400);
+	}
+
+	const { project_id, name} = body ?? {};
+	if (typeof project_id !== 'string' || typeof name !== 'string') {
+        return jsonResponse({ error: 'missing_fields' }, 400);
+    }
+
+	checkProjectAccess(project_id, session, env);
+
+	const result = await env.DB.prepare(
+		'UPDATE projects SET name = ? WHERE project_id = ?'
+	).bind(name, project_id).run();
+
+	if (result.meta.changes === 0) {
+		return jsonResponse({ error: 'project_not_found' }, 404);
+	}
+
+	return jsonResponse({ project: { project_id, name } }, 200);
+} 
+
+/**
+ * Handle a 'DELETE /api/projects'
+ * @param {Objeect} request -
+ * @param {Object} env -
+ * @return {}
+ */
+async function handleDeleteProject(request, env, session) {
+	const project_id = new URL(request.url).pathname.split('/').pop();
+
+	checkProjectAccess(project_id, session, env);
+
+	const result = await env.DB.prepare(
+		'DELETE FROM projects WHERE project_id = ?'
+	).bind(project_id).run();
+
+	if (result.meta.changes === 0) {
+		return jsonResponse({ error: 'project_not_found' }, 404);
+	}
+
+	return jsonResponse({ project: { project_id } }, 200);
+} 
+
+/** Handle `GET /api/events/:event_id`.
+ *
+ * Returns the full shaped event plus the nearest deploy event at-or-before
+ * the event's timestamp in the same project (deploy correlation).
+ * 404 on unknown event_id; 403 if the project is not owned by the session user.
+ */
+async function handleGetEventDetail(eventId, url, env, session) {
+	// Fetch event by PK first — project_id param not needed (FE does not send it).
+	const row = await env.DB.prepare(
+		'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload, project_id ' +
+		'FROM events WHERE event_id = ?'
+	).bind(eventId).first();
+
+	if (!row) return jsonResponse({ error: 'not_found' }, 404);
+
+	const denied = await checkProjectAccess(row.project_id, session, env);
+	if (denied) return denied;
+
+	const event = shapeEvent(row);
+
+	// Deploy correlation: use deploy_id from the event when present (exact);
+	// fall back to nearest deploy at-or-before the event timestamp otherwise.
+	let deployRow = null;
+	if (row.deploy_id) {
+		deployRow = await env.DB.prepare(
+			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+			"FROM events WHERE project_id = ? AND event_type = 'deploy' AND deploy_id = ? ORDER BY timestamp DESC LIMIT 1"
+		).bind(row.project_id, row.deploy_id).first();
+	}
+	if (!deployRow) {
+		deployRow = await env.DB.prepare(
+			'SELECT event_id, event_type, timestamp, environment, deploy_id, received_at, country, payload ' +
+			'FROM events ' +
+			'WHERE project_id = ? AND event_type = ? AND timestamp <= ? ' +
+			'ORDER BY timestamp DESC, event_id DESC LIMIT 1'
+		).bind(row.project_id, 'deploy', event.timestamp).first();
+	}
+
+	const correlatedDeploy = deployRow ? shapeEvent(deployRow) : null;
+
+	return jsonResponse({ event, correlated_deploy: correlatedDeploy }, 200);
 }

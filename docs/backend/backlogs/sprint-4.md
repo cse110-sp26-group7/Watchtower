@@ -45,17 +45,17 @@ Scope this sprint: auth + project CRUD + summary. Deploy signal tracking, event-
 
 ## Task summary
 
-| #   | Task                                                     | Owner      | Depends |
-| --- | -------------------------------------------------------- | ---------- | ------- |
-| 1   | FE-BE integration carryover (`/api/events` cutover)      | Theo      |         |
-| 2   | `GET /api/summary`                                       | Gabrielle |         |
-| 3   | `projects` table + demo seed + ingest `project_id` check | Michael   |         |
-| 4   | ADR-0005 (ratify defaults + decide open items)           | Theo      |         |
-| 5   | Auth schema migration (users, sessions, projects.owner)  | Bishal    | #3, #4  |
-| 6   | `POST /api/login` + PBKDF2 hashing                       | open      | #5      |
-| 7   | Session middleware + CORS change + `POST /api/logout`    | open      | #6, #2  |
-| 8   | `GET/POST /api/projects` (user-scoped)                   | open      | #5, #7  |
-| 9   | FE auth cutover + re-gate `/api/events`                  | open      | #6, #7  |
+| #   | Task                                                     | Owner      | Depends | Status |
+| --- | -------------------------------------------------------- | ---------- | ------- | ------ |
+| 1   | FE-BE integration carryover (`/api/events` cutover)      | Theo       |         | Done (PR #138, #139) |
+| 2   | `GET /api/summary`                                       | Gabrielle  |         | Done (PR #128) |
+| 3   | `projects` table + demo seed + ingest `project_id` check | Michael    |         | Done (PR #126) |
+| 4   | ADR-0005 (ratify defaults + decide open items)           | Theo       |         | Done (PR #122) |
+| 5   | Auth schema migration (users, sessions, projects.owner)  | Bishal     | #3, #4  | Done (PR #143) |
+| 6   | `POST /api/login` + PBKDF2 hashing                       | Bishal     | #5      | Done (PR #148) |
+| 7   | Session middleware + CORS change + `POST /api/logout`    | Theo       | #6, #2  | Done (PR #152) |
+| 8   | `GET/POST /api/projects` (user-scoped)                   | Michael    | #5, #7  | Carryover → Sprint 5 |
+| 9   | FE auth cutover + re-gate `/api/events`                  | Gabrielle  | #6, #7  | Partial — gate merged (PR #152); FE half → Sprint 5 |
 
 ---
 
@@ -113,7 +113,7 @@ Why now: `project_id` is currently unvalidated, and the `projects` table is a pr
 ### 4. ADR-0005 (signed-cookie-auth)
 
 Owner: Theo
-Issue: new (the Sprint 4 doc lists "Writing ADR" as a goal)
+Issue: #123
 
 Deliverables:
 - Write `docs/adr/0005-signed-cookie-auth.md` in MADR format, recording the grounded defaults: cookie (not bearer), sessions table, PBKDF2, `SameSite=None; Secure` with credentialed CORS, email login, secret via `wrangler secret`.
@@ -177,7 +177,7 @@ Unblocks the FE project-selection page (PR #112) and the CLI registration flow (
 
 ### 9. FE auth cutover + re-gate `/api/events`
 
-Owner: open (cross-team with FE)
+Owner: Gabrielle (cross-team with FE)
 Depends on: Task 6, Task 7
 Issue: new
 
@@ -185,6 +185,8 @@ Deliverables:
 - Once login and the CORS change land, FE adds `credentials: 'include'` and the `X-Watchtower-Auth` header to the `api-client.js` fetches so the session cookie rides along and passes the CSRF check.
 - Re-gate `/api/events` (left ungated in Task 1) behind the middleware, and confirm the dashboard still loads end to end after gating.
 - Coordinate timing with the FE owners so the cutover and gating land together, not split across a broken window.
+
+Rollout note (from Task 7 implementation): deploys are tag-triggered (`v*`, deploy.yml), so the merged gate does not reach production until the next tag. That tag breaks the dashboard unless the FE fetches already send `credentials: 'include'` + `X-Watchtower-Auth`. Land the FE changes first, then tag; announce the tag hold in `#backend`.
 
 ---
 
@@ -196,3 +198,11 @@ Per `docs/sprints/sprint-5.md`, ADR-0005, and the Sprint 4 planning notes (alert
 - Alerts / notifications when new errors are detected
 - Source-map upload and stack-trace symbolication
 - Rate-limiting hardening on ingest
+
+---
+
+## Outcome (end of sprint)
+
+Tasks 1-7 shipped; per-task PRs are in the Task summary status column. Also landed alongside: demo data consolidated to `wt_demo` (PR #145) and the DevOps deploy-event hook posting deploy events to `/ingest` on tag-triggered deploys (PR #141, #144).
+
+Carryover — Task 8 and the FE half of Task 9 — moves to `sprint-5.md`.

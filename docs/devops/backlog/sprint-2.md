@@ -1,184 +1,119 @@
-# Sprint 2 DevOps Backlog (week of May 11 – May 18, 2026)
+# Sprint 2 DevOps Backlog (Week of May 11 – May 17, 2026)
 
-DevOps team: Jack, Ethan
+Sprint goal: Land CI on `main` so Backend can start merging real code with a safety net. Deploy automation and the deploy-event hook are planned here but carried to later sprints once CI is green.
 
-Inputs from Sprint 1:
-- ESLint baseline merged (#52). Root `eslint.config.mjs` + per-worker config; `js/recommended` rules, ignores `node_modules/`, `dist/`, `.wrangler/`.
-- Ingest worker deployed to Cloudflare (`watchtower-ingest.<sub>.workers.dev`, Hello World stub).
-- D1 database `watchtower` created on Cloudflare (empty, no schema yet).
-- D1 binding wired into `workers/ingest/wrangler.jsonc` (`env.DB`) — PR `chore/d1-binding` pending merge; unblocks Backend Sprint 2 Tasks 1, 2, 4.
+Sprint type: Implementation (per project doc).
+
+DevOps team: Jack (Lead), Ethan
 
 ---
 
 ## How we work
 
-- Tasks tracked as GitHub issues #53–#57 plus three additions noted below.
-- Each PR closes one task (smaller diffs, easier review). Exception: Task 1 closes #53 + #54 since they share one workflow file.
-- If blocked, post in Slack `#devops` or DM Jack.
+- One PR per task (smaller diffs over big batches).
+- Technical decisions (CI platform, lint config, matrix shape, vitest as test runner) are recorded in [`docs/adr/`](../../adr/), not duplicated here.
+- If a task slips, mark Status accordingly and link to the sprint that picks it up.
+- If you get stuck, post in Slack `#devops` or DM Jack.
 
 ---
 
-## Task summary
+## Task summary (this sprint)
 
-| #   | Task                                            | Owner | Issue        | Depends on   |
-| --- | ----------------------------------------------- | ----- | ------------ | ------------ |
-| 1   | CI workflow: lint + build check + tests         | Jack  | #53, #54     |              |
-| 2   | CORS on ingest worker                           | Jack  | (new)        |              |
-| 3   | Scaffold `workers/api/`                         | Jack  | (new)        |              |
-| 4   | Deploy workflow + secrets management            | Jack  | #56          | #1           |
-| 5   | CI deploy-event hook (deploy correlation)       | Jack  | (new)        | #4, BE schema|
-| 6   | Environment separation (deferred — see below)   | Jack  | #55          | #4           |
-| 7   | Deployment rollback (deferred — see below)      | Jack  | #57          | #6           |
+| #   | Task                                       | Owner | Status                                                    | Depends on |
+| --- | ------------------------------------------ | ----- | --------------------------------------------------------- | ---------- |
+| 1   | CI workflow: lint + build + test (#53, #54) | Jack  | Done — shipped on `main`                                  |            |
+| 2   | Deploy workflow + secrets (#56)            | Jack  | Carried to Sprint 3 (see [`sprint-3.md`](sprint-3.md))    | #1         |
+| 3   | Deploy-event hook                          | Jack  | Carried to Sprint 4 (see [`sprint-4.md`](sprint-4.md))    | #2         |
+| 4   | Environment separation (#55)               | Jack  | Deferred to post-MVP                                      | #2         |
+| 5   | Deployment rollback (#57)                  | Jack  | Deferred to post-MVP                                      | #4         |
 
 ---
 
 ## Tasks
 
-### 1. CI workflow: lint + build check + tests
+### 1. CI workflow: lint + build + test
 
 Owner: Jack
 Issues: #53 (build check), #54 (automated tests)
+Status: Done — `.github/workflows/ci.yml` merged and required on `main`.
 
-Combines three checks into one `.github/workflows/ci.yml` running on every PR. Single workflow file = single PR, less churn than three separate ones.
+Deliverables (as originally planned):
+- One `ci.yml` running on every PR with three jobs: `lint`, `build`, `test`.
+- Hosted on GitHub Actions (per [ADR-0023](../../adr/0023-github-actions-as-ci-platform.md)).
+- `lint` runs `npx eslint .` from repo root (per [ADR-0013](../../adr/0013-eslint-flat-config.md)).
+- `build` and `test` use a matrix over the workers (per [ADR-0018](../../adr/0018-matrix-ci-per-worker.md)).
+- Branch protection on `main` requires all three jobs green before merge.
 
-Deliverables:
-- `.github/workflows/ci.yml` with three jobs:
-  - `lint` — `npm run lint` at root + `workers/ingest/`
-  - `build` — `npx wrangler deploy --dry-run` against each worker config (validates entry point + bindings resolve)
-  - `test` — `npm test` in `workers/ingest/` (passes against existing Hello World spec)
-- Branch protection on `main`: require `lint`, `build`, `test` to pass before merge
-- Brief README note on what runs in CI and how to reproduce failures locally
-
-Scope:
-- No coverage thresholds this sprint (no real tests yet to threshold against)
-- No matrix testing across Node versions; pin to Node 20
-- Build job runs against both workers once `workers/api/` is scaffolded (Task 3)
-
-Why first: BE is about to land real code. Without CI, nothing prevents broken code reaching `main`.
-
----
-
-### 2. CORS on ingest worker
-
-Owner: Jack
-Issue: TBD (file before starting)
-
-Cross-origin POSTs to `/ingest` from the SDK currently fail at the browser. Without this, the SDK team's end-to-end demo can't run.
-
-Deliverables:
-- `OPTIONS` preflight handler in `workers/ingest/src/index.js` returning `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: POST, OPTIONS`, `Access-Control-Allow-Headers: Content-Type`
-- Same headers on the `POST` response
-- Vitest spec covering preflight + actual POST
-
-Scope:
-- Wildcard origin (`*`) for MVP — locking down to specific domains is post-MVP
-- Same CORS posture will mirror onto `workers/api/` in Task 3
-
-Why early: SDK team (BE Task 3) is blocked on this for the end-to-end demo. Land before mid-sprint.
+What actually shipped:
+- All three jobs landed in one workflow file (commits `d3bf7db`, `1f10052`).
+- `build` runs `npx wrangler deploy --dry-run` per worker — validates entry point + bindings without touching Cloudflare.
+- `test` job ran the **smoke tests Backend had already written** (Hello World vitest spec on the ingest worker). QA had not produced a test suite yet, so this was the only suite to run; the CI infrastructure is suite-agnostic and will pick up future QA tests automatically.
+- Node pinned to 22 after the initial run failed against wrangler 4.x (commit `f186f98`).
+- Matrix extended to `workers/api/` once BE scaffolded it (commit `fa98f97`).
+- Branch protection enabled: `lint`, `build (ingest)`, `build (api)`, `test (ingest)`, `test (api)` all required.
 
 ---
 
-### 3. Scaffold `workers/api/`
-
-Owner: Jack
-Issue: TBD (file before starting)
-
-`workers/api/` currently holds empty placeholder files (`index.js`, `wrangler.toml`). Needs the same scaffolding treatment `workers/ingest/` got.
-
-Deliverables:
-- Replace placeholders by running `npm create cloudflare@latest workers/api` (Hello World template, JS, no immediate deploy)
-- Rename worker to `watchtower-api` in `wrangler.jsonc`
-- Add same D1 binding as ingest (`binding: "DB"`, same `database_name` and `database_id`) so reads and writes share one database
-- Deploy once to verify it appears in the Cloudflare dashboard
-- Optional cleanup: remove the leftover `wrangler.toml` placeholder; standardize on `wrangler.jsonc` across both workers
-
-Why this sprint: BE Task 4 (`/api/events` handler) lands here. Empty placeholders mean nowhere to land it.
-
----
-
-### 4. Deploy workflow + secrets management
+### 2. Deploy workflow + secrets (carried to Sprint 3)
 
 Owner: Jack
 Issue: #56
+Status: Carried into [`sprint-3.md`](sprint-3.md) Task 1. The trigger model also changed during implementation — see [ADR-0010](../../adr/0010-tag-based-deploys-with-d1-migrations.md).
 
-Auto-deploy both workers on merge to `main`. Tightly paired with secrets — deploy workflow needs `CLOUDFLARE_API_TOKEN` to function.
+Deliverables (as originally planned):
+- Auto-deploy both workers on push to `main`.
+- Cloudflare API token provisioned and stored as a GitHub Secret.
+- D1 migrations applied as part of the workflow before the workers deploy.
 
-Deliverables:
-- Generate Cloudflare API token (dashboard → My Profile → API Tokens → "Edit Cloudflare Workers" template, scoped to this account's Workers + D1 only)
-- Add token to GitHub repo Settings → Secrets and variables → Actions as `CLOUDFLARE_API_TOKEN`
-- `.github/workflows/deploy.yml` runs on push to `main`:
-  - Deploys `workers/ingest/` via `wrangler deploy`
-  - Deploys `workers/api/` via `wrangler deploy`
-  - Only runs after the CI workflow (Task 1) passes
-- Document the token rotation procedure in `docs/devops/secrets.md` (where it lives, how to regenerate, who has access)
-
-Scope:
-- One environment (production) this sprint — staging is Task 6
-- No manual approval gate; auto-deploy on merge. Acceptable because CI gates the merge.
-
-Depends on: Task 1 (CI must exist before deploy can require it to pass)
+What actually shipped (in Sprint 3):
+- Trigger model switched from "every merge to `main`" to "tag-triggered (`v*`)" — explicit ship-it semantics (rationale in [ADR-0010](../../adr/0010-tag-based-deploys-with-d1-migrations.md)).
+- `migrate` job runs once, then `deploy` matrix runs both workers in parallel.
+- Token stored as `TOKEN_CICD_V1`, mapped to the `CLOUDFLARE_API_TOKEN` env var that wrangler reads.
 
 ---
 
-### 5. CI deploy-event hook (deploy correlation)
+### 3. Deploy-event hook (carried to Sprint 4)
 
 Owner: Jack
-Issue: TBD (file before starting)
+Status: Carried into [`sprint-4.md`](sprint-4.md) Task 1.
 
-Required for the "which deployment started the fire?" feature (ARCHITECTURE.md §1). After each successful Worker deploy, POST a deploy event to `/ingest` so the dashboard can correlate later errors against deploys.
+Deliverables (as originally planned):
+- After both workers deploy successfully, POST a `deploy` event to ingest so the dashboard can correlate errors with deploys.
 
-Deliverables:
-- New job at the end of `.github/workflows/deploy.yml` (after both worker deploys succeed):
-  - POSTs a `deploy` event to the live ingest URL
-  - Payload matches `docs/backend/api/event-schema-draft.md` (event_id, project_id, event_type=deploy, timestamp, environment, deploy_id=$GITHUB_SHA, version from $GITHUB_REF_NAME if it's a tag)
-- Verify in D1 dashboard that the row landed after the next merge
-
-Scope:
-- This sprint covers WatchTower observing its own deploys (dogfooding for demo)
-- For *external* host apps using the SDK: documenting how they wire their own deploy hook lives with SDK docs (BE Task 3) — not this task
-
-Depends on:
-- Task 4 (deploy workflow must exist)
-- BE schema landed so `deploys` rows (or `events` rows with type=deploy) have a place to go
+What actually shipped (in Sprint 4):
+- `notify-deploy` job appended to `deploy.yml`, gated on `needs: deploy`.
+- Payload matches BE's deploy-event schema.
 
 ---
 
-### 6. Environment separation (deferred — Sprint 3)
+### 4. Environment separation (deferred — post-MVP)
 
 Owner: Jack
 Issue: #55
+Status: Deferred. Carried as a documented post-MVP item; no work done in Sprints 2–5.
 
-Staging vs production deployments. Separate workers (`watchtower-ingest-staging`, `watchtower-api-staging`), separate D1 (`watchtower-staging`), separate URLs.
-
-Deferred rationale: hard to design well before real code and real traffic patterns exist. Sprint 2 ships one environment; Sprint 3 splits it once we know what we're separating. Premature now.
-
-Depends on: Task 4 (deploy workflow exists), real code flowing through it.
+Reason: a staging environment is only meaningful once there's real traffic and a release cadence that benefits from a pre-prod gate. For a class-project demo on a frozen tag, one production environment is sufficient.
 
 ---
 
-### 7. Deployment rollback (deferred — Sprint 3)
+### 5. Deployment rollback (deferred — post-MVP)
 
 Owner: Jack
 Issue: #57
+Status: Deferred. Manual procedure (`git revert <merge>` + retag) is the recovery path; documented in [`docs/devops/secrets.md`](../secrets.md) and Sprint 5's runbook.
 
-Mechanism to revert a bad deploy quickly. Options: `wrangler rollback`, redeploying a previous git SHA, or pinning to a known-good tag.
-
-Deferred rationale: rollback to "production" when there's only one environment is just "redeploy previous SHA" — trivial. The real rollback story needs staging/prod separation (Task 6) first. Building a sophisticated rollback before that is over-engineering.
-
-Depends on: Task 6.
+Reason: automated rollback adds complexity without demo value; the manual procedure is fast enough for a one-shot demo recording.
 
 ---
 
-## Out of scope this sprint
+## Sprint 2 outcomes (filled at sprint close)
 
-- Real source-map upload / stack-trace symbolication (ARCHITECTURE.md §8 — explicitly deferred for MVP)
-- Multi-region D1 replication (D1 free tier doesn't support, also §8)
-- Cost monitoring / billing alerts (not yet relevant at free-tier usage)
-- Custom domain on the workers (`*.workers.dev` URLs are fine for class project)
+What landed:
+- `.github/workflows/ci.yml` with lint + build + test, matrix over both workers, Node 22.
+- Branch protection on `main`: 1 approval + all status checks required + conversations resolved.
+- ESLint baseline (slipped from Sprint 1) shipped alongside CI in the same PR.
 
-## Cross-team notes
-
-- **Backend Task 1 (ingest scaffold, Gabrielle)**: already deployed. BE pulls the merged `chore/d1-binding` branch and is unblocked.
-- **Backend Task 3 (SDK, Michael/Bishal)**: blocked on Task 2 (CORS) for the cross-origin demo. Land Task 2 by mid-sprint.
-- **Backend Task 4 (Reporting API, Theo/Gabrielle)**: blocked on Task 3 (scaffold). Land Task 3 by mid-sprint.
-- **Deploy correlation feature**: requires coordination — Task 5 (this team), schema column for `deploy_id` (BE), and `watchtower.init({ deployId })` config (SDK team). Confirm payload shape with BE before implementing Task 5.
+Not in scope (delegated to other teams):
+- CORS preflight + headers on ingest — shipped inside Backend's `/ingest` endpoint PR.
+- `workers/api/` scaffold — Backend went past scaffold to a full `GET /api/events` implementation in their own PR.
+- DevOps support: extending the CI matrix to cover the new api worker once it landed.

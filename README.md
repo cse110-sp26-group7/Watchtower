@@ -1,5 +1,7 @@
 # WatchTower
 
+**[→ Visit the project site](https://cse110-sp26-group7.github.io/Watchtower/landing/)**
+
 Lightweight observability dashboard. Errors, performance, and user
 feedback in one place.
 
@@ -10,16 +12,20 @@ feedback in one place.
 ***
 
 ## Prerequisites
-- Wrangler CLI — `npm install -g wrangler`
-For backend-specific setup, see `/backend/README.md`
+- Node.js 20+ and npm 10+ (`wrangler` is pinned in each worker's `devDependencies`; no global install needed)
+For backend-specific setup, see `docs/backend/README.md` and the per-worker READMEs (`workers/api/`, `workers/ingest/`)
 ***
 
 ## Installation & Setup
 ### Installation
-**WIP**
+```sh
+git clone https://github.com/cse110-sp26-group7/Watchtower.git
+cd Watchtower/workers/api && npm install     # reporting API
+cd ../ingest && npm install                  # ingest
+```
 ### Setup
 #### Step 1 - Register your Project
-Create an account. After that you will have a ProjectId
+Dashboard accounts are seeded by the team (no self-serve signup). Ask in the team channel to get a `project_id` for your app.
 
 #### Step 2 - Install SDK
 Add the Watchtower SDK to your html file with the following script
@@ -55,7 +61,15 @@ Add this button to your html file to test your dashboard
 ***
 
 ## Usage & Common Scripts
-**WIP**
+Run from `workers/api/` or `workers/ingest/`:
+
+| Script | What it does |
+|--------|--------------|
+| `npm run dev` | local worker on `http://localhost:8787` (`-- --port 8788` to run both) |
+| `npm test` | Vitest suite for that worker |
+| `npm run deploy` | manual `wrangler deploy` (normally done by CI on `v*` tags) |
+
+Lint runs from the repo root: `npx eslint .`
 ***
 
 ## Architecture Overview
@@ -64,12 +78,18 @@ Add this button to your html file to test your dashboard
 
 ## Environment Variables
 
+| Worker | Name | Kind | Purpose |
+|--------|------|------|---------|
+| API | `ALLOWED_ORIGINS` | var (`wrangler.jsonc`) | comma-separated CORS allowlist; must include the dashboard origin |
+| API | `SESSION_SECRET` | secret (`wrangler secret put`) | HMAC key for signing session cookies |
+
 ### Deployed Endpoints
 
-| Worker | URL |
-|--------|-----|
+| Surface | URL |
+|---------|-----|
+| Dashboard | https://watchtower-page.pages.dev |
 | Ingest | https://watchtower-ingest.cse110piedpiper7.workers.dev/ingest |
-| API    | https://watchtower-api.cse110piedpiper7.workers.dev/api/events |
+| API | https://watchtower-api.cse110piedpiper7.workers.dev/api/* |
 ***
 
 ## Tech Stack
@@ -81,6 +101,8 @@ Add this button to your html file to test your dashboard
 - Data Collection — User feedback, performance degradations, crashes
 - Log Viewer — Browse and filter application logs including errors, warnings, and crashes
 - Data Visualization — Visual dashboards for monitoring app performance and user activity
+- Deploy Correlation — links each error to the deploy that likely introduced it
+- Authenticated Dashboard — login-gated API with per-project ownership checks
 ***
   
 ## Planned Features
