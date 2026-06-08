@@ -37,87 +37,67 @@ function parseStack(stack) {
     });
 }
 
-// Search bar functionality for error log page
-document.getElementById("search").addEventListener("input", function () {
-  const query = this.value.toLowerCase();
-
-  const rows = document.querySelectorAll(".full-errors-table tbody tr");
-
-  rows.forEach((row) => {
-    const text = row.textContent.toLowerCase();
-    const match = text.includes(query);
-
-    row.style.display = match ? "" : "none";
-
-    const detailRow = row.nextElementSibling;
-    if (detailRow?.classList.contains("detail-row")) {
-      detailRow.classList.remove("detail-row-open");
-    }
-  });
-});
 
 // Filter functionality for error log page
-// Filter by date range (last 24 hours, last 7 days, last 30 days)
-document.getElementById("date-filter").addEventListener("change", function () {
-  const filter = this.value;
+function applyFilters() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const dateFilter = document.getElementById("date-filter").value;
+  const levelFilter = document.getElementById("level-filter").value;
   const now = new Date();
 
-  const rows = document.querySelectorAll(".full-errors-table tbody tr");
+  const rows = document.querySelectorAll(".full-errors-table tbody tr:not(.detail-row)");
 
   rows.forEach((row) => {
+    // Search bar functionality for error log page
+    const text = row.textContent.toLowerCase();
+    const matchesSearch = text.includes(query);
+
+    // Filter by date range (last 24 hours, last 7 days, last 30 days)
     const timestampText = row.querySelector("td").textContent.trim();
     const [datePart, timePart] = timestampText.split("\n").map((s) => s.trim());
     const timestamp = new Date(`${datePart} ${timePart}`);
-
-    let show = false;
-
-    if (filter === "all") {
-      show = true;
-    } else if (filter === "24h") {
-      show = now - timestamp <= 24 * 60 * 60 * 1000;
-    } else if (filter === "7d") {
-      show = now - timestamp <= 7 * 24 * 60 * 60 * 1000;
-    } else if (filter === "30d") {
-      show = now - timestamp <= 30 * 24 * 60 * 60 * 1000;
+    let matchesDate = false;
+    if (dateFilter === "all") {
+      matchesDate = true;
+    } else if (dateFilter === "24h") {
+      matchesDate = now - timestamp <= 24 * 60 * 60 * 1000;
+    } else if (dateFilter === "7d") {
+      matchesDate = now - timestamp <= 7 * 24 * 60 * 60 * 1000;
+    } else if (dateFilter === "30d") {
+      matchesDate = now - timestamp <= 30 * 24 * 60 * 60 * 1000;
     }
 
-    row.style.display = show ? "" : "none";
-
-    const detailRow = row.nextElementSibling;
-    if (detailRow?.classList.contains("detail-row")) {
-      detailRow.classList.remove("detail-row-open");
-    }
-  });
-});
-
-// Filter by error level (error, warning, minimal)
-document.getElementById("level-filter").addEventListener("change", function () {
-  const filter = this.value;
-
-  const rows = document.querySelectorAll(".full-errors-table tbody tr");
-
-  rows.forEach((row) => {
+    // Filter by error level (error, warning, minimal)
     const level = row.dataset.level ?? "";
-    let show = false;
-
-    if (filter === "all") {
-      show = true;
-    } else if (filter === "error" && level.includes("error")) {
-      show = true;
-    } else if (filter === "warning" && level.includes("warning")) {
-      show = true;
-    } else if (filter === "minimal" && level.includes("minimal")) {
-      show = true;
+    let matchesLevel = false;
+    if (levelFilter === "all") {
+      matchesLevel = true;
+    } else if (levelFilter === "error" && level.includes("error")) {
+      matchesLevel = true;
+    } else if (levelFilter === "warning" && level.includes("warning")) {
+      matchesLevel = true;
+    } else if (levelFilter === "minimal" && level.includes("minimal")) {
+      matchesLevel = true;
     }
-
+    // all filters must pass
+    const show = matchesSearch && matchesDate && matchesLevel;
     row.style.display = show ? "" : "none";
 
     const detailRow = row.nextElementSibling;
     if (detailRow?.classList.contains("detail-row")) {
-      detailRow.classList.remove("detail-row-open");
+      if (!show) {
+        row.classList.remove("row-open");
+        detailRow.classList.remove("detail-row-open");
+      }
     }
   });
-});
+}
+
+document.getElementById("search").addEventListener("input", applyFilters);
+document.getElementById("date-filter").addEventListener("change", applyFilters);
+document.getElementById("level-filter").addEventListener("change", applyFilters);
+
+
 /**
  * Loads real error data and updates the error log table
  */
@@ -207,6 +187,16 @@ window.loadErrorLog = async function loadErrorLog() {
 
       // toggle detail row on click
       row.addEventListener("click", () => {
+        document.querySelectorAll(".full-errors-table-row.row-open").forEach((openRow) => {
+          if (openRow !== row) {
+            openRow.classList.remove("row-open");
+            const openDetail = openRow.nextElementSibling;
+            if (openDetail?.classList.contains("detail-row")) {
+              openDetail.classList.remove("detail-row-open");
+            }
+          }
+        });
+
         detailRow.classList.toggle("detail-row-open");
         row.classList.toggle("row-open");
       });
