@@ -1,11 +1,21 @@
+/* global logout, navigate */
+
 /**
- * Logs out the user by clearing session and redirecting to login
+ * Logs out the user: revokes the server-side session (POST /api/logout), then
+ * clears the local session flag and redirects to login. Best-effort — local
+ * cleanup and redirect run even if the network call fails so the user is never
+ * stranded on a protected page.
+ * @returns {Promise<void>}
  */
-window.handleLogout = function handleLogout() {
-  // clear login session
-  sessionStorage.removeItem("loggedIn");
-  // redirect to login page
-  window.navigate("login");
+window.handleLogout = async function handleLogout() {
+  try {
+    await logout();
+  } catch {
+    // ignore network/API errors; fall through to local cleanup
+  } finally {
+    sessionStorage.removeItem("loggedIn");
+    navigate("login");
+  }
 };
 
 // toggle avatar dropdown on click
