@@ -31,13 +31,13 @@ window.refreshProjectCards = async function refreshProjectCards() {
     // fetch errors
     const { events: errorEvents } = await getEvents("wt_demo", {
       type: "error",
-      since: "7d",
+      since: "30d",
     });
 
     // fetch performance
     const { events: perfEvents } = await getEvents("wt_demo", {
       type: "performance",
-      since: "7d",
+      since: "30d",
     });
 
     // find latest performance metrics
