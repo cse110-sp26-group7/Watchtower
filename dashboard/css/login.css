@@ -1,14 +1,78 @@
-#login-error {
-  color: red;
+/*Hide navbar and sidebar on login page, and make main content full width*/
+.login-page .navbar-divider,
+.login-page .navbar-logo,
+.login-page .navbar-project,
+.login-page .sidebar,
+.login-page .avatar {
+  display: none;
 }
 
-/*Hide navbar and sidebar on login page, and make main content full width*/
-.login-page .navbar,
-.login-page .sidebar {
-  display: none;
+.login-page {
+  overflow: hidden;
+  height: 100vh;
 }
 
 .login-page .main {
   margin-left: 0;
-  padding: 0;
+  padding-top: 7rem;
+}
+
+#welcome-title {
+  padding: 1.5rem 0;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  width: 640px;
+  max-width: 90%;
+  margin-top: 2rem;
+  justify-self: center;
+
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.login-form {
+  margin-top: 1rem;
+  color: var(--loginText);
+  font-size: 26px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border: 2px solid var(--loginText);
+  border-radius: 8px;
+  font-size: 16px;
+
+  color: var(--text);
+  background: var(--card);
+}
+
+#login-button {
+  width: 100%;
+  margin-top: 4rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--card);
+  background: var(--loginText);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#login-error {
+  margin-top: 1rem;
+  color: red;
 }

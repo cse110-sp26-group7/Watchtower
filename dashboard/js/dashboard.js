@@ -1,4 +1,4 @@
-/* global getEvents */
+/* global getEvents, getSummary */
 
 /**
  * Thresholds from Google Web Vitals standards
@@ -29,66 +29,55 @@ function escapeHtml(str) {
  */
 window.loadDashboard = async function loadDashboard() {
   try {
-    //fetch errors
-    const { events } = await getEvents("wt_demo", {
-      type: "error",
-      since: "30d",
-    });
+    // fetch summary from backend and update dashboard cards
+    const data = await getSummary("wt_demo", "30d");
+    document.getElementById("total-errors").textContent = data.totals.errors;
+    document.getElementById("error-change").textContent =
+      data.totals.errors === 0 ? "No errors in last 30 days" : "Last 30 days";
 
-    // fetch performance
-    const { events: perfEvents } = await getEvents("wt_demo", {
-      type: "performance",
-      since: "30d",
-    });
-
-    // find latest LCP, FCP, CLS values
-    const lcp = perfEvents.find((e) => e.metric_name === "LCP");
-    const fcp = perfEvents.find((e) => e.metric_name === "FCP");
-    const cls = perfEvents.find((e) => e.metric_name === "CLS");
-
-    // update cards
-    document.getElementById("lcp-value").textContent = lcp
-      ? `${lcp.metric_value}ms`
+    // update performance cards
+    const p75 = data.totals.performance_p75;
+    document.getElementById("lcp-value").textContent = p75.LCP
+      ? `${p75.LCP}ms`
       : "N/A";
-    document.getElementById("fcp-value").textContent = fcp
-      ? `${fcp.metric_value}ms`
+    document.getElementById("fcp-value").textContent = p75.FCP
+      ? `${p75.FCP}ms`
       : "N/A";
-    document.getElementById("cls-value").textContent = cls
-      ? parseFloat(cls.metric_value ?? "N/A").toFixed(2)
+    document.getElementById("cls-value").textContent = p75.CLS
+      ? parseFloat(p75.CLS).toFixed(2)
       : "N/A";
 
-    // apply threshold colors to performance metrics
-    if (lcp)
+    // apply threshold colors
+    if (p75.LCP)
       applyMetricColor(
         "lcp-value",
-        lcp.metric_value,
+        p75.LCP,
         THRESHOLDS.lcp.warn,
         THRESHOLDS.lcp.poor,
       );
-    if (fcp)
+    if (p75.FCP)
       applyMetricColor(
         "fcp-value",
-        fcp.metric_value,
+        p75.FCP,
         THRESHOLDS.fcp.warn,
         THRESHOLDS.fcp.poor,
       );
-    if (cls)
+    if (p75.CLS)
       applyMetricColor(
         "cls-value",
-        cls.metric_value,
+        p75.CLS,
         THRESHOLDS.cls.warn,
         THRESHOLDS.cls.poor,
       );
 
-    // update total errors card
-    document.getElementById("total-errors").textContent = events.length;
-    document.getElementById("error-change").textContent =
-      events.length === 0 ? "No errors in last 30 days" : "Last 30 days";
+    // update bar chart using timeseries
+    updateErrorChart(data.timeseries.errors);
 
-    // update bar chart
-    updateErrorChart(events);
-
-    // update recent errors table (show 5 most recent)
+    // update recent errors table — still uses getEvents()
+    const { events } = await getEvents("wt_demo", {
+      type: "error",
+      since: "30d",
+    });
     updateRecentErrors(events.slice(0, 5));
   } catch (err) {
     console.error("Dashboard failed to load:", err);
@@ -97,27 +86,23 @@ window.loadDashboard = async function loadDashboard() {
 
 /**
  * Updates error rate bar chart grouped by day
- * @param {Array} events
+ * @param {Array} timeseries
  */
-function updateErrorChart(events) {
-  const counts = {};
-  events.forEach((e) => {
-    // group by hour instead of day
-    const hour = e.timestamp.split(":")[0]; // "2026-05-30T12"
-    counts[hour] = (counts[hour] || 0) + 1;
-  });
-
-  const values = Object.values(counts);
+function updateErrorChart(timeseries) {
+  console.log("timeseries:", timeseries);
+  console.log("first item:", timeseries[0]);
+  const values = timeseries.map((e) => e.count);
   const max = Math.max(...values);
   const chartHeight = 180;
 
   const chart = document.getElementById("error-rate-chart");
   chart.innerHTML = "";
 
-  values.forEach((value) => {
+  values.forEach((value, index) => {
     const bar = document.createElement("div");
     bar.classList.add("bar");
-    bar.style.height = `${(value / max) * chartHeight}px`;
+    bar.style.height = value === 0 ? "0px" : `${(value / max) * chartHeight}px`;
+    bar.title = `${timeseries[index].t.split("T")[0]}: ${value} errors`;
     chart.appendChild(bar);
   });
 }

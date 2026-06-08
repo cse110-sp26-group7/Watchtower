@@ -1,9 +1,9 @@
 # 0002 — Storage Selection for WatchTower Backend
 
-- Status: Proposed
+- Status: Accepted (2026-06-07)
 - Date: 2026-05-06
 - Deciders: Backend team (Theo, Michael, Bishal, Gabrielle)
-- Consulted: TA Audria (pending)
+- Consulted: TA Audria
 - Informed: Full WatchTower team
 
 ## Context and Problem Statement
@@ -12,7 +12,7 @@ WatchTower is a lightweight observability backend that ingests three kinds of da
 
 The dashboard surface drives the read-side requirements. End users will routinely ask questions like *"show me all errors for project X in the last 7 days, grouped by message, sorted by count"* or *"show the p95 page-load time for the v1.4.2 deploy over the past 24 hours."* These queries require server-side filtering, sorting, grouping, and time-range scans — they are not point-key lookups. The write side has the opposite shape: high-volume, append-mostly inserts of small JSON-ish payloads, with the realistic worst case being a single busy customer site emitting thousands of events per minute during an incident. Writes arrive from **two distinct sources sharing one ingestion endpoint**: the client SDK embedded in monitored apps (the high-volume path) and GitHub Actions on every deploy (a low-volume marker path, a handful per day per project). Both go through the same `/ingest` Worker and land in the same store.
 
-Retention is bounded: events older than **30 days** will be pruned to keep storage within the chosen product's free-tier limits. The exact pruning mechanism (likely a scheduled `DELETE WHERE ts < now() - 30d`) is deferred to a future ADR; for storage selection, what matters is that the chosen product can support routine bulk deletes cheaply.
+Retention is bounded: events older than **30 days** will be pruned to keep storage within the chosen product's free-tier limits. The exact pruning mechanism is decided in ADR-0020 (scheduled `DELETE` on a Workers Cron Trigger); for storage selection, what matters is that the chosen product can support routine bulk deletes cheaply.
 
 The question this ADR decides: **which Cloudflare storage product (or combination) should hold WatchTower's events, deploys, and projects?**
 
@@ -43,7 +43,7 @@ These drivers are the yardstick. Every option below is measured against them —
 
 R2 will be used as a **secondary store** for any large blobs we may later attach to events (stack-trace attachments, source maps), but it is not the primary database. KV and Durable Objects are rejected as the primary store; rationale below.
 
-This decision is **Proposed**, not Accepted, until the bootstrap spike (`spike/cloudflare-bootstrap`) confirms the projected query latencies and the backend team formally signs off on the PR for this ADR.
+This decision was drafted as **Proposed** pending the bootstrap spike; it is now **Accepted** on the strength of sustained production use (see Confirmation).
 
 ### Consequences
 
@@ -72,18 +72,13 @@ This decision is **Proposed**, not Accepted, until the bootstrap spike (`spike/c
 
 ### Confirmation
 
-The decision is confirmed when **all four** of the following are true at the end of the bootstrap spike:
+Accepted 2026-06-07. The original draft gated acceptance on a spike checklist (a 200 ms query benchmark against 50K seeded events, a 100 events/second burst test, and a formal TA sign-off). In practice the decision was confirmed by production use instead: D1 has been the live store since the bootstrap spike landed — migrations apply through `wrangler d1 migrations`, both workers run every read and write against it, and it has carried ingest and dashboard traffic through development, demos, and QA without hitting free-tier quotas.
 
-1. The spike branch (`spike/cloudflare-bootstrap`) successfully creates a D1 database, applies the seed schema migration, and round-trips a sample event through ingest → store → dashboard query.
-2. With seeded test data of at least 50,000 events across 3 projects, the canonical dashboard query (`errors in last 7 days for project X, grouped by message, sorted by count`) executes in under **200 ms** end-to-end (Worker invocation + D1 query + JSON serialization).
-3. A simulated burst of 100 events/second for 60 seconds is ingested without the Worker returning 5xx, and total `rows_written` for the burst stays within a single day's free-tier allowance with margin to spare. Drops above the rate-limit threshold are counted and exposed as a metric, not silenced.
-4. At least one other backend team member has reviewed and approved the ADR PR, and TA Audria has signed off in the weekly TA meeting.
-
-If any of these fail, this ADR returns to Draft status and we revisit Durable Objects (SQLite) or a hybrid D1+KV approach in a follow-up ADR.
+The latency and burst benchmarks were never formally run; recorded here so nobody mistakes them for verified numbers. Per-project rate limiting was also deferred (ADR-0021; implementation out of scope for the course timeline), so the burst-drop behavior described under Negative Consequences is design intent, not tested behavior.
 
 ## Pros and Cons of the Options
 
-> Free-tier figures below are sourced from Cloudflare's official pricing pages and verified as of **2026-05-06**. Cloudflare publishes these limits on a page that does change; before publishing this ADR as Accepted, recheck the linked pricing pages in *More Information*.
+> Free-tier figures below are sourced from Cloudflare's official pricing pages and verified as of **2026-05-06**. Cloudflare adjusts these caps occasionally; if a quota decision ever rides on them, recheck the linked pricing pages in *More Information*.
 
 ### Option 1: Cloudflare D1
 
@@ -204,12 +199,11 @@ The point of this table is not precision — the numbers are rough — but docum
 - ADR-0001: Cloudflare over Node/PHP (platform choice)
 - ADR-0004: Single events table (event/perf/feedback data model)
 - ADR-0005: Signed-cookie auth (auth tables — `users`, `sessions`)
-- Future ADR: Ingest rate limiting and per-project quotas
-- Future ADR: 30-day retention pruning job (scheduled `DELETE` on a Workers Cron Trigger)
-- Future ADR: Use of R2 for large-blob attachments (source maps, screenshots) — only if we decide we need them
+- ADR-0020: 30-day retention pruning job (scheduled `DELETE` on a Workers Cron Trigger)
+- ADR-0021: Ingest rate limiting and per-project quotas (implementation deferred)
+- R2 for large-blob attachments never materialized: source-map upload was dropped for the course timeline (Sprint 4/5 out of scope).
 
-**Open follow-ups:**
+**Follow-ups, resolved at acceptance (2026-06-07):**
 
-- Reconfirm free-tier numbers immediately before changing this ADR's status from Proposed to Accepted; Cloudflare adjusts these caps occasionally.
-- Decide whether to use a single D1 database with `project_id` as a partition column, or one D1 database per project. Default for now: single database. Revisit if write quota or single-threaded contention becomes a real issue during peer-review week.
-- TA Audria sign-off in the weekly meeting before this moves to Accepted.
+- Single D1 database with `project_id` as a partition column, as defaulted. Write quota and single-threaded contention never became an issue.
+- Free-tier numbers were not formally rechecked; the system ran within the 2026-05-06 figures throughout the project.

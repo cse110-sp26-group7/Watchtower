@@ -19,34 +19,42 @@
     <link rel="stylesheet" href="css/performance_summary.css" />
     <link rel="stylesheet" href="css/error_log.css" />
     <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/logout.css" />
+    <link rel="stylesheet" href="css/feedback_widget.css" />
+
+    <!-- favicon here -->
+    <link rel="icon" type="image/png" href="/dashboard/img/watchtower.png" />
   </head>
   <body>
     <!--NavBar-->
     <nav class="navbar">
+      <a class="navbar-watchtower">
+        <img
+          class="navbar-watchtower"
+          src="img/watchtower.png"
+          alt="WatchTower icon"
+        />
+      </a>
       <a class="navbar-logo" onclick="navigate('projects')">WatchTower</a>
       <div class="navbar-divider"></div>
       <div class="navbar-project">App-Name▾</div>
       <div class="navbar-right">
-        <a class="navbar-icon" title="Notifications">
-          <img
-            class="navbar-icon"
-            src="img/notification.png"
-            alt="notification icon"
-          />
-        </a>
         <button
           class="navbar-icon"
           id="themeBtn"
           onclick="toggleTheme()"
           title="Toggle dark mode"
         >
-          <img
-            class="navbar-icon"
-            src="img/lightMode.png"
-            alt="light mode icon"
-          />
+          <img src="img/lightMode.png" alt="light mode icon" />
         </button>
-        <div class="avatar">User</div>
+
+        <!-- avatar with dropdown -->
+        <button class="navbar-icon" id="avatar-btn" title="User menu">
+          <img src="img/user.png" alt="user avatar" />
+        </button>
+        <div class="avatar-dropdown" id="avatar-dropdown">
+          <button onclick="handleLogout()">Logout</button>
+        </div>
       </div>
     </nav>
     <!-- SIDEBAR -->
@@ -72,12 +80,29 @@
       <!--LOGIN-->
       <div class="page" id="page-login">
         <div class="page-header">
-          <div class="page-title">Login</div>
+          <div class="page-title" id="welcome-title">
+            Welcome to WatchTower!
+          </div>
         </div>
-        <input type="email" id="login-email" placeholder="Email" />
-        <input type="password" id="login-password" placeholder="Password" />
-        <button onclick="handleLogin()">Login</button>
-        <p id="login-error"></p>
+        <div class="login-card">
+          <div class="page-title">Login</div>
+          <div class="login-form">Email:</div>
+          <input
+            type="email"
+            class="login-input"
+            id="login-email"
+            placeholder="Email"
+          />
+          <div class="login-form">Password:</div>
+          <input
+            type="password"
+            class="login-input"
+            id="login-password"
+            placeholder="Password"
+          />
+          <button onclick="handleLogin()" id="login-button">Login</button>
+          <p id="login-error"></p>
+        </div>
       </div>
       <!-- PROJECT SELECTION -->
       <div class="page" id="page-projects">
@@ -322,13 +347,54 @@
       </div>
     </main>
 
+    <!-- feedback widget -->
+    <div class="feedback-widget" id="feedback-widget">
+      <!-- popup — hidden by default -->
+      <div class="feedback-popup" id="feedback-popup">
+        <span class="feedback-label">How happy are you with our app?</span>
+        <div class="stars">
+          <span class="star" data-value="1"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="2"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="3"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="4"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+          <span class="star" data-value="5"
+            ><img src="img/star.png" alt="star icon"
+          /></span>
+        </div>
+        <button class="feedback-submit" id="feedback-submit">Submit</button>
+      </div>
+      <!-- trigger icon -->
+      <div class="feedback-trigger" id="feedback-trigger">
+        <img src="img/star.png" alt="rate us" />
+      </div>
+    </div>
+
+    <!-- thank you overlay -->
+    <div class="thankyou-overlay" id="thankyou-overlay">
+      <div class="thankyou-card">
+        <p>
+          Thank you for your feedback! <img src="img/cat.png" alt="cat icon" />
+        </p>
+      </div>
+    </div>
+
     <!--Add scripts here-->
     <script src="js/api-client.js"></script>
     <script src="js/login.js"></script>
+    <script src="js/logout.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/error_log.js"></script>
     <script src="js/projects_selection.js"></script>
     <script src="js/router.js"></script>
     <script src="js/darkmode.js" defer></script>
+    <script src="js/feedback.js" defer></script>
   </body>
 </html>

@@ -102,9 +102,12 @@ Low Priority:
 - `docs/devops/` describes deploy flow, rollback, and secrets rotation — useful for any future maintainer.
 - CI stayed green on `main` through the freeze window.
 - Demo video recorded; one external test app (Ethan's club site) live.
+- Event detail + deploy correlation shipped (PR #161): `GET /api/events/:event_id` returns an error together with the deploy that likely introduced it.
+- Backend tests run against the real Workers runtime (miniflare + in-memory D1), so the auth gate, ownership checks, and handler contracts are covered without mocking Cloudflare.
 
 **What didn't go well:**
-- E2E test framework (Playwright) discussed since Sprint 2 but never landed — only unit + integration tests shipped.
+- E2E tests (Playwright), discussed since Sprint 2, only landed in the final two days (PR #164) — too late to catch anything during development.
+- The session gate went live in prod (`v0.0.6-updateAuth`, June 4) three days before the FE auth cutover (PR #158, June 7), so the prod dashboard's API calls returned 403 in between.
 - A few Sprint 4 carryovers (alerting/notifications, multi-project support beyond one demo project) were deferred to "post-MVP."
 - Finals-week timing compressed the last 36 hours; some doc cleanup happened later than ideal.
 - We relied on Cloudflare Pages preview deploys instead of a true staging environment — documented in ADR-0022, but a real staging would have caught a couple of cross-origin issues earlier.
@@ -114,7 +117,8 @@ Low Priority:
 - Bake CHANGELOG updates into the release-tag workflow so it never lags releases.
 - Capture standups and TA meetings as you go — backfilling at the end is fine, but doing it weekly is cheaper.
 - Pick one e2e tool early and land a single happy-path test in Sprint 2, even before you have features to cover. Adding the framework when you "need" it never quite happens.
+- Sequence cross-team cutovers by dependency, not by readiness: ship the consumer-side change before (or with) the server change that breaks it.
 - Vanilla JS + Cloudflare was the right stack for the constraint and the scale; we never wished for a framework.
 
 **Closing notes:**
-- This is the final sprint of the project; the next "sprint" for future maintainers begins with the open items in ADR-0020 (retention cron implementation), ADR-0021 (rate limiter implementation), and the e2e suite that never landed.
+- This is the final sprint of the project; the next "sprint" for future maintainers begins with the open items in ADR-0020 (retention cron implementation), ADR-0021 (rate limiter implementation), and broadening the e2e suite beyond the happy paths landed in PR #164.
