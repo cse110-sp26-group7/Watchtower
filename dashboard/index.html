@@ -19,10 +19,11 @@
     <link rel="stylesheet" href="css/performance_summary.css" />
     <link rel="stylesheet" href="css/error_log.css" />
     <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/logout.css" />
     <link rel="stylesheet" href="css/feedback_widget.css" />
 
     <!-- favicon here -->
-    <link rel="icon" type="image/png" href="/dashboard/img/watchtower.png">
+    <link rel="icon" type="image/png" href="/dashboard/img/watchtower.png" />
   </head>
   <body>
     <!--NavBar-->
@@ -44,13 +45,16 @@
           onclick="toggleTheme()"
           title="Toggle dark mode"
         >
-          <img
-            class="navbar-icon"
-            src="img/lightMode.png"
-            alt="light mode icon"
-          />
+          <img src="img/lightMode.png" alt="light mode icon" />
         </button>
-        <div class="avatar">User</div>
+
+        <!-- avatar with dropdown -->
+        <button class="navbar-icon" id="avatar-btn" title="User menu">
+          <img src="img/user.png" alt="user avatar" />
+        </button>
+        <div class="avatar-dropdown" id="avatar-dropdown">
+          <button onclick="handleLogout()">Logout</button>
+        </div>
       </div>
     </nav>
     <!-- SIDEBAR -->
@@ -76,14 +80,26 @@
       <!--LOGIN-->
       <div class="page" id="page-login">
         <div class="page-header">
-          <div class="page-title" id="welcome-title">Welcome to WatchTower!</div>
+          <div class="page-title" id="welcome-title">
+            Welcome to WatchTower!
+          </div>
         </div>
         <div class="login-card">
           <div class="page-title">Login</div>
           <div class="login-form">Email:</div>
-          <input type="email" class="login-input" id="login-email" placeholder="Email" />
+          <input
+            type="email"
+            class="login-input"
+            id="login-email"
+            placeholder="Email"
+          />
           <div class="login-form">Password:</div>
-          <input type="password" class="login-input" id="login-password" placeholder="Password" />
+          <input
+            type="password"
+            class="login-input"
+            id="login-password"
+            placeholder="Password"
+          />
           <button onclick="handleLogin()" id="login-button">Login</button>
           <p id="login-error"></p>
         </div>
@@ -373,6 +389,7 @@
     <!--Add scripts here-->
     <script src="js/api-client.js"></script>
     <script src="js/login.js"></script>
+    <script src="js/logout.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/error_log.js"></script>
     <script src="js/projects_selection.js"></script>

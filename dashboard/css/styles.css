@@ -10,6 +10,7 @@
   --loginText: #267726;
   --grey: #f0f2f3;
   --dim: #7a5c48;
+  --navbarhover: rgba(255, 255, 255, 0.15);
   --tipBackground: #31201c;
   --tipText: #fff9f3;
   --sans: "Nunito", sans-serif;
@@ -73,8 +74,8 @@ body {
   gap: 16px;
 }
 .navbar-icon {
-  width: 34px;
-  height: 34px;
+  width: 2.75rem;
+  height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,19 +99,15 @@ body {
   text-decoration: none;
 }
 .navbar-icon:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--navbarhover);
 }
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--orange);
+
+.navbar-icon img {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+
+  object-fit: contain;
+  pointer-events: none;
 }
 
 /* SIDEBAR */
