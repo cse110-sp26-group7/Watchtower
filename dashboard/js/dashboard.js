@@ -94,7 +94,7 @@ function updateErrorChart(timeseries) {
     .trim();
   const isDark = document.body.classList.contains("dark");
   const textColor = isDark ? "#e8cfc0" : "#3a2210";
-  const gridColor = isDark ? "#aa8d76" : "#a88872";
+  const gridColor = isDark ? "#aa8d76" : "rgba(0, 0, 0, 0.1)";
   const labels = timeseries.map((b) => b.t.split("T")[0].slice(5));
   const values = timeseries.map((b) => b.count);
 
@@ -114,13 +114,13 @@ function updateErrorChart(timeseries) {
       scales: {
         x: {
           title: { display: true, text: "Date", color: textColor },
-          ticks: { maxTicksLimit: 8, color: gridColor },
+          ticks: { maxTicksLimit: 8, color: textColor },
           grid: { display: false },
         },
         y: {
           beginAtZero: true,
           title: { display: true, text: "Errors", color: textColor },
-          ticks: { color: gridColor },
+          ticks: { color: textColor },
           grid: { color: gridColor },
         },
       },

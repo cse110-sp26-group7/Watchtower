@@ -14,11 +14,11 @@
 
 .login-page .main {
   margin-left: 0;
-  padding-top: 7rem;
+  margin-right: 0;
+  padding-top: 4rem;
 }
 
 #welcome-title {
-  padding: 1.5rem 0;
   margin: 0 auto;
   text-align: center;
 }
@@ -30,7 +30,7 @@
   padding: 1.5rem;
   width: 640px;
   max-width: 90%;
-  margin-top: 2rem;
+  margin-top: 1rem;
   justify-self: center;
 
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
