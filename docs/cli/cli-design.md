@@ -11,8 +11,9 @@ This is the command line interface for Watchtower. It's used in a user's CI/CD p
 |---|---|
 | `deploy` | Call on deployment |
 | `create` | Creates a Watchtower project |
-| `login`  | Prompts for credentials and starts a session |
-| `logout` | Logs the user out if they are logged in |
+| `login`    | Prompts for credentials and starts a session |
+| `logout`   | Logs the user out if they are logged in |
+| `register` | Creates a new Watchtower account |
 
 ## Global Flags
 | Flag | Short | Required | Description |
@@ -41,3 +42,6 @@ Prompts for an email and password in the terminal. If successful, saves a sessio
 
 ### `npx watchtower logout`
 Logs the user out. Calls the logout API and deletes the local session file if there was one.
+
+### `npx watchtower register`
+Prompts for an email, password, and password confirmation in the terminal. If successful, creates a new account and saves a session to `~/.config/watchtower/session`.
