@@ -102,11 +102,6 @@ async function sendDeployEventRequest(projectId, gitSha, environment, version) {
       })
     });
 
-    if (!response.ok) {
-      console.error(`HTTP error! Status: ${response.statusText}`);
-      return -1;
-    }
-
     return response.status;
   } catch (error) {
     console.error("Request failed: ", error);

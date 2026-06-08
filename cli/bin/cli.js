@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises"
 import { parseArgs } from "node:util";
 import create from "../commands/create.js";
 import deploy from "../commands/deploy.js";
+import login from "../commands/login.js";
+import logout from "../commands/logout.js";
 
 /**
  * Main function for the Watchtower cli. Parses the arguments and dispatches to the corresponding command if provided.
@@ -19,7 +21,7 @@ async function cli() {
   });
 
   if (values.version) {
-    const { version } = await JSON.parse(await readFile("./package.json", "utf8"));
+    const { version } = await JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8"));
     console.log(version);
     process.exit(0);
   }
@@ -40,18 +42,28 @@ async function cli() {
         console.log('REQUIRED: --gitSha <git_sha> (short: -s) Release identifier (git SHA). In GitHub actions, this can be obtained from $GITHUB_SHA');
         console.log('OPTIONAL: --version <version> (short: -V): Specifies the version with a SemVer tag (e.g., "v0.1.0")');
         break;
+      case "login":
+        console.log("Logs in to Watchtower and saves a local session.");
+        console.log("Usage: npx watchtower login");
+        break;
+      case "logout":
+        console.log("Logs out of Watchtower and clears the local session.");
+        console.log("Usage: npx watchtower logout");
+        break;
       default:
         console.log("Usage: npx watchtower <command> [options]");
-        console.log("Commands: create, deploy");
+        console.log("Commands: create, deploy, login, logout");
     }
     process.exit(0);
   }
 
-  console.log("Watchtower CLI running!");
+  console.log("Running Watchtower CLI...");
 
   switch (command) {
     case "create": await create(); break;
     case "deploy": await deploy(); break;
+    case "login": await login(); break;
+    case "logout": await logout(); break;
     default:
       console.error(`Unknown command: "${command}"`);
       console.error("Run with --help for usage.");
