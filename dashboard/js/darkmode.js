@@ -1,3 +1,5 @@
+/* global updateErrorChart */
+
 window.toggleTheme = function () {
   const isDark = document.body.classList.toggle("dark");
   document.getElementById("themeBtn").innerHTML = isDark
@@ -6,9 +8,9 @@ window.toggleTheme = function () {
   // rerender chart with updated theme colors
   if (
     typeof updateErrorChart === "function" &&
-    typeof lastTimeseries !== "undefined" &&
-    lastTimeseries
+    typeof window.lastTimeseries !== "undefined" &&
+    window.lastTimeseries
   ) {
-    updateErrorChart(lastTimeseries);
+    updateErrorChart(window.lastTimeseries);
   }
 };

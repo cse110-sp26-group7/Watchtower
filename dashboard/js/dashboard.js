@@ -1,4 +1,5 @@
 /* global getEvents, getSummary, Chart */
+// expose lastTimeseries for darkmode.js to use
 
 /**
  * Thresholds from Google Web Vitals standards
@@ -86,10 +87,8 @@ window.loadDashboard = async function loadDashboard() {
 
 //getting color values from CSS variables to use in charts for consistent theming
 let errorChart = null;
-let lastTimeseries = null;
-// updates the error rate bar chart with new timeseries data
 function updateErrorChart(timeseries) {
-  lastTimeseries = timeseries;
+  window.lastTimeseries = timeseries;
   const orange = getComputedStyle(document.documentElement)
     .getPropertyValue("--orange")
     .trim();
