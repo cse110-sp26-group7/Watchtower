@@ -89,8 +89,6 @@ window.loadDashboard = async function loadDashboard() {
  * @param {Array} timeseries
  */
 function updateErrorChart(timeseries) {
-  console.log("timeseries:", timeseries);
-  console.log("first item:", timeseries[0]);
   const values = timeseries.map((e) => e.count);
   const max = Math.max(...values);
   const chartHeight = 180;
