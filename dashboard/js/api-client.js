@@ -56,10 +56,14 @@ window.getEvents = async function getEvents(projectId, option = {}) {
 /**
  * Fetches summary metrics for the dashboard
  * @param {string} projectId
+ * @param {string} timeWindow
  * @returns {Promise<Object>}
  */
-window.getSummary = async function getSummary(projectId) {
-  const params = new URLSearchParams({ project_id: projectId });
+window.getSummary = async function getSummary(projectId, timeWindow) {
+  const params = new URLSearchParams({
+    project_id: projectId,
+    window: timeWindow,
+  });
   return apiFetch(`/api/summary?${params}`);
 };
 
