@@ -10,6 +10,7 @@ feedback in one place.
 
 [Status Update 1](https://youtu.be/NoIb_ukGxmw)
 [Final Project Video (Public)](https://youtu.be/rJK7l-YkAIY)
+[Final Project Video (Private)](https://youtu.be/X5Kig6IOmKI)
 
 ***
 
