@@ -36,7 +36,7 @@ Add the Watchtower SDK to your html file with the following script
 ```
 
 #### Step 3 - Initialize SDK
-Create and initialize a WatchTower object in in your code. Make sure to use your project id
+Create and initialize a WatchTower object in your code. Make sure to use your project id
 ```
 const wt = new Watchtower({
   projectId: "your_project_id",
@@ -72,6 +72,15 @@ Run from `workers/api/` or `workers/ingest/`:
 | `npm run deploy` | manual `wrangler deploy` (normally done by CI on `v*` tags) |
 
 Lint runs from the repo root: `npx eslint .`
+
+### Running the Dashboard Locally
+The dashboard is a static site (`dashboard/`). Serve it with any static file server on port 5500 (the API's CORS allowlist only permits `localhost:5500`):
+
+```sh
+npx serve dashboard -l 5500
+```
+
+It talks to the deployed API (`watchtower-api.cse110piedpiper7.workers.dev`), so no local backend is needed. To try it out without a seeded account, log in with the demo user: `demo@watchtower.dev` / `demo1234` (project `wt_demo`).
 ***
 
 ## Architecture Overview
