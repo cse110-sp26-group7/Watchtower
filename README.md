@@ -9,6 +9,8 @@ feedback in one place.
 **CSE 110 Sp 26 team project. Pre-release.**
 
 [Status Update 1](https://youtu.be/NoIb_ukGxmw)
+[Final Project Video (Public)](https://youtu.be/rJK7l-YkAIY)
+
 ***
 
 ## Prerequisites
