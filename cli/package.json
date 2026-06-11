@@ -1,5 +1,5 @@
 {
-  "name": "@watchtower/cli",
+  "name": "@watchtower7/cli",
   "version": "1.0.0-alpha",
   "description": "\"A command line interface for creating and deploying apps with Watchtower\"",
   "license": "ISC",
